@@ -28,7 +28,6 @@ String EEPROMSetup::readString(int startAddr) {
     for (int i = 0; i < maxLen; i++) {
         buf[i] = EEPROM.read(startAddr + i);
         if (buf[i] == 0) {
-            buf[i] = '\0';
             break;
         }
     }
