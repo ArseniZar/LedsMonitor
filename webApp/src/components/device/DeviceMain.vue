@@ -1,9 +1,9 @@
 <template>
-    <div
-        className="fixed px-5 py-10  inset-0 bg-black/30 backdrop-blur-md flex flex-col items-center gap-5 overflow-y-auto">
-        <Header v-on:goBack="handleGoBack" v-on:addDevice="handleAddDevice"></Header>
-        <DeviceItem @deviceSelected="deviceSelected" v-bind:devices="devices"></DeviceItem>
-
+    <div className="fixed inset-0 backdrop-blur-md  bg-black/40 overflow-y-auto w-full  min-h-screen">
+        <div className="py-10  mx-auto w-8/12  max-w-md  h-full  flex flex-col items-center gap-3.5 ">
+            <Header v-on:goBack="handleGoBack" v-on:addDevice="handleAddDevice"></Header>
+            <DeviceItem @deviceSelected="deviceSelected" v-bind:device="device" v-for="device in devices"></DeviceItem>
+        </div>
     </div>
 </template>
 

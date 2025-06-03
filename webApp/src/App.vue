@@ -1,7 +1,3 @@
-<script setup lang="ts">
-
-</script>
-
 <template>
 
   <!-- <div className=" w-2/3 p-5 mx-auto flex flex-col items-center justify-center min-h-screen">
@@ -32,147 +28,102 @@
       device</button>
   </div> -->
 
-  <div id="main" className=" w-8/12 m-4 mx-auto max-w-md min-h-screen">
+  <div className=" w-8/12  p-4 pt-10  mx-auto max-w-md min-h-screen">
 
     <div className="flex  items-center">
-      <select
-        className="p-2  rounded-4xl w-full shadow-md text-center text-white/90 bg-black/30 focus:outline-none hover:bg-black/50  transition  duration-400">
-        <option className="text-white/90">Выберите вариант</option>
-        <option className="text-white/90">Первый</option>
-        <option className="text-white/90">Второй</option>
-        <option className="text-white/90">Третий</option>
-      </select>
+      <button @click="SelectDevice"
+        className="text-center h-8 font w-full shadow-md text-white/90 mx-auto p-1 bg-black/30 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105  hover:bg-black/95  transition block">
+        {{ currentDevice.name }}</button>
     </div>
-    <div className="flex justify-center mt-10 flex-row gap-1">
-      <!-- <div className="bg-white w-50 h-50 rounded-full"></div> -->
-      <!-- <div class="w-10 h-30 rounded-full bg-green-500 shadow-[0_0_10px_3px_rgba(34,197,94,0.7)]"></div> -->
-      <!-- <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_7px_2px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div> -->
 
-    </div>
-    <div className="flex justify-between w-auto">
-      <!-- <div className="bg-white w-50 h-50 rounded-full"></div> -->
-      <!-- <div class="w-10 h-30 rounded-full bg-green-500 shadow-[0_0_10px_3px_rgba(34,197,94,0.7)]"></div> -->
-      <div className="flex flex-col gap-1">
-        <!-- <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div> -->
 
-      </div>
-      <div className="flex flex-col gap-1">
-        <!-- <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-        <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div> -->
 
-      </div>
-
-    </div>
-    <div className="flex justify-center flex-row gap-1">
-      <!-- <div className="bg-white w-50 h-50 rounded-full"></div> -->
-      <!-- <div class="w-10 h-30 rounded-full bg-green-500 shadow-[0_0_10px_3px_rgba(34,197,94,0.7)]"></div> -->
-      <!-- <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-yellow-400 shadow-[0_0_8px_3px_rgba(250,204,21,0.7)]"></div>
-      <div class="w-6 h-6 rounded-full bg-green-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.7)]"></div> -->
-
-    </div>
-    <div className="flex justify-center mt-10 w-full">
+    <!-- <div className="flex justify-center mt-10 w-full ">
       <div id="picker"></div>
-    </div>
-    <label class="block mt-5 cursor-pointer ">
-      <input type="radio" name="color" class="hidden peer" />
-      <div
-        class="bg-amber-300 h-6 rounded-xl transition duration-150 transform
-             peer-checked:scale-110 peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
-        <span class="text-center font-bold text-white/90 block"> 1.1.1.1</span>
-      </div>
-    </label>
-
-    <!-- <div class="flex max-w-[40px justify-between">
-      <div class="w-20 h-20 bg-blue-500"></div>
-      <div class="w-20 h-20 bg-red-500"></div>
-      <div class="w-20 h-20 bg-green-500"></div>
-      <div class="w-20 h-20 bg-yellow-500"></div>
     </div> -->
 
-    <!-- <div class="flex w-full justify-center "> -->
-    <div class="grid grid-cols-5 mt-5 w-full ">
-      <label class="flex justify-center cursor-pointer">
+
+    <ColorPanel />
+
+    <!-- <ColorMainBox v-bind:color="color" /> -->
+
+    <!-- <div class="flex  w-full flex-row justify-between gap-3 mt-5 mx-auto mb-10">
+      <label class="block h-6 max-w-[60px] w-full">
         <input type="radio" name="color" class="hidden peer" />
         <div
-          class="bg-amber-300  w-full max-w-[40px] h-6 rounded-xl transition duration-150  transform
-             peer-checked:scale-110 peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
+          class="bg-amber-300 w-full h-full rounded-xl  transition duration-150  transform
+             peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
         </div>
       </label>
 
-      <label class="flex justify-center cursor-pointer">
+      <label class="block h-6 max-w-[60px] w-full">
         <input type="radio" name="color" class="hidden peer" />
         <div
-          class="bg-amber-300 w-full max-w-[40px] h-6 rounded-xl transition duration-150 transform
-             peer-checked:scale-110  peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
+          class="bg-amber-300 w-full h-full rounded-xl  transition duration-150  transform
+             peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
         </div>
       </label>
 
-      <label class="flex justify-center cursor-pointer">
+      <label class="block h-6 max-w-[60px] w-full">
         <input type="radio" name="color" class="hidden peer" />
         <div
-          class="bg-amber-300 w-full max-w-[40px] h-6 rounded-xl transition duration-150 transform
-             peer-checked:scale-110 peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
+          class="bg-amber-300 w-full h-full rounded-xl  transition duration-150  transform
+             peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
         </div>
       </label>
 
-      <label class="flex justify-center cursor-pointer">
+      <label class="block h-6 max-w-[60px] w-full">
         <input type="radio" name="color" class="hidden peer" />
         <div
-          class="bg-amber-300 w-full max-w-[40px] h-6  rounded-xl transition duration-150 transform
-             peer-checked:scale-110 peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
+          class="bg-amber-300 w-full h-full rounded-xl  transition duration-150  transform
+             peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
         </div>
       </label>
 
-      <label class="flex justify-center cursor-pointer">
+      <label class="block h-6 max-w-[60px] w-full">
         <input type="radio" name="color" class="hidden peer" />
         <div
-          class="bg-amber-300 w-full max-w-[40px] h-6 rounded-xl transition duration-150 transform
-             peer-checked:scale-110 peer-checked:translate-y-[-3px] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
+          class="bg-amber-300 w-full h-full rounded-xl  transition duration-150  transform
+             peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)] peer-checked:shadow-[0_0_10px_3px_rgba(250,204,21,0.8)]">
         </div>
       </label>
     </div>
-    <!-- </div> -->
+  </div> -->
 
 
-    <button
-      className="text-center mt-40 font w-full shadow-md text-white/90 mx-auto p-2  bg-black/50 rounded-4xl  hover:bg-gray-900 transition block">
-      Edit color</button>
+
+    <!-- <button
+      className="text-center font w-full shadow-md text-white/90 mx-auto p-2  bg-black/30 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105  hover:bg-black/95  transition block">
+      edit</button> -->
+
+    <!-- <DeviceMain @device_selected="device_selected" v-bind:devices="devices">-->
+
+    <DeviceMain v-if="stepStack[stepStack.length - 1] === StepMain.Select" v-bind:devices="devices"
+      v-on:deviceSelected="deviceSelected" v-on:addDevice="handleAddDevice" v-on:goBack="handleGoBack" />
+    <DeviceAddMain v-if="stepStack[stepStack.length - 1] === StepMain.Add" v-on:deviceCreate="handleDeviceCreate"
+      v-on:goBack="handleGoBack" />
+
+
+    <!-- <Transition
+    mode="out-in"
+    enter-active-class="transition-opacity duration-300 ease-out"
+    enter-from-class="opacity-0 translate-y-2"
+    enter-to-class="opacity-100 translate-y-0"
+    leave-active-class="transition-opacity duration-200 ease-in"
+    leave-from-class="opacity-100 translate-y-0"
+    leave-to-class="opacity-0 translate-y-2"
+  >
+    <component
+      :is="currentStepComponent"
+      :devices="devices"
+      @deviceSelected="deviceSelected"
+      @addDevice="handleAddDevice"
+      @goBack="handleGoBack"
+      @deviceCreate="handleDeviceCreate"
+      :key="stepStack[stepStack.length - 1]"
+    />
+  </Transition> -->
+
   </div>
 
 
@@ -180,39 +131,105 @@
 
 </template>
 
-<script setup lang="ts">
-import { onMounted} from 'vue';
-import iro from '@jaames/iro';
-// export default {
-
-// };
 
 
-onMounted(() => {
-  const container = document.getElementById('main');
-  var widtw;
-  if (container) {
-    widtw = container.offsetWidth;
-    console.log('Ширина контейнера:', widtw);
-  } else {
-    console.warn('Контейнер с таким ID не найден');
-  }
+
+<script lang="ts">
+
+import type { Device } from './interface'; // Adjust the path as necessary
+import { StepMain } from './interface'; // Adjust the path as necessary
+import DeviceMain from './components/device/DeviceMain.vue';
+import DeviceAddMain from './components/device/deviceAdd/DeviceAddMain.vue';
+import ColorPanel from './components/main/ColorPanel.vue';
 
 
-  const colorPicker = new iro.ColorPicker("#picker", {
-    width: widtw,
-    color: "#ffffff",
-    margin: 50,
-    borderWidth: 0,
-    padding: 8,
-    handleRadius: 8,
-    layout: [
-      { component: iro.ui.Wheel },
-      { component: iro.ui.Slider, options: { sliderType: 'value', } },
-    ]
-  });
-});
 
+
+
+export default {
+  name: 'App',
+  components: {
+    DeviceMain,
+    DeviceAddMain,
+    ColorPanel
+  },
+  data() {
+    return {
+
+      devices: [
+        { name: "Device 1", token: "1" },
+        { name: "Device 2", token: "2" },
+        { name: "Device 3", token: "3" },
+      ] as Device[],
+      currentDevice: {} as Device,
+      stepStack: [StepMain.Main] as StepMain[],
+      StepMain: StepMain,
+
+      color: '#87CEEB' as string,
+    };
+  },
+
+  mounted() {
+    this.currentDevice = this.devices[0];
+  },
+  computed: {
+    currentStepComponent() {
+      const currentStep = this.stepStack[this.stepStack.length - 1];
+      if (currentStep === StepMain.Select) return 'DeviceMain';
+      if (currentStep === StepMain.Add) return 'DeviceAddMain';
+      return null;
+    }
+  },
+  methods: {
+    deviceSelected(device: Device) {
+      this.currentDevice = device;
+      this.stepStack.push(StepMain.Main);
+    },
+    handleAddDevice() {
+      this.stepStack.push(StepMain.Add);
+    },
+    handleGoBack() {
+      console.log('Go back clicked');
+      this.stepStack.pop()
+    },
+
+    handleDeviceCreate(device: Device) {
+      this.stepStack.pop();
+      this.currentDevice = device;
+      this.devices.push(device);
+    },
+    SelectDevice() {
+      this.stepStack.push(StepMain.Select);
+    },
+  },
+};
 
 
 </script>
+
+<!-- <script>
+import { onMounted } from 'vue';
+import iro from '@jaames/iro';
+onMounted(() => {
+const container = document.getElementById('main');
+const style = window.getComputedStyle(container);
+const paddingLeft = parseFloat(style.paddingLeft);
+const paddingRight = parseFloat(style.paddingRight);
+const contentWidth = container.offsetWidth - paddingLeft - paddingRight;
+
+
+const colorPicker = new iro.ColorPicker("#picker", {
+width: contentWidth,
+color: "#ffffff",
+margin: 50,
+borderWidth: 0,
+padding: 8,
+handleRadius: 8,
+layout: [
+{ component: iro.ui.Wheel },
+{ component: iro.ui.Slider, options: { sliderType: 'value', } },
+]
+});
+});
+
+</script> -->

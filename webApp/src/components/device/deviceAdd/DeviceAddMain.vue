@@ -52,11 +52,10 @@ export default defineComponent({
             this.$emit('deviceCreate', this.device);
         },
         handleGoBack() {
-            if (this.stepStack.length === 0) {
-                console.warn("No steps to go back to.");
-                return;
-            }
             this.stepStack.pop();
+            if (this.stepStack.length === 0) {
+                this.$emit('goBack');
+            }
         }
 
     }

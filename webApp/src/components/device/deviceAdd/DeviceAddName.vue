@@ -1,14 +1,14 @@
 <template>
 
 
-  <div class="fixed inset-0  bg-black/30  backdrop-blur-md  min-h-screen">
-    <div class="fixed top-10 left-5">
-      <BackPage v-on:goBack="handleGoBack" />
+  <div className="fixed inset-0 backdrop-blur-md  bg-black/40 overflow-y-auto w-full  min-h-screen">
+    <div class="fixed top-10 left-10">
+      <BackPage v-on:goBack="handleGoBack"/>
     </div>
-    <div className=" p-15  flex gap-3 flex-col items-center justify-center w-full h-full  ">
-      <h1 className="text-center text-2xl font-bold text-white/90">Введи имя устройства</h1>
+    <div className=" p-1 flex gap-3 flex-col items-center justify-center w-8/12 max-w-md  mx-auto h-full ">
+      <h1 className="text-center text-2xl font-bold text-white/90">Введи имя</h1>
       <input v-model="name" type="text"
-        className="p-2  px-5  bg-black  shadow-md text-white/90 rounded-2xl focus:outline-none  focus:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] w-full max-w-xl"
+        className="p-2  px-3 text-xs  bg-black  shadow-md text-white/90 rounded-2xl focus:outline-none  focus:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] w-full max-w-xl"
         placeholder="Enter text here" />
       <p className="text-white/80  text-center p-1  block min-h-9">{{ alert }}</p>
       <div class="w-full px-10">

@@ -1,25 +1,25 @@
 <template>
-    <button @click="deviceSelected(device)" v-for="device in devices"
-        class="text-center font-bold shadow-md w-full text-white/90  p-2 px-3 bg-black/60 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:bg-black/95 hover:scale-110  transition block">
+    <button @click="deviceSelected"
+        class="text-center font-bold shadow-md w-full text-white/90  p-1.5  bg-black/60 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:bg-black/95 hover:scale-105  transition block">
         {{ device.name }}
     </button>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { Device } from '../../interface'; 
+import type { Device } from '../../interface';
 
 export default defineComponent({
     name: 'DeviceItem',
     props: {
-        devices: {
-            type: Array as () => Device[],
+        device: {
+            type: Object as () => Device,
             required: true
         }
     },
     methods: {
-        deviceSelected(device: Device) {
-            this.$emit('deviceSelected', device);
+        deviceSelected() {
+            this.$emit('deviceSelected', this.device);
         }
     }
 });

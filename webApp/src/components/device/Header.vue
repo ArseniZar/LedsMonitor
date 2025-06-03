@@ -2,7 +2,7 @@
     <div className="w-full flex flex-row justify-between items-center mb-6">
         <BackPage @click="goBack" />
         <div className="">
-            <button
+            <button 
                 className="text-center text-2xl  font-bold text-white/90  hover:text-white/100 hover:scale-110  duration-200">
                 Select device
             </button>
