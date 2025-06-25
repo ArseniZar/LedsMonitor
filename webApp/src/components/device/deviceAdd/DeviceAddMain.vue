@@ -12,15 +12,19 @@ import { defineComponent } from 'vue';
 import DeviceAddToken from './DeviceAddToken.vue';
 import DeviceAddName from './DeviceAddName.vue';
 import { StepAddDevice } from '../../../interface';
-import type { Device } from '../../../interface';
+import type { Device, BoxColor } from '../../../interface';
 
 
 export default defineComponent({
     name: 'DeviceAddMain',
 
-    data() {
+    data(): {
+        stepStack: StepAddDevice[],
+        device: Device,
+        StepAddDevice: typeof StepAddDevice,
+    } {
         return {
-            stepStack: [StepAddDevice.Token] as StepAddDevice[],
+            stepStack: [StepAddDevice.Token],
             device: {} as Device,
             StepAddDevice: StepAddDevice,
         };
@@ -28,17 +32,6 @@ export default defineComponent({
     components: {
         DeviceAddToken,
         DeviceAddName
-    },
-
-    watch: {
-        // stepStack(newStack) {
-        //     const last = newStack[newStack.length - 1];
-        //     if (last === StepAddDevice.Devices) {
-        //         console.log("All steps completed, device created");
-        //         this.$emit('deviceCreate');
-        //         // this.onDevicesStepReached();
-        //     }
-        // }
     },
     methods: {
         handleTokenSubmit(token: string) {
@@ -48,7 +41,8 @@ export default defineComponent({
         handleNameSubmit(name: string) {
             this.device.name = name;
             this.stepStack.push(StepAddDevice.Devices);
-            // console.log("All steps completed, device created");
+            this.device.boxColorsList = this.createDefaultboxColors();
+            this.device.boxColorMain = this.createDefaultboxColorsMain();
             this.$emit('deviceCreate', this.device);
         },
         handleGoBack() {
@@ -56,6 +50,17 @@ export default defineComponent({
             if (this.stepStack.length === 0) {
                 this.$emit('goBack');
             }
+        },
+        createDefaultboxColors(): BoxColor[] {
+            return [
+            { numberBox: 2, color: '#ffffff' },
+            { numberBox: 3, color: '#ffa500' },
+            { numberBox: 4, color: '#ff00ff' },
+            { numberBox: 5, color: '#008000' },
+            { numberBox: 6, color: '#8000ff' }];
+        },
+        createDefaultboxColorsMain(): BoxColor {
+            return { numberBox: 1, color: '#e5e5e5' }
         }
 
     }
