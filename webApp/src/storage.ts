@@ -1,24 +1,13 @@
-export class LocalDB<T extends { id?: number }> {
+export class LocalDB<T extends Record<string, any>> {
   private table: string;
-  private static idCounters: Record<string, number> = {};
+  private uniqueField: keyof T;
 
-  constructor(tableName: string) {
+  constructor(tableName: string, uniqueField: keyof T) {
     this.table = tableName;
-
-    // Инициализация счётчика ID для таблицы из localStorage или 0
-    const lastId = localStorage.getItem(`${this.table}_lastId`);
-    LocalDB.idCounters[this.table] = lastId ? parseInt(lastId, 10) : 0;
-
-    // Если данных для таблицы ещё нет — создаём пустой массив
+    this.uniqueField = uniqueField;
     if (!localStorage.getItem(this.table)) {
       localStorage.setItem(this.table, JSON.stringify([]));
     }
-  }
-
-  private getNextId(): number {
-    LocalDB.idCounters[this.table]++;
-    localStorage.setItem(`${this.table}_lastId`, LocalDB.idCounters[this.table].toString());
-    return LocalDB.idCounters[this.table];
   }
 
   private getData(): T[] {
@@ -30,43 +19,54 @@ export class LocalDB<T extends { id?: number }> {
     localStorage.setItem(this.table, JSON.stringify(data));
   }
 
-  // Вставка новой записи — id генерируется автоматически
-  insert(record: Omit<T, 'id'>): T {
+  insert(record: T): T {
     const data = this.getData();
-    const newRecord = { ...record, id: this.getNextId() } as T;
-    data.push(newRecord);
+    // Проверяем, нет ли уже записи с таким уникальным полем
+    const exists = data.find(item => item[this.uniqueField] === record[this.uniqueField]);
+    if (exists) {
+      throw new Error(`Record with ${String(this.uniqueField)}="${record[this.uniqueField]}" already exists.`);
+    }
+    data.push(record);
     this.saveData(data);
-    return newRecord;
+    return record;
   }
 
-  // Получить все записи
+  upsert(record: T): T {
+    const data = this.getData();
+    const index = data.findIndex(item => item[this.uniqueField] === record[this.uniqueField]);
+    if (index === -1) {
+      data.push(record);
+    } else {
+      data[index] = { ...data[index], ...record };
+    }
+    this.saveData(data);
+    return record;
+  }
+
   getAll(): T[] {
     return this.getData();
   }
 
-  // Найти запись по id
-  getById(id: number): T | undefined {
+  getByUnique(value: T[keyof T]): T | undefined {
     const data = this.getData();
-    return data.find(item => item.id === id);
+    return data.find(item => item[this.uniqueField] === value);
   }
 
-  // Обновить запись по id
-  update(id: number, updatedFields: Partial<Omit<T, 'id'>>): T | null {
-    const data = this.getData();
-    const index = data.findIndex(item => item.id === id);
-    if (index === -1) return null;
-    data[index] = { ...data[index], ...updatedFields };
-    this.saveData(data);
-    return data[index];
-  }
-
-  // Удалить запись по id
-  delete(id: number): boolean {
+  deleteByUnique(value: T[keyof T]): boolean {
     let data = this.getData();
     const initialLength = data.length;
-    data = data.filter(item => item.id !== id);
-    if (data.length === initialLength) return false; // ничего не удалено
+    data = data.filter(item => item[this.uniqueField] !== value);
+    if (data.length === initialLength) return false;
     this.saveData(data);
     return true;
   }
+
+  replaceAll(newData: T[]): void {
+    this.saveData(newData);
+  }
+
+
+
 }
+
+
