@@ -9,8 +9,7 @@
     <Welcome v-if="stepStack[stepStack.length - 1] === StepMain.Welcome" v-on:addDevice="handleAddDevice" />
     <ColorPanel
       v-if="stepStack[stepStack.length - 1] === StepMain.Main || stepStack[stepStack.length - 1] === StepMain.Select"
-      v-bind:device="currentDevice" v-on:colorValue="getColorValue" v-on:device="updateDevices"
-      v-on:status="updateStatus" />
+      v-bind:device="currentDevice" v-on:updateDevice="updateDevice" />
     <DeviceMain v-if="stepStack[stepStack.length - 1] === StepMain.Select" v-bind:devices="devices"
       v-on:deviceSelected="deviceSelected" v-on:addDevice="handleAddDevice" v-on:goBack="handleGoBack" />
     <DeviceAddMain v-if="stepStack[stepStack.length - 1] === StepMain.Add" v-on:deviceCreate="handleDeviceCreate"
@@ -68,7 +67,6 @@ export default {
   },
   data(): {
     statusLed: Boolean,
-    colorValue: string;
     devices: Device[];
     boxColors: BoxColor[];
     currentDevice: Device;
@@ -79,7 +77,6 @@ export default {
     const devicesDB = new LocalDB<Device>('devices', 'token');
     return {
       statusLed: false,
-      colorValue: '',
       StepMain: StepMain,
       devices: [],
       boxColors: [],
@@ -130,27 +127,22 @@ export default {
       this.stepStack.push(StepMain.Select);
     },
 
-    updateStatus(status: boolean) {
-      this.statusLed = status;
-    },
 
-    updateDevices(device: Device) {
+    updateDevice(device: Device) {
       const index = this.devices.findIndex(d => d.token === device.token);
       if (index !== -1) {
         this.devices[index] = device;
+        this.currentDevice = device;
+        console.log(this.currentDevice)
       }
+
     },
 
     handleBeforeUnload() {
       this.devicesDB.replaceAll(this.devices);
     },
 
-    getColorValue(colorValue: string) {
-      this.colorValue = colorValue;
-    },
-
     initializeApp() {
-
       const savedDevices = this.devicesDB.getAll();
       if (savedDevices && savedDevices.length > 0) {
         this.devices = savedDevices;

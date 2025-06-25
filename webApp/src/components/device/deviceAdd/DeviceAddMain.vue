@@ -17,7 +17,7 @@ import type { Device, BoxColor } from '../../../interface';
 
 export default defineComponent({
     name: 'DeviceAddMain',
-
+    emits: ['deviceCreate', 'goBack'],
     data(): {
         stepStack: StepAddDevice[],
         device: Device,
@@ -33,6 +33,7 @@ export default defineComponent({
         DeviceAddToken,
         DeviceAddName
     },
+    
     methods: {
         handleTokenSubmit(token: string) {
             this.device.token = token;
@@ -40,6 +41,8 @@ export default defineComponent({
         },
         handleNameSubmit(name: string) {
             this.device.name = name;
+            this.device.status = false;
+            this.device.currentNumberBox = Number(0);
             this.stepStack.push(StepAddDevice.Devices);
             this.device.boxColorsList = this.createDefaultboxColors();
             this.device.boxColorMain = this.createDefaultboxColorsMain();
@@ -53,14 +56,14 @@ export default defineComponent({
         },
         createDefaultboxColors(): BoxColor[] {
             return [
-            { numberBox: 2, color: '#ffffff' },
-            { numberBox: 3, color: '#ffa500' },
-            { numberBox: 4, color: '#ff00ff' },
-            { numberBox: 5, color: '#008000' },
-            { numberBox: 6, color: '#8000ff' }];
+            { numberBox: Number(2), color: '#ffffff' },
+            { numberBox: Number(3), color: '#ffa500' },
+            { numberBox: Number(4), color: '#ff00ff' },
+            { numberBox: Number(5), color: '#008000' },
+            { numberBox: Number(6), color: '#8000ff' }];
         },
         createDefaultboxColorsMain(): BoxColor {
-            return { numberBox: 1, color: '#e5e5e5' }
+            return { numberBox: Number(1), color: '#e5e5e5' }
         }
 
     }

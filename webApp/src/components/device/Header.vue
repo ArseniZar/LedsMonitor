@@ -19,7 +19,7 @@ import BackPage from './BackPage.vue';
 import { defineComponent } from 'vue';
 export default defineComponent({
     name: 'Header',
-
+    emits: ['goBack', 'addDevice'],
     components: {
         DeviceAddButton,
         BackPage

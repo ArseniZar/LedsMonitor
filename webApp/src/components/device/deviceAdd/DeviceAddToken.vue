@@ -26,6 +26,7 @@ import { defineComponent } from 'vue';
 import BackPage from '../BackPage.vue';
 export default defineComponent({
   name: 'DeviceAddToken',
+  emits: ['goBack','submitToken'],
   data() {
     return {
       token: '' as string,

@@ -11,6 +11,7 @@ import type { Device } from '../../interface';
 
 export default defineComponent({
     name: 'DeviceItem',
+    emits: ['deviceSelected'],
     props: {
         device: {
             type: Object as () => Device,

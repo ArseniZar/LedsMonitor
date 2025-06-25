@@ -2,14 +2,16 @@
     <div className="flex justify-center items-center mt-10 w-full">
         <div ref="pickerRef" class="w-full"></div>
     </div>
-    <ColorMainBox v-bind:colorBox="device.boxColorMain" v-on:onSelect="onSelect" />
+    <ColorMainBox v-bind:colorBox="localDevice.boxColorMain" v-bind:modelValue="localDevice.currentNumberBox.valueOf()"
+        v-on:onSelect="onSelect" />
 
     <div class="flex  w-full flex-row justify-between gap-3 mt-5 mx-auto mb-5">
-        <ColorBox v-for="box in device.boxColorsList" v-bind:colorBox="box" v-on:onSelect="onSelect" />
+        <ColorBox v-for="box in localDevice.boxColorsList" v-bind:colorBox="box"
+            v-bind:modelValue="localDevice.currentNumberBox.valueOf()" v-on:onSelect="onSelect" />
     </div>
 
     <div class="w-full flex items-center mt-5 mx-auto mb-5">
-        <OffBox v-bind:value="0" v-on:onSelect="onSelect"/>
+        <OffBox v-bind:value="0" v-bind:modelValue="localDevice.currentNumberBox.valueOf()" v-on:onSelect="onSelect" />
     </div>
 </template>
 
@@ -27,7 +29,7 @@ export default defineComponent({
         ColorBox,
         OffBox,
     },
-    emits: ['colorValue', 'device', 'status'],
+    emits: ['updateDevice'],
     props: {
         device: {
             type: Object as PropType<Device>,
@@ -35,58 +37,62 @@ export default defineComponent({
         },
     },
     data(): {
-        status: boolean
+        localDevice: Device,
         colorValue: string;
-        currentNumberBox: number;
         _resizeObserver: ResizeObserver | null;
     } {
         return {
-            status: false,
+            localDevice: {} as Device,
             colorValue: '#e5e5e5',
-            currentNumberBox: -1,
             _resizeObserver: null
         }
     },
 
     watch: {
+        device: {
+            immediate: true,
+            handler(newDevice) {
+                this.localDevice = JSON.parse(JSON.stringify(newDevice));
+                console.log(typeof newDevice.currentNumberBox);
+                console.log(this.localDevice)
+            }
+        },
+
         colorValue() {
             this.updateSelectedBoxColor();
-            this.$emit("colorValue", this.colorValue);
         },
-        status() {
-            this.$emit("status", this.status);
-        }
     },
 
     mounted() {
         this.initColorPicker();
-        this.status = false;
-        this.currentNumberBox = 0;
-        window.addEventListener('beforeunload', this.handleBeforeUnload);
+        this.localDevice.currentNumberBox = Number(0);
+        window.addEventListener('beforeunload', this.updateDevice);
 
     },
 
     methods: {
         onSelect(numberBox: number) {
-            this.currentNumberBox = numberBox;
-            this.status = Number(numberBox) !== 0;
+            this.localDevice.currentNumberBox = Number(numberBox);
+            this.localDevice.status = numberBox !== 0;
+            this.updateDevice();
         },
 
         updateSelectedBoxColor() {
-            if (!this.currentNumberBox) return;
-            let box = this.device.boxColorsList.find(b => Number(b.numberBox) === Number(this.currentNumberBox)) ||
-                (Number(this.device.boxColorMain.numberBox) === Number(this.currentNumberBox) ? this.device.boxColorMain : null);
+            if (!this.localDevice.currentNumberBox) return;
+            let box = this.localDevice.boxColorsList.find(b => Number(b.numberBox) === Number(this.localDevice.currentNumberBox)) ||
+                (Number(this.localDevice.boxColorMain.numberBox) === Number(this.localDevice.currentNumberBox) ? this.localDevice.boxColorMain : null);
 
             if (box && box.color !== this.colorValue) {
                 box.color = this.colorValue;
+                this.updateDevice();
             }
 
         },
 
 
 
-        handleBeforeUnload() {
-            this.$emit("device", this.device);
+        updateDevice() {
+            this.$emit("updateDevice", this.localDevice);
         },
 
         initColorPicker() {
@@ -135,7 +141,7 @@ export default defineComponent({
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
         }
-        window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        window.removeEventListener('beforeunload', this.updateDevice);
     },
 
 

@@ -26,6 +26,7 @@ import { defineComponent } from 'vue';
 import BackPage from '../BackPage.vue';
 export default defineComponent({
   name: 'DeviceAddName',
+  emits: ['goBack','submitName'],
   data() {
     return {
       name: '' as string,

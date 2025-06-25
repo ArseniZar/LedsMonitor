@@ -21,6 +21,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'Welcome',
+  emits: ['addDevice'],
   methods: {
     handleAddDevice() {
       this.$emit('addDevice');

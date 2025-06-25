@@ -17,6 +17,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: 'DeviceMain',
+    emits: ['goBack', 'addDevice','deviceSelected'],
     components: {
         Header,
         DeviceItem

@@ -9,6 +9,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: 'DeviceAddButton',
+    emits: ['add-device'],
     methods: {
         addDevice() {
             this.$emit('add-device');
