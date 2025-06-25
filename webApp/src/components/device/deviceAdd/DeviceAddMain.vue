@@ -1,5 +1,5 @@
 <template>
-    <DeviceAddToken v-if="stepStack[stepStack.length - 1] === StepAddDevice.Token" @submitToken="handleTokenSubmit"
+    <DeviceAddToken v-if="stepStack[stepStack.length - 1] === StepAddDevice.Token" v-bind:devices = "devices" @submitToken="handleTokenSubmit"
         @goBack="handleGoBack" />
     <DeviceAddName v-if="stepStack[stepStack.length - 1] === StepAddDevice.Name" @submitName="handleNameSubmit"
         @goBack="handleGoBack" />
@@ -18,6 +18,12 @@ import type { Device, BoxColor } from '../../../interface';
 export default defineComponent({
     name: 'DeviceAddMain',
     emits: ['deviceCreate', 'goBack'],
+    props: {
+        devices: {
+            type: Array as () => Device[],
+            required: true
+        }
+    },
     data(): {
         stepStack: StepAddDevice[],
         device: Device,

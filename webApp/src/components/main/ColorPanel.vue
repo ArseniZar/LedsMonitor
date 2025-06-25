@@ -66,8 +66,6 @@ export default defineComponent({
     mounted() {
         this.initColorPicker();
         this.localDevice.currentNumberBox = Number(0);
-        window.addEventListener('beforeunload', this.updateDevice);
-
     },
 
     methods: {
@@ -141,7 +139,6 @@ export default defineComponent({
         if (this._resizeObserver) {
             this._resizeObserver.disconnect();
         }
-        window.removeEventListener('beforeunload', this.updateDevice);
     },
 
 
