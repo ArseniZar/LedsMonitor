@@ -1,12 +1,14 @@
 export interface Device {
     token: string;
     name: string;
-    boxColorsList: BoxColor[],
-    boxColorMain: BoxColor
+    status: Boolean;
+    currentNumberBox: Number;
+    boxColorsList: BoxColor[];
+    boxColorMain: BoxColor;
 }
 
 export interface BoxColor {
-    numberBox: number;
+    numberBox: Number;
     color: string;
 }
 
