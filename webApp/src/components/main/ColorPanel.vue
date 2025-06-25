@@ -9,7 +9,7 @@
     </div>
 
     <div class="w-full flex items-center mt-5 mx-auto mb-5">
-        <DeleteBox v-bind:value="0" v-on:onSelect="onSelect"/>
+        <OffBox v-bind:value="0" v-on:onSelect="onSelect"/>
     </div>
 </template>
 
@@ -19,13 +19,13 @@ import iro from '@jaames/iro';
 import type { Device } from '../../interface';
 import ColorMainBox from './panelElements/ColorMainBox.vue';
 import ColorBox from './panelElements/ColorBox.vue';
-import offBox from './panelElements/offBox.vue';
+import OffBox from './panelElements/OffBox.vue';
 export default defineComponent({
     name: 'ColorPanel',
     components: {
         ColorMainBox,
         ColorBox,
-        offBox,
+        OffBox,
     },
     emits: ['colorValue', 'device', 'status'],
     props: {

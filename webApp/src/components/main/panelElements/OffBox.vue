@@ -12,7 +12,7 @@
 
 <script lang="ts">
 export default {
-    name: 'offBox',
+    name: 'OffBox',
     props: {
         value: {
             type: Number,
