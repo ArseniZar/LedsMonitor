@@ -21,7 +21,6 @@ export class LocalDB<T extends Record<string, any>> {
 
   insert(record: T): T {
     const data = this.getData();
-    // Проверяем, нет ли уже записи с таким уникальным полем
     const exists = data.find(item => item[this.uniqueField] === record[this.uniqueField]);
     if (exists) {
       throw new Error(`Record with ${String(this.uniqueField)}="${record[this.uniqueField]}" already exists.`);

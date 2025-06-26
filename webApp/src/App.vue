@@ -1,19 +1,17 @@
 <template>
   <div className=" w-10/12  p-4 pt-10  mx-auto max-w-md min-h-screen">
-
-    <div className="flex  items-center">
-      <button @click="selectDevice"
-        className="text-center h-8 font w-full shadow-md text-white/90 mx-auto p-1 bg-black/30 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105  hover:bg-black/95  transition block">
-        {{ currentDevice.name }}</button>
-    </div>
     <Welcome v-if="stepStack[stepStack.length - 1] === StepMain.Welcome" v-on:addDevice="handleAddDevice" />
+    <ButtonSelect
+      v-if="stepStack[stepStack.length - 1] === StepMain.Main || stepStack[stepStack.length - 1] === StepMain.Select"
+      v-bind:device="currentDevice" v-on:selectDevice="selectDevice" />
     <ColorPanel
       v-if="stepStack[stepStack.length - 1] === StepMain.Main || stepStack[stepStack.length - 1] === StepMain.Select"
       v-bind:device="currentDevice" v-on:updateDevice="updateDevice" />
     <DeviceMain v-if="stepStack[stepStack.length - 1] === StepMain.Select" v-bind:devices="devices"
-      v-on:deviceSelected="deviceSelected" v-on:addDevice="handleAddDevice" v-on:goBack="handleGoBack" />
-    <DeviceAddMain v-if="stepStack[stepStack.length - 1] === StepMain.Add" v-on:deviceCreate="handleDeviceCreate"
+      v-on:deviceSelected="deviceSelected" v-on:addDevice="handleAddDevice" v-on:deleteDevice="handleDeleteDevice"
       v-on:goBack="handleGoBack" />
+    <DeviceAddMain v-if="stepStack[stepStack.length - 1] === StepMain.Add" v-bind:devices="devices"
+      v-on:deviceCreate="handleDeviceCreate" v-on:goBack="handleGoBack" />
 
 
     <!-- <Transition
@@ -37,10 +35,6 @@
   </Transition> -->
 
   </div>
-
-
-
-
 </template>
 
 
@@ -55,6 +49,7 @@ import DeviceMain from './components/device/DeviceMain.vue';
 import DeviceAddMain from './components/device/deviceAdd/DeviceAddMain.vue';
 import ColorPanel from './components/main/ColorPanel.vue';
 import Welcome from './components/Welcome.vue';
+import ButtonSelect from './components/main/ButtonSelect.vue';
 
 
 export default {
@@ -63,6 +58,7 @@ export default {
     DeviceMain,
     DeviceAddMain,
     ColorPanel,
+    ButtonSelect,
     Welcome,
   },
   data(): {
@@ -88,6 +84,7 @@ export default {
 
 
   mounted() {
+    
     this.initializeApp();
     window.addEventListener('beforeunload', this.handleBeforeUnload);
   },
@@ -112,8 +109,19 @@ export default {
     handleAddDevice() {
       this.stepStack.push(StepMain.Add);
     },
+
+    handleDeleteDevice(device: Device) {
+      this.devices = this.devices.filter(d => d.token !== device.token);
+
+      if (this.devices.length === 0) {
+        this.stepStack = [StepMain.Welcome];
+        this.currentDevice = {} as Device;
+      } else if (this.currentDevice.token === device.token) {
+        this.currentDevice = this.devices[0];
+      }
+    },
+
     handleGoBack() {
-      console.log('Go back clicked');
       this.stepStack.pop()
     },
 
@@ -133,7 +141,6 @@ export default {
       if (index !== -1) {
         this.devices[index] = device;
         this.currentDevice = device;
-        console.log(this.currentDevice)
       }
 
     },
