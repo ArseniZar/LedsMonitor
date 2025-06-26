@@ -69,6 +69,7 @@ export default {
     stepStack: StepMain[];
     StepMain: typeof StepMain;
     devicesDB: LocalDB<Device>;
+    tg: WebApp;
   } {
     const devicesDB = new LocalDB<Device>('devices', 'token');
     return {
@@ -79,23 +80,22 @@ export default {
       currentDevice: {} as Device,
       stepStack: [],
       devicesDB: devicesDB,
+      tg: {} as WebApp,
     };
   },
 
 
   mounted() {
-    this.initializeApp()
-    
-    if (Telegram.WebApp.BackButton) {
-      Telegram.WebApp.BackButton.show();
-      Telegram.WebApp.onEvent('backButtonClicked', this.handleBeforeUnload);
-    }
 
-    window.addEventListener('beforeunload', this.handleBeforeUnload);
+    this.initializeApp();
+    this.initializeTelegramApp();
+    // window.addEventListener('beforeunload', this.handleBeforeUnload);
   },
 
   beforeDestroy() {
-    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    if (this.tg) {
+      this.tg.BackButton.offClick(this.handleBeforeUnload);
+    }
   },
 
   computed: {
@@ -162,6 +162,23 @@ export default {
         this.stepStack = [StepMain.Main];
       } else {
         this.stepStack = [StepMain.Welcome];
+      }
+    },
+
+
+    initializeTelegramApp() {
+      this.tg = window.Telegram?.WebApp;
+      if (this.tg) {
+        this.tg.ready();
+        
+        // Показываем кнопку "Назад"
+        this.tg.BackButton.show();
+        
+        // Вешаем НАШ обработчик на ее нажатие
+        this.tg.BackButton.onClick(this.handleBeforeUnload);
+
+      } else {
+        setTimeout(this.initializeApp, 100);
       }
     },
 
