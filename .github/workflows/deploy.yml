@@ -3,7 +3,7 @@ name: Deploy webApp to GitHub Pages
 on:
   push:
     branches:
-      - feature/webapp  # твоя основная ветка
+      - feature/webapp 
 
 jobs:
   build-and-deploy:
@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./webApp  # 👈 ВАЖНО: указываем путь к сайту
+        working-directory: ./webApp  
 
     steps:
       - name: Checkout code
@@ -32,4 +32,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist  # 👈 путь к папке после сборки
+          publish_dir: webApp/dist
