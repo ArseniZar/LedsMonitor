@@ -58,6 +58,10 @@ export default defineComponent({
             }
         },
 
+        // localDevice(){
+        //     this.updateDevice();
+        // }
+
         colorValue() {
             this.updateSelectedBoxColor();
         },

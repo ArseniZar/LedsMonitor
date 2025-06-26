@@ -11,11 +11,10 @@
   "dependencies": {
     "@jaames/iro": "^5.5.2",
     "@tailwindcss/vite": "^4.1.8",
-    "@telegram-apps/sdk-vue": "^2.0.28",
-    "node-telegram-bot-api": "^0.66.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@types/telegram-web-app": "^7.10.1",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.21",
