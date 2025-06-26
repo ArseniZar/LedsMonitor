@@ -85,17 +85,14 @@ export default {
   },
 
 
-  mounted() {
-
+   mounted() {
     this.initializeApp();
-    this.initializeTelegramApp();
-    // window.addEventListener('beforeunload', this.handleBeforeUnload);
+    document.addEventListener('visibilitychange', this.handleBeforeUnload);
   },
 
   beforeDestroy() {
-    if (this.tg) {
-      this.tg.BackButton.offClick(this.handleBeforeUnload);
-    }
+    // Обязательно убираем слушатель, чтобы избежать утечек памяти
+    document.removeEventListener('visibilitychange', this.handleBeforeUnload);
   },
 
   computed: {
