@@ -66,6 +66,7 @@ export default defineComponent({
     mounted() {
         this.initColorPicker();
         this.localDevice.currentNumberBox = Number(0);
+        this.updateDevice();
     },
 
     methods: {

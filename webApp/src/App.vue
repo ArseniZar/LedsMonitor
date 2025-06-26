@@ -84,13 +84,16 @@ export default {
 
 
   mounted() {
-    
-    this.initializeApp();
+    if (Telegram.WebApp.BackButton) {
+      Telegram.WebApp.BackButton.show();
+      Telegram.WebApp.onEvent('backButtonClicked', this.handleBeforeUnload);
+    }
+
     window.addEventListener('beforeunload', this.handleBeforeUnload);
   },
-
-  beforeMount() {
+  beforeDestroy() {
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    Telegram.WebApp.offEvent('backButtonClicked', this.handleBeforeUnload);
   },
 
   computed: {
