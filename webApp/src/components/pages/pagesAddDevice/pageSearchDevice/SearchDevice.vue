@@ -1,5 +1,5 @@
 <template>
-    <HeaderBar :goBack="handleGoBack" :visible-mode="'back'" />
+    <HeaderBar @goBack="handleGoBack" :visible-mode="'back'" />
     <div class=" mt-3 w-full h-full flex flex-col items-center gap-2">
         <div class=" mb-3 w-full text-center ">
             <span class="font-bold text-2xl  text-white/90 "> {{ chat.title }} </span>
