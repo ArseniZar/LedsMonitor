@@ -38,9 +38,9 @@ export default defineComponent({
     } {
         return {
             bottomButtons: [
-                { id: 1, imgIcon: '../../../img/icons8-ped-50.png', title: '' },
-                { id: 2, imgIcon: '../../../img/icons8-home-48.png', title: '' },
-                { id: 3, imgIcon: '../../../img/icons8-settings-48.png', title: '' },]
+                { id: 1, imgIcon: '/public/img/icons8-ped-50.png', title: '' },
+                { id: 2, imgIcon: '/public/img/icons8-home-48.png', title: '' },
+                { id: 3, imgIcon: '/public/img/icons8-settings-48.png', title: '' },]
         };
     }
     ,

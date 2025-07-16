@@ -25,8 +25,8 @@ export default defineComponent({
     } {
         return {
             data: [
-                { id: 1, imgIcon: "../../../../../img/icons8-dep-50.png", title: '' },
-                { id: 2, imgIcon: "../../../../../img/icons8-ped-50.png", title: '' }
+                { id: 1, imgIcon: "/public/img/icons8-dep-50.png", title: '' },
+                { id: 2, imgIcon: "/public/img/icons8-ped-50.png", title: '' }
             ]
         }
 
