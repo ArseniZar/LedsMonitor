@@ -52,12 +52,13 @@ export default defineComponent({
         handleNewDevices(devices: Device[]) {
             this.$emit('newDevices', devices)
         },
-        
+
         handleGoBack() {
-            this.stepStack.pop();
-            if (this.stepStack.length === 0) {
+            if (this.stepStack.length - 1 == 0) {
                 this.$emit('goBack');
+                return;
             }
+            this.stepStack.pop();
         }
     },
 }

@@ -182,11 +182,13 @@ export default defineComponent({
         _textPars(command: string, text: string): string {
             switch (command) {
                 case 'mac': {
-                    const match = text.match(/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/);
+                    console.log(text);
+                    const match = text.match(/\/MAC:\s*(([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})/);
+                    console.log(match);
                     if (!match) {
                         throw new ParseError('Failed to parse MAC address from text', command);
                     }
-                    return match[0];
+                    return match[1];
                 }
                 case 'name': {
                     const match = text.match(/NAME:\s*([^\s]+)/i);

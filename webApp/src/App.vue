@@ -1,9 +1,9 @@
 <template>
   <div className=" w-10/12  p-4 pt-6  mx-auto max-w-md min-h-screen">
-    <BottomBar v-if="![StepMain.Startup, StepMain.AddDevices, StepMain.Select].includes(stepStack[stepStack.length - 1])"
+    <BottomBar
+      v-if="![StepMain.Startup, StepMain.AddDevices, StepMain.Select].includes(stepStack[stepStack.length - 1])"
       v-bind:visible="visible" v-on:goBack="" v-on:goMain="() => handleStepStackChange(ComponentId.BottomBarMain)"
       v-on:goSettings="handleStepStackChange(ComponentId.BottomBarSettings)" />
-
 
     <MainStartup v-if="[StepMain.Startup].includes(stepStack[stepStack.length - 1])"
       v-on:tokenAndBotId="(data) => { handleMainStartupTokenAndBotId(data); handleStepStackChange(ComponentId.MainStartup) }" />
@@ -12,8 +12,9 @@
       v-on:goBack="handleStepStackChange(ComponentId.GoBack)" v-on:newOffset="handleOffset"
       v-on:newDevices="(devices) => { handleUpdateDevices(devices); handleStepStackChange(ComponentId.MainAddDevice); }" />
 
-    <MainColorPanel v-if="[StepMain.Main, StepMain.Select].includes(stepStack[stepStack.length - 1])" v-bind:device="currentDevice"
-      v-on:updateDevice="handleUpdateDevice" v-on:selectDevice="handleStepStackChange(ComponentId.MainColorPanel)" />
+    <MainColorPanel v-if="[StepMain.Main, StepMain.Select].includes(stepStack[stepStack.length - 1])"
+      v-bind:device="currentDevice" v-on:updateDevice="handleUpdateDevice"
+      v-on:selectDevice="handleStepStackChange(ComponentId.MainColorPanel)" />
 
     <MainSelectDevice v-if="[StepMain.Select].includes(stepStack[stepStack.length - 1])" v-bind:devices="devices"
       v-on:deviceSelected="(device) => { handleCurrentDevice(device); handleStepStackChange(ComponentId.MainSelectDevice); }"
@@ -124,6 +125,7 @@ export default {
 
   mounted() {
     this.initializeApp();
+    console.log(this.devices)
   },
 
   beforeDestroy() {
@@ -160,7 +162,7 @@ export default {
           return;
 
         case ComponentId.GoBack:
-          if (this.stepStack.length - 1 > 0) {
+          if (this.stepStack.length - 2 > 0) {
             this.stepStack.pop();
           }
           return;
@@ -205,6 +207,7 @@ export default {
     },
 
     handleUpdateDevices(devices: Device[]) {
+      console.log(devices)
       devices.forEach(device => {
         const index = this.devices.findIndex(d => d.equals(device));
         if (index !== -1) {
