@@ -1,17 +1,27 @@
 <template>
-  <div className=" w-10/12  p-4 pt-10  mx-auto max-w-md min-h-screen">
-    <Welcome v-if="stepStack[stepStack.length - 1] === StepMain.Welcome" v-on:addDevice="handleAddDevice" />
-    <ButtonSelect
-      v-if="stepStack[stepStack.length - 1] === StepMain.Main || stepStack[stepStack.length - 1] === StepMain.Select"
-      v-bind:device="currentDevice" v-on:selectDevice="selectDevice" />
-    <ColorPanel
-      v-if="stepStack[stepStack.length - 1] === StepMain.Main || stepStack[stepStack.length - 1] === StepMain.Select"
-      v-bind:device="currentDevice" v-on:updateDevice="updateDevice" />
-    <DeviceMain v-if="stepStack[stepStack.length - 1] === StepMain.Select" v-bind:devices="devices"
-      v-on:deviceSelected="deviceSelected" v-on:addDevice="handleAddDevice" v-on:deleteDevice="handleDeleteDevice"
-      v-on:goBack="handleGoBack" />
-    <DeviceAddMain v-if="stepStack[stepStack.length - 1] === StepMain.Add" v-bind:devices="devices"
-      v-on:deviceCreate="handleDeviceCreate" v-on:goBack="handleGoBack" />
+  <div className=" w-10/12  p-4 pt-6  mx-auto max-w-md min-h-screen">
+    <BottomBar v-if="![StepMain.Startup, StepMain.AddDevices, StepMain.Select].includes(stepStack[stepStack.length - 1])"
+      v-bind:visible="visible" v-on:goBack="" v-on:goMain="() => handleStepStackChange(ComponentId.BottomBarMain)"
+      v-on:goSettings="handleStepStackChange(ComponentId.BottomBarSettings)" />
+    <!-- <SelectDevice v-bind:title="'hello'"/> -->
+
+    <MainStartup v-if="[StepMain.Startup].includes(stepStack[stepStack.length - 1])"
+      v-on:tokenAndBotId="(data) => { handleMainStartupTokenAndBotId(data); handleStepStackChange(ComponentId.MainStartup) }" />
+
+    <MainAddDevice v-if="[StepMain.AddDevices].includes(stepStack[stepStack.length - 1])"
+      v-on:goBack="handleStepStackChange(ComponentId.GoBack)" v-on:newOffset="handleOffset"
+      v-on:newDevices="(devices) => { handleUpdateDevices(devices); handleStepStackChange(ComponentId.MainAddDevice); }" />
+
+    <MainColorPanel v-if="[StepMain.Main, StepMain.Select].includes(stepStack[stepStack.length - 1])" v-bind:device="currentDevice"
+      v-on:updateDevice="handleUpdateDevice" v-on:selectDevice="handleStepStackChange(ComponentId.MainColorPanel)" />
+
+    <MainSelectDevice v-if="[StepMain.Select].includes(stepStack[stepStack.length - 1])" v-bind:devices="devices"
+      v-on:deviceSelected="(device) => { handleCurrentDevice(device); handleStepStackChange(ComponentId.MainSelectDevice); }"
+      v-on:goBack="handleStepStackChange(ComponentId.GoBack)" />
+
+    <MainSettings v-if="
+      stepStack[stepStack.length - 1] === StepMain.Settings" v-on:goBack="handleStepStackChange(ComponentId.GoBack)" />
+
 
 
     <!-- <Transition
@@ -33,155 +43,276 @@
       :key="stepStack[stepStack.length - 1]"
     />
   </Transition> -->
-
   </div>
 </template>
 
-
-
-
 <script lang="ts">
+import { markRaw } from "vue";
+import MainStartup from "./components/pages/pagesStartup/MainStartup.vue";
+import MainAddDevice from "./components/pages/pagesAddDevice/MainAddDevice.vue";
+import MainSelectDevice from "./components/pages/pagesSelectDevice/pageSelectDevice/MainSelectDevice.vue";
+import MainColorPanel from "./components/pages/pagesColorPanel/pageColorPanel/MainColorPanel.vue";
+import MainSettings from "./components/pages/pagesSettings/pageSettings/MainSettings.vue";
 
-import type { Device, BoxColor } from './interface';
-import { StepMain } from './interface';
-import { LocalDB } from './storage';
-import DeviceMain from './components/device/DeviceMain.vue';
-import DeviceAddMain from './components/device/deviceAdd/DeviceAddMain.vue';
-import ColorPanel from './components/main/ColorPanel.vue';
-import Welcome from './components/Welcome.vue';
-import ButtonSelect from './components/main/ButtonSelect.vue';
+import BottomBar from "./components/basic/header/BottomBar.vue";
 
+import { CONFIG } from "./config";
+import { ComponentId } from "./componentId";
+import { LocalDB, LocalConfig } from "./storage";
+import { StepMain, Device } from "./interface";
+
+
+import type { ConfigType } from "./config";
+import type { ComponentIdValueType } from "./componentId";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    DeviceMain,
-    DeviceAddMain,
-    ColorPanel,
-    ButtonSelect,
-    Welcome,
+    MainSelectDevice,
+    MainColorPanel,
+    MainAddDevice,
+    MainStartup,
+    MainSettings,
+
+    BottomBar,
   },
   data(): {
-    statusLed: Boolean,
+    visible: 'back' | 'main' | 'settings',
     devices: Device[];
-    boxColors: BoxColor[];
     currentDevice: Device;
     stepStack: StepMain[];
     StepMain: typeof StepMain;
+    ComponentId: typeof ComponentId;
     devicesDB: LocalDB<Device>;
+    configDB: LocalConfig<ConfigType>;
     tg: WebApp;
   } {
-    const devicesDB = new LocalDB<Device>('devices', 'token');
+    const devicesDB = new LocalDB<Device>("devices", ["id", "chat.id"], Device);
+    const configDB = new LocalConfig<ConfigType>("CONFIG");
     return {
-      statusLed: false,
-      StepMain: StepMain,
+      visible: 'main',
       devices: [],
-      boxColors: [],
       currentDevice: {} as Device,
       stepStack: [],
       devicesDB: devicesDB,
+      configDB: configDB,
       tg: {} as WebApp,
+      StepMain: StepMain,
+      ComponentId: ComponentId,
     };
   },
+  watch: {
+    stepStack: {
+      immediate: true,
+      deep: true,
+      handler(newStack: any[]) {
+        const lastStep = newStack[newStack.length - 1];
+        switch (lastStep) {
+          case StepMain.Main:
+            this.visible = 'main';
+            break;
+          case StepMain.Settings:
+            this.visible = 'settings';
+            break;
+          default:
+            this.visible = 'main';
+            break;
+        }
+      }
+    }
+  },
 
-
-   mounted() {
+  mounted() {
     this.initializeApp();
-    document.addEventListener('visibilitychange', this.handleBeforeUnload);
   },
 
   beforeDestroy() {
-    // Обязательно убираем слушатель, чтобы избежать утечек памяти
-    document.removeEventListener('visibilitychange', this.handleBeforeUnload);
+    this.destroyApp();
   },
 
-  computed: {
-    currentStepComponent() {
-      const currentStep = this.stepStack[this.stepStack.length - 1];
-      if (currentStep === StepMain.Select) return 'DeviceMain';
-      if (currentStep === StepMain.Add) return 'DeviceAddMain';
-      return null;
-    }
-  },
   methods: {
-    deviceSelected(device: Device) {
-      this.currentDevice = device;
-      this.stepStack.push(StepMain.Main);
-    },
-    handleAddDevice() {
-      this.stepStack.push(StepMain.Add);
+
+    handleStepStackChange(id: ComponentIdValueType) {
+      const hasToken = CONFIG.token && CONFIG.token !== "" && CONFIG.token !== "undefined";
+      const hasBotId = CONFIG.botId && CONFIG.botId !== "" && CONFIG.botId !== "undefined";
+      const hasDevices = this.devices.length > 0;
+
+      if (!hasToken || !hasBotId) {
+        this.setStep(StepMain.Startup);
+        return;
+      }
+
+      if (!hasDevices) {
+        this.setStep(StepMain.AddDevices);
+        return;
+      }
+
+      switch (id) {
+        case ComponentId.MainStartup:
+          this.setStep(StepMain.Main);
+          return;
+
+        case ComponentId.BottomBarMain:
+          this.setStep(StepMain.Main);
+          return;
+        case ComponentId.BottomBarSettings:
+          this.setStep(StepMain.Settings);
+          return;
+
+        case ComponentId.GoBack:
+          if (this.stepStack.length - 1 > 0) {
+            this.stepStack.pop();
+          }
+          return;
+        case ComponentId.MainColorPanel:
+          this.setStep(StepMain.Select);
+          return;
+
+
+        case ComponentId.MainSelectDevice:
+          this.setStep(StepMain.Main);
+          return;
+
+        case ComponentId.MainAddDevice:
+          this.setStep(StepMain.Main);
+          return;
+      }
+
+
+
+
     },
 
-    handleDeleteDevice(device: Device) {
-      this.devices = this.devices.filter(d => d.token !== device.token);
+    handleCurrentDevice(device: Device) {
+      const exists = this.devices.some((d) => d.equals(device));
+      const isSame = this.currentDevice?.equals?.(device);
 
-      if (this.devices.length === 0) {
-        this.stepStack = [StepMain.Welcome];
-        this.currentDevice = {} as Device;
-      } else if (this.currentDevice.token === device.token) {
-        this.currentDevice = this.devices[0];
+      if (isSame) {
+        return;
+      }
+      if (exists) {
+        this.currentDevice = device;
       }
     },
 
-    handleGoBack() {
-      this.stepStack.pop()
-    },
 
-    handleDeviceCreate(device: Device) {
-      this.stepStack.pop();
-      this.currentDevice = device;
-      this.devices.push(device);
-      this.stepStack = [StepMain.Main];
-    },
-    selectDevice() {
-      this.stepStack.push(StepMain.Select);
-    },
-
-
-    updateDevice(device: Device) {
-      const index = this.devices.findIndex(d => d.token === device.token);
+    handleUpdateDevice(device: Device) {
+      const index = this.devices.findIndex((d) => d.equals(device));
       if (index !== -1) {
         this.devices[index] = device;
         this.currentDevice = device;
       }
-
     },
 
-    handleBeforeUnload() {
+    handleUpdateDevices(devices: Device[]) {
+      devices.forEach(device => {
+        const index = this.devices.findIndex(d => d.equals(device));
+        if (index !== -1) {
+          this.devices[index] = device;
+        } else {
+          this.devices.push(device);
+        }
+      });
+
+      if (devices.length > 0) {
+        this.currentDevice = devices[devices.length - 1];
+      }
+      this.commitDB();
+    },
+
+
+
+    commitDB() {
       this.devicesDB.replaceAll(this.devices);
     },
 
+    setStep(StepMain: StepMain) {
+      this.stepStack.push(StepMain);
+    },
+
+    handleMainStartupTokenAndBotId(data: { token: string; chatId: string }) {
+      CONFIG.token = data.token;
+      CONFIG.botId = data.token;
+      this.configDB.set("botId", CONFIG.token);
+      this.configDB.set("token", CONFIG.botId);
+    },
+
+    handleOffset(offset: string) {
+      CONFIG.offset = offset;
+      this.configDB.set("offset", CONFIG.offset);
+    },
+
     initializeApp() {
-      const savedDevices = this.devicesDB.getAll();
+      if (
+        typeof window.Telegram?.WebApp?.initData === "string" &&
+        window.Telegram.WebApp.initData.length > 0
+      ) {
+        this.initializeTelegramApp();
+      } else {
+        console.log("web")
+        this.initializeWebApp();
+      }
+      this.initializeDataBase();
+      this.handleStepStackChange(ComponentId.BottomBarMain);
+    },
+
+    destroyApp() {
+      if (this.tg) {
+        this.destroyTelegramApp();
+      } else {
+        this.destroyWebApp();
+      }
+    },
+
+    initializeTelegramApp() {
+      this.tg = markRaw(Telegram.WebApp);
+      this.tg.ready();
+      this.tg.BackButton.show();
+      window.addEventListener("visibilitychange", () => { this.commitDB() });
+
+      this.tg.BackButton.onClick(() => {
+        this.commitDB();
+        this.tg.close();
+      });
+    },
+
+    destroyTelegramApp() {
+      window.removeEventListener("visibilitychange", () => { this.commitDB() });
+      this.tg.BackButton.offClick(() => {
+        this.commitDB();
+        this.tg.close();
+      });
+    },
+
+    initializeWebApp() {
+      window.addEventListener("beforeunload", () => { this.commitDB() });
+    },
+
+    destroyWebApp() {
+      window.removeEventListener("beforeunload", () => { this.commitDB() });
+    },
+
+    initializeDataBase() {
+      const savedDevices: Device[] = this.devicesDB.getAll();
+      const savedBotId: string = String(this.configDB.getAll().botId).valueOf();
+      const savedToken: string = String(this.configDB.getAll().token).valueOf();
+      const savedOffset: string = String(
+        this.configDB.getAll().offset
+      ).valueOf();
+
+      if (savedBotId?.trim() && savedToken?.trim()) {
+        CONFIG.botId = savedBotId;
+        CONFIG.token = savedToken;
+        CONFIG.offset = savedOffset;
+      }
+
       if (savedDevices && savedDevices.length > 0) {
         this.devices = savedDevices;
         this.currentDevice = this.devices[0];
-        this.stepStack = [StepMain.Main];
-      } else {
-        this.stepStack = [StepMain.Welcome];
       }
     },
 
 
-    initializeTelegramApp() {
-      this.tg = window.Telegram?.WebApp;
-      if (this.tg) {
-        this.tg.ready();
-        
-        // Показываем кнопку "Назад"
-        this.tg.BackButton.show();
-        
-        // Вешаем НАШ обработчик на ее нажатие
-        this.tg.BackButton.onClick(this.handleBeforeUnload);
-
-      } else {
-        setTimeout(this.initializeApp, 100);
-      }
-    },
-
-
-  }
-}
-
-
+  },
+};
 </script>
