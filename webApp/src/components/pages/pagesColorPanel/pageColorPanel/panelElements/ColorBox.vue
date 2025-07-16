@@ -1,6 +1,7 @@
 <template>
   <label class="block h-6 max-w-[60px] w-full ">
-    <input @change="onSelect"  :checked="modelValue.valueOf() === colorBox.numberBox.valueOf()" type="radio" name="color" :value="colorBox.numberBox.valueOf()" class="hidden peer" />
+    <input @change="onSelect" :checked="modelValue.valueOf() === colorBox.numberBox.valueOf()" type="radio" name="color"
+      :value="colorBox.numberBox.valueOf()" class="hidden peer" />
     <div
       class=" w-full h-full rounded-xl  transition duration-150  transform
              peer-checked:scale-110 peer-checked:translate-y-[-3px] hover:scale-110 hover:shadow-[0_0_10px_1px_rgba(255,255,255,0.8)] peer-checked:shadow-[0_0_10px_1px_rgba(255,255,255,0.8)]"
@@ -13,7 +14,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type  { BoxColor } from '../../../interface';
+import type { BoxColor } from '../../../../../interface';
 export default {
   name: 'ColorMainBox',
   emits: ['onSelect'],
@@ -22,7 +23,7 @@ export default {
       type: Object as PropType<BoxColor>,
       required: true
     },
-    modelValue:{
+    modelValue: {
       type: Number,
       required: true,
     }

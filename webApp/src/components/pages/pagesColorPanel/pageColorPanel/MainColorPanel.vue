@@ -1,41 +1,50 @@
 <template>
-    <div className="flex justify-center items-center mt-10 w-full">
+    <SelectDeviceButton :title="localDevice.name" @selectDevice="selectDevice" />
+
+    <div className="flex justify-center items-center mt-20 w-full">
         <div ref="pickerRef" class="w-full"></div>
     </div>
-    <ColorMainBox v-bind:colorBox="localDevice.boxColorMain" v-bind:modelValue="localDevice.currentNumberBox.valueOf()"
-        v-on:onSelect="onSelect" />
+    <ColorMainBox :colorBox="localDevice.boxColorMain" :modelValue="localDevice.currentNumberBox.valueOf()"
+        v-on:onSelect="handleSelectBox" />
 
-    <div class="flex  w-full flex-row justify-between gap-3 mt-5 mx-auto mb-5">
-        <ColorBox v-for="box in localDevice.boxColorsList" v-bind:colorBox="box"
-            v-bind:modelValue="localDevice.currentNumberBox.valueOf()" v-on:onSelect="onSelect" />
+    <div class="flex  w-full flex-row justify-between gap-3 mt-5  mb-5">
+        <ColorBox v-for="box in localDevice.boxColorsList" :colorBox="box"
+            :modelValue="localDevice.currentNumberBox.valueOf()" v-on:onSelect="handleSelectBox" />
     </div>
 
-    <div class="w-full flex items-center mt-5 mx-auto mb-5">
-        <OffBox v-bind:value="0" v-bind:modelValue="localDevice.currentNumberBox.valueOf()" v-on:onSelect="onSelect" />
+    <div class="w-full flex items-center mt-5 mb-5">
+        <OffBox :colorBox="localDevice.boxColorOff" :modelValue="localDevice.currentNumberBox.valueOf()"
+            v-on:onSelect="handleSelectBox" />
     </div>
+
 </template>
+
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import iro from '@jaames/iro';
-import type { Device } from '../../interface';
+import { Device } from '../../../../interface';
 import ColorMainBox from './panelElements/ColorMainBox.vue';
 import ColorBox from './panelElements/ColorBox.vue';
 import OffBox from './panelElements/OffBox.vue';
+import SelectDeviceButton from './panelElements/SelectDeviceButton.vue';
 export default defineComponent({
-    name: 'ColorPanel',
+    name: 'MainColorPanel',
     components: {
         ColorMainBox,
         ColorBox,
         OffBox,
+        SelectDeviceButton,
     },
-    emits: ['updateDevice'],
+
+    emits: ['updateDevice', 'selectDevice'],
     props: {
         device: {
             type: Object as PropType<Device>,
             required: true
         },
     },
+
     data(): {
         localDevice: Device,
         colorValue: string;
@@ -51,16 +60,10 @@ export default defineComponent({
     watch: {
         device: {
             immediate: true,
-            handler(newDevice) {
-                this.localDevice = JSON.parse(JSON.stringify(newDevice));
-                console.log(typeof newDevice.currentNumberBox);
-                console.log(this.localDevice)
+            handler(newDevice: Device) {
+                this.localDevice = new Device(newDevice);
             }
         },
-
-        // localDevice(){
-        //     this.updateDevice();
-        // }
 
         colorValue() {
             this.updateSelectedBoxColor();
@@ -69,33 +72,46 @@ export default defineComponent({
 
     mounted() {
         this.initColorPicker();
-        this.localDevice.currentNumberBox = Number(0);
         this.updateDevice();
+
+
     },
 
     methods: {
-        onSelect(numberBox: number) {
+        handleSelectBox(numberBox: number) {
             this.localDevice.currentNumberBox = Number(numberBox);
-            this.localDevice.status = numberBox !== 0;
             this.updateDevice();
         },
 
         updateSelectedBoxColor() {
             if (!this.localDevice.currentNumberBox) return;
-            let box = this.localDevice.boxColorsList.find(b => Number(b.numberBox) === Number(this.localDevice.currentNumberBox)) ||
-                (Number(this.localDevice.boxColorMain.numberBox) === Number(this.localDevice.currentNumberBox) ? this.localDevice.boxColorMain : null);
+
+            const currentBoxNumber = Number(this.localDevice.currentNumberBox);
+
+            let box = this.localDevice.boxColorsList.find(
+                b => Number(b.numberBox) === currentBoxNumber
+            );
+
+            if (!box && Number(this.localDevice.boxColorMain.numberBox) === currentBoxNumber) {
+                box = this.localDevice.boxColorMain;
+            }
 
             if (box && box.color !== this.colorValue) {
                 box.color = this.colorValue;
                 this.updateDevice();
             }
-
         },
 
-
-
         updateDevice() {
+            const newStatus = Number(this.localDevice.currentNumberBox) === Number(0);
+            if (this.localDevice.status !== newStatus) {
+                this.localDevice.status = newStatus;
+            }
             this.$emit("updateDevice", this.localDevice);
+        },
+
+        selectDevice() {
+            this.$emit("selectDevice");
         },
 
         initColorPicker() {

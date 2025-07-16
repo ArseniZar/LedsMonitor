@@ -15,7 +15,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { BoxColor } from '../../../interface';
+import type { BoxColor } from '../../../../../interface';
 export default {
     name: 'ColorMainBox',
     emits: ['onSelect'],
