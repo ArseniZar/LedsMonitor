@@ -3,7 +3,7 @@
     <BottomBar v-if="![StepMain.Startup, StepMain.AddDevices, StepMain.Select].includes(stepStack[stepStack.length - 1])"
       v-bind:visible="visible" v-on:goBack="" v-on:goMain="() => handleStepStackChange(ComponentId.BottomBarMain)"
       v-on:goSettings="handleStepStackChange(ComponentId.BottomBarSettings)" />
-    <!-- <SelectDevice v-bind:title="'hello'"/> -->
+
 
     <MainStartup v-if="[StepMain.Startup].includes(stepStack[stepStack.length - 1])"
       v-on:tokenAndBotId="(data) => { handleMainStartupTokenAndBotId(data); handleStepStackChange(ComponentId.MainStartup) }" />
