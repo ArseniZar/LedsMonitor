@@ -7,7 +7,7 @@
         <DeviceItem v-for="itemDevice in itemsDevices" :item="{ id: itemDevice.id, name: itemDevice.name }" />
         <button @click="handleSearchDevice" v-if="searchStatus === 'start' || searchStatus === 'done'"
             class='mt-6  h-7'>
-            <img src="../../../../assets/img/icons8-restart-64.png" alt="Check" class="h-7" />
+            <img src="../../../../img/icons8-restart-64.png" alt="Check" class="h-7" />
         </button>
         <div v-if="searchStatus === 'loading'" class="mt-6 h-7">
             <Spin />

@@ -32,9 +32,9 @@ export default defineComponent({
     } {
         return {
             headerButtons: [
-                { id: 1, imgIcon: '../../../assets/img/icons8-ped-50.png', title: '' },
+                { id: 1, imgIcon: '../../../img/icons8-ped-50.png', title: '' },
                 { id: 2, imgIcon: '', title: 'chg.' },
-                { id: 3, imgIcon: '../../../assets/img/icons8-add-24.png', title: '' },]
+                { id: 3, imgIcon: '../../../img/icons8-add-24.png', title: '' },]
         };
     }
     ,

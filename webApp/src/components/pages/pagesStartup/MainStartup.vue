@@ -9,7 +9,7 @@
 import { defineComponent } from 'vue';
 import { StepStartupApp } from '../../../interface';
 import Welcome from './pageWelcome/Welcome.vue';
-import Token from './pageToken/Token.vue'; './pageToken/Token.vue';
+import Token from './pageToken/Token.vue';
 
 
 

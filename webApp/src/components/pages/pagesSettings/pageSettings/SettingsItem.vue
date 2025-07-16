@@ -3,7 +3,7 @@
         class="flex  px-3 flex-row gap-4 w-full p-2.5 rounded-xl hover:scale-105 active:bg-black/80 transition-transform duration-400">
         <img v-if="item.imgIcon" :src="item.imgIcon" alt="Check" class="h-6" />
         <p class="text-white/90 text-left w-full break-words font-bold ">{{ item.title }} </p>
-        <img src="/src/assets/img/icons8-dep-50.png" alt="Check" class="h-6" />
+        <img src="../../../../img/icons8-dep-50.png" alt="Check" class="h-6" />
     </button>
 
 </template>
