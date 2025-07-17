@@ -121,18 +121,17 @@ export default defineComponent({
         async getDevice() {
             try {
                 const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
-
-
                 if (!result.length) return;
-
-                const newUpdates: TelegramUpdate[] = [];
-                for (let i: number = result.length - 1; i >= 0; i--) {
-                    const item: TelegramUpdate = result[i];
-
-                    if (Number(this.offset) - Number(item.update_id) >= 0) break;
-                    newUpdates.unshift(item);
-                }
+                console.log(result)
+                console.log(this.offset)
+                const newUpdates: TelegramUpdate[] = result
+                    .filter(item => Number(item.update_id) > Number(this.offset))
+                    .sort((a, b) => Number(a.update_id) - Number(b.update_id)); 
+                
+                console.log(newUpdates)
                 newUpdates.forEach((item) => {
+                    
+
                     const chatId: string = item.channel_post.chat.id;
                     const text: string = item.channel_post.text;
                     const typeMessage: string = item.channel_post.entities[0].type
