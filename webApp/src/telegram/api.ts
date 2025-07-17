@@ -80,6 +80,8 @@ export async function postCommandToTelegramChat(token: string, chatId: string, t
 
 export async function getTelegramUpdates(token: string, offset?: number): Promise<TelegramUpdate[]> {
   const url = new URL(`https://api.telegram.org/bot${token}/getUpdates`);
+  url.searchParams.set('allowed_updates', JSON.stringify(["channel_post"]));
+
   if (offset !== undefined) {
     url.searchParams.set('offset', String(offset));
   }

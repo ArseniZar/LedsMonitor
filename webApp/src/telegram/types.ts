@@ -95,9 +95,11 @@ type ChannelPost = {
     entities: MessageEntity[];
 };
 
+
 type Chat = {
     id: string;
     title: string;
+    imgIcon?: string;
     type?: string;
 };
 
