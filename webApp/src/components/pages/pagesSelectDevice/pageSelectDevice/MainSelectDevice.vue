@@ -10,7 +10,7 @@
 
 
 <script lang="ts">
-import type { Device } from '../../../../interface'; // Adjust the path as necessary
+import type { Device } from '../../../../interface'; 
 import DeviceItem from './SelectDeviceItem.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
 
@@ -18,7 +18,7 @@ import HeaderBar from '../../../basic/header/HeaderBar.vue';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-    name: 'DeviceMain',
+    name: 'MainSelectDevice',
     emits: ['goBack', 'deviceSelected'],
     components: {
         DeviceItem,
