@@ -29,7 +29,7 @@ export default defineComponent({
     },
     props: {
         visible: {
-            type: String as PropType<'back' | 'main' | 'settings'>,
+            type: String as PropType<'back' | 'main' | 'settings' | 'off'>,
             required: true
         }
     },
@@ -38,9 +38,9 @@ export default defineComponent({
     } {
         return {
             bottomButtons: [
-                { id: 1, imgIcon: 'img/icons8-ped-50.png', title: '' },
-                { id: 2, imgIcon: 'img/icons8-home-48.png', title: '' },
-                { id: 3, imgIcon: 'img/icons8-settings-48.png', title: '' },]
+                { id: '1', imgIcon: 'img/icons8-ped-50.png', title: '' },
+                { id: '2', imgIcon: 'img/icons8-home-48.png', title: '' },
+                { id: '3', imgIcon: 'img/icons8-settings-48.png', title: '' },]
         };
     }
     ,
