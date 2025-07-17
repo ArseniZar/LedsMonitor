@@ -10,6 +10,7 @@ export class Device {
   boxColorsList: BoxColor[];
   boxColorMain: BoxColor;
   boxColorOff: BoxColor;
+  imgIcon?: string; //////
 
   constructor(
     id: string,
@@ -67,7 +68,7 @@ export interface BoxColor {
 }
 
 export type ItemData = {
-  id: number;
+  id: string;
   imgIcon: string;
   title: string;
 }
@@ -84,6 +85,15 @@ export const StepAddDevice = {
   ChatId: 'chatId' as StepAddDevice,
   SearchDevices: 'searchDevices' as StepAddDevice,
   Devices: 'devices' as StepAddDevice,
+};
+
+
+
+export type StepSettings = 'settings' | 'devices' | 'token';
+export const StepSettings = {
+  Settings: 'settings' as StepSettings,
+  Token: 'token' as StepSettings,
+  Devices: 'devices' as StepSettings,
 };
 
 
