@@ -16,12 +16,16 @@
       v-bind:device="currentDevice" v-on:updateDevice="handleUpdateDevice"
       v-on:selectDevice="handleStepStackChange(ComponentId.MainColorPanel)" />
 
-    <MainSelectDevice v-if="[StepMain.Select].includes(stepStack[stepStack.length - 1])" v-bind:devices="devices"
+    <MainSelectDevice v-if="[StepMain.Select].includes(stepStack[stepStack.length - 1])"
+      v-bind:devices="devicesByChat[currentChat.id]"
       v-on:deviceSelected="(device) => { handleCurrentDevice(device); handleStepStackChange(ComponentId.MainSelectDevice); }"
       v-on:goBack="handleStepStackChange(ComponentId.GoBack)" />
 
     <MainSettings v-if="
-      stepStack[stepStack.length - 1] === StepMain.Settings" v-on:goBack="handleStepStackChange(ComponentId.GoBack)" />
+      stepStack[stepStack.length - 1] === StepMain.Settings" v-bind:currentChat="currentChat"
+      v-bind:devices="devicesByChat[currentChat.id]" v-bind:itemsChat="getChatsFromDevicesByChat()"
+      v-on:goBack="handleStepStackChange(ComponentId.GoBack)" v-on:deleteDevice="removeDevice"
+      v-on:addChat="handleStepStackChange(ComponentId.MainSettings)" v-on:selectChat="setCurrentChat" />
 
 
 
@@ -52,9 +56,8 @@ import { markRaw } from "vue";
 import MainStartup from "./components/pages/pagesStartup/MainStartup.vue";
 import MainAddDevice from "./components/pages/pagesAddDevice/MainAddDevice.vue";
 import MainSelectDevice from "./components/pages/pagesSelectDevice/pageSelectDevice/MainSelectDevice.vue";
-import MainColorPanel from "./components/pages/pagesColorPanel/pageColorPanel/MainColorPanel.vue";
-import MainSettings from "./components/pages/pagesSettings/pageSettings/MainSettings.vue";
-
+import MainColorPanel from "./components/pages/pagesColorPanel/MainColorPanel.vue";
+import MainSettings from "./components/pages/pagesSettings/MainSettings.vue";
 import BottomBar from "./components/basic/header/BottomBar.vue";
 
 import { CONFIG } from "./config";
@@ -63,8 +66,13 @@ import { LocalDB, LocalConfig } from "./storage";
 import { StepMain, Device } from "./interface";
 
 
+
 import type { ConfigType } from "./config";
 import type { ComponentIdValueType } from "./componentId";
+import type { Chat } from "./telegram/types";
+
+import Device1 from "./components/pages/pagesSettings/pageDevice/DeviceList.vue";
+
 
 export default {
   name: "App",
@@ -74,13 +82,14 @@ export default {
     MainAddDevice,
     MainStartup,
     MainSettings,
-
+    Device1,
     BottomBar,
   },
   data(): {
-    visible: 'back' | 'main' | 'settings',
-    devices: Device[];
+    visible: 'back' | 'main' | 'settings' | 'off',
+    devicesByChat: Record<string, Device[]>;
     currentDevice: Device;
+    currentChat: Chat;
     stepStack: StepMain[];
     StepMain: typeof StepMain;
     ComponentId: typeof ComponentId;
@@ -92,8 +101,9 @@ export default {
     const configDB = new LocalConfig<ConfigType>("CONFIG");
     return {
       visible: 'main',
-      devices: [],
+      devicesByChat: {},
       currentDevice: {} as Device,
+      currentChat: {} as Chat,
       stepStack: [],
       devicesDB: devicesDB,
       configDB: configDB,
@@ -116,7 +126,7 @@ export default {
             this.visible = 'settings';
             break;
           default:
-            this.visible = 'main';
+            this.visible = 'off';
             break;
         }
       }
@@ -125,7 +135,6 @@ export default {
 
   mounted() {
     this.initializeApp();
-    console.log(this.devices)
   },
 
   beforeDestroy() {
@@ -134,10 +143,16 @@ export default {
 
   methods: {
 
+
+
+    hasAnyDevices(): boolean {
+      return Object.values(this.devicesByChat).some(deviceList => deviceList.length > 0);
+    },
+
     handleStepStackChange(id: ComponentIdValueType) {
       const hasToken = CONFIG.token && CONFIG.token !== "" && CONFIG.token !== "undefined";
       const hasBotId = CONFIG.botId && CONFIG.botId !== "" && CONFIG.botId !== "undefined";
-      const hasDevices = this.devices.length > 0;
+      const hasDevices = this.hasAnyDevices();
 
       if (!hasToken || !hasBotId) {
         this.setStep(StepMain.Startup);
@@ -153,7 +168,9 @@ export default {
         case ComponentId.MainStartup:
           this.setStep(StepMain.Main);
           return;
-
+        case ComponentId.MainSettings:
+          this.setStep(StepMain.AddDevices);
+          return;
         case ComponentId.BottomBarMain:
           this.setStep(StepMain.Main);
           return;
@@ -185,48 +202,134 @@ export default {
 
     },
 
-    handleCurrentDevice(device: Device) {
-      const exists = this.devices.some((d) => d.equals(device));
-      const isSame = this.currentDevice?.equals?.(device);
 
-      if (isSame) {
-        return;
+    getChatsFromDevicesByChat(): Chat[] {
+      const chats: Chat[] = [];
+
+      for (const chatId in this.devicesByChat) {
+        const devices = this.devicesByChat[chatId];
+        if (devices.length > 0) {
+          chats.push(devices[0].chat);
+        }
       }
-      if (exists) {
-        this.currentDevice = device;
+      return chats;
+    },
+
+    setCurrentChat(chat: Chat) {
+      if (!chat || (this.currentChat && this.currentChat.id === chat.id)) return;
+      this.currentChat = chat;
+      const chatDevices = this.devicesByChat[chat.id];
+      if (chatDevices && chatDevices.length > 0) {
+        this.currentDevice = chatDevices[0];
+      }
+    },
+
+    removeDevice(device: Device) {
+      const chatId = device.chat.id;
+      const chatDevices = this.devicesByChat[chatId];
+      if (!chatDevices) return;
+
+      const index = chatDevices.findIndex(d => d.equals(device));
+      if (index !== -1) {
+        chatDevices.splice(index, 1);
+        // Если устройств не осталось, удалить чат
+        if (chatDevices.length === 0) {
+          delete this.devicesByChat[chatId];
+          // Если текущий чат был удалён, сбросить currentChat/currentDevice
+          if (this.currentChat && this.currentChat.id === chatId) {
+            const chats = Object.values(this.devicesByChat);
+            if (chats.length > 0 && chats[0].length > 0) {
+              this.currentChat = chats[0][0].chat;
+              this.currentDevice = chats[0][0];
+            } else {
+              this.currentChat = {} as Chat;
+              this.currentDevice = {} as Device;
+            }
+          }
+        } else {
+          if (this.currentDevice && this.currentDevice.equals(device)) {
+            this.currentDevice = chatDevices[0];
+          }
+        }
+        this.commitDB();
       }
     },
 
 
-    handleUpdateDevice(device: Device) {
-      const index = this.devices.findIndex((d) => d.equals(device));
-      if (index !== -1) {
-        this.devices[index] = device;
+    handleCurrentDevice(device: Device) {
+      const isSame = this.currentDevice.equals(device);
+      if (isSame) return;
+
+      const chatId = device.chat.id;
+
+      const chatDevices = this.devicesByChat[chatId];
+      if (!chatDevices) return;
+
+      const exists = chatDevices.some(d => d.equals(device));
+      if (exists) {
         this.currentDevice = device;
+
+        if (!this.currentChat || this.currentChat.id !== chatId) {
+          this.currentChat = device.chat;
+        }
+      }
+    },
+
+
+
+    handleUpdateDevice(device: Device) {
+      if (!this.currentChat || device.chat.id !== this.currentChat.id) {
+        return;
+      }
+
+      const chatId = this.currentChat.id;
+      const chatDevices = this.devicesByChat[chatId];
+
+      if (!chatDevices) {
+        return;
+      }
+
+      const index = chatDevices.findIndex(d => d.equals(device));
+      if (index !== -1) {
+        chatDevices[index] = device;
+        this.currentDevice = device;
+        this.commitDB();
       }
     },
 
     handleUpdateDevices(devices: Device[]) {
-      console.log(devices)
+      if (devices.length === 0) return;
+
+      const chatId = devices[0].chat.id;
+      const chat = devices[0].chat;
+
+      if (!this.devicesByChat[chatId]) {
+        this.devicesByChat[chatId] = [];
+      }
+
+      const chatDevices = this.devicesByChat[chatId];
+
       devices.forEach(device => {
-        const index = this.devices.findIndex(d => d.equals(device));
+        const index = chatDevices.findIndex(d => d.equals(device));
         if (index !== -1) {
-          this.devices[index] = device;
+          chatDevices[index] = device;
         } else {
-          this.devices.push(device);
+          chatDevices.push(device);
         }
       });
 
-      if (devices.length > 0) {
-        this.currentDevice = devices[devices.length - 1];
-      }
+      this.currentChat = chat;
+      this.currentDevice = devices[devices.length - 1];
+
       this.commitDB();
-    },
+    }
+    ,
 
 
 
     commitDB() {
-      this.devicesDB.replaceAll(this.devices);
+      const allDevices = Object.values(this.devicesByChat).flat();
+      this.devicesDB.replaceAll(allDevices);
     },
 
     setStep(StepMain: StepMain) {
@@ -299,21 +402,39 @@ export default {
       const savedDevices: Device[] = this.devicesDB.getAll();
       const savedBotId: string = String(this.configDB.getAll().botId).valueOf();
       const savedToken: string = String(this.configDB.getAll().token).valueOf();
-      const savedOffset: string = String(
-        this.configDB.getAll().offset
-      ).valueOf();
+      const savedOffset: string = String(this.configDB.getAll().offset).valueOf();
 
-      if (savedBotId?.trim() && savedToken?.trim()) {
+      if (savedBotId !== "undefined" && savedToken !== "undefined" && savedBotId?.trim() && savedToken?.trim()) {
         CONFIG.botId = savedBotId;
         CONFIG.token = savedToken;
+      }
+
+      if (savedOffset !== "undefined" && savedOffset?.trim()) {
         CONFIG.offset = savedOffset;
       }
 
-      if (savedDevices && savedDevices.length > 0) {
-        this.devices = savedDevices;
-        this.currentDevice = this.devices[0];
-      }
+      this.loadDevicesFromDB(savedDevices);
     },
+
+
+    loadDevicesFromDB(devices: Device[]) {
+      this.devicesByChat = {};
+
+      for (const device of devices) {
+        const chatId = device.chat.id;
+        if (!this.devicesByChat[chatId]) {
+          this.devicesByChat[chatId] = [];
+        }
+        this.devicesByChat[chatId].push(device);
+      }
+
+      const firstChatDevices = Object.values(this.devicesByChat)[0];
+
+      if (firstChatDevices && firstChatDevices.length > 0) {
+        this.currentChat = firstChatDevices[0].chat;
+        this.currentDevice = firstChatDevices[0];
+      }
+    }
 
 
   },
