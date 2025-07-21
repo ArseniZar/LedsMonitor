@@ -32,7 +32,7 @@ import { Device } from '../../../../interface';
 import DeviceItem from './DeviceItem.vue';
 import Spin from '../../../basic/Spin.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
-import { CONFIG, DURATION_MS, INTERVAL_MS } from '../../../../config';
+import { CONFIG, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../config';
 import { TELEGRAM_COMMANDS } from '../../../../telegram/commands';
 import { postCommandToTelegramChat, getTelegramUpdates } from '../../../../telegram/api';
 import type { Chat, TelegramUpdate } from '../../../../telegram/types';
@@ -79,14 +79,14 @@ export default defineComponent({
     methods: {
         async handleSearchDevice() {
             this.searchStatus = 'loading'
-            if (this.offset) {
+            if (!this.offset) {
                 this.offset = await this.initConfigOffset();
             }
             await this.SendCommand();
             const startTime = Date.now();
-            while (Date.now() - startTime < DURATION_MS) {
+            while (Date.now() - startTime < DEVICE_SEND_SESSION_DURATION_MS) {
                 await this.getDevice();
-                await new Promise(r => setTimeout(r, INTERVAL_MS));
+                await new Promise(r => setTimeout(r, RETRY_SEND_INTERVAL_MS));
             }
 
             if (this.itemsDevices.length) {
@@ -199,9 +199,7 @@ export default defineComponent({
         _textPars(command: string, text: string): string {
             switch (command) {
                 case 'mac': {
-                    console.log(text);
                     const match = text.match(/\/MAC:\s*(([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})/);
-                    console.log(match);
                     if (!match) {
                         throw new ParseError('Failed to parse MAC address from text', command);
                     }
@@ -225,7 +223,7 @@ export default defineComponent({
 
 
         _createDefaultboxColorsOff(): BoxColor {
-            return { numberBox: Number(0), color: '#e5e5e5' }
+            return { numberBox: Number(0), color: '#000000' }
         },
 
         _createDefaultboxColorsMain(): BoxColor {
