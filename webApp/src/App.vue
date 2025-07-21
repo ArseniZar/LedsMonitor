@@ -9,7 +9,7 @@
       v-on:tokenAndBotId="(data) => { handleMainStartupTokenAndBotId(data); handleStepStackChange(ComponentId.MainStartup) }" />
 
     <MainAddDevice v-if="[StepMain.AddDevices].includes(stepStack[stepStack.length - 1])"
-      v-on:goBack="handleStepStackChange(ComponentId.GoBack)" v-on:newOffset="handleOffset"
+      v-on:goBack="handleStepStackChange(ComponentId.GoBack)"
       v-on:newDevices="(devices) => { handleUpdateDevices(devices); handleStepStackChange(ComponentId.MainAddDevice); }" />
 
     <MainColorPanel v-if="[StepMain.Main, StepMain.Select].includes(stepStack[stepStack.length - 1])"
@@ -232,10 +232,8 @@ export default {
       const index = chatDevices.findIndex(d => d.equals(device));
       if (index !== -1) {
         chatDevices.splice(index, 1);
-        // Если устройств не осталось, удалить чат
         if (chatDevices.length === 0) {
           delete this.devicesByChat[chatId];
-          // Если текущий чат был удалён, сбросить currentChat/currentDevice
           if (this.currentChat && this.currentChat.id === chatId) {
             const chats = Object.values(this.devicesByChat);
             if (chats.length > 0 && chats[0].length > 0) {
@@ -343,11 +341,6 @@ export default {
       this.configDB.set("token", CONFIG.botId);
     },
 
-    handleOffset(offset: string) {
-      CONFIG.offset = offset;
-      this.configDB.set("offset", CONFIG.offset);
-    },
-
     initializeApp() {
       if (
         typeof window.Telegram?.WebApp?.initData === "string" &&
@@ -402,15 +395,10 @@ export default {
       const savedDevices: Device[] = this.devicesDB.getAll();
       const savedBotId: string = String(this.configDB.getAll().botId).valueOf();
       const savedToken: string = String(this.configDB.getAll().token).valueOf();
-      const savedOffset: string = String(this.configDB.getAll().offset).valueOf();
 
       if (savedBotId !== "undefined" && savedToken !== "undefined" && savedBotId?.trim() && savedToken?.trim()) {
         CONFIG.botId = savedBotId;
         CONFIG.token = savedToken;
-      }
-
-      if (savedOffset !== "undefined" && savedOffset?.trim()) {
-        CONFIG.offset = savedOffset;
       }
 
       this.loadDevicesFromDB(savedDevices);

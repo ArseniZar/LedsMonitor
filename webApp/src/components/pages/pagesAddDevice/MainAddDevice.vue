@@ -2,7 +2,7 @@
     <ChatId v-if="stepStack[stepStack.length - 1] === StepAddDevice.ChatId" @goBack="handleGoBack" :headerStatus="true"
         @newChat="handleChatIdSubmit" />
     <SearchDevice v-if="stepStack[stepStack.length - 1] === StepAddDevice.SearchDevices" @goBack="handleGoBack"
-        :chat="newChat" @newDevices="handleNewDevices" @offset="handleOffset" />
+        :chat="newChat" @newDevices="handleNewDevices" />
 
 
 </template>
@@ -22,7 +22,7 @@ export default defineComponent({
         SearchDevice,
         ChatId
     },
-    emits: ['goBack', 'chatId', 'newOffset', 'newDevices'],
+    emits: ['goBack', 'chatId', 'newDevices'],
     data(): {
         stepStack: StepAddDevice[],
         StepAddDevice: typeof StepAddDevice,
@@ -43,10 +43,6 @@ export default defineComponent({
         handleChatIdSubmit(newChat: Chat) {
             this.newChat = newChat;
             this.stepStack.push(StepAddDevice.SearchDevices);
-        },
-
-        handleOffset(offset: string) {
-            this.$emit('newOffset', offset)
         },
 
         handleNewDevices(devices: Device[]) {

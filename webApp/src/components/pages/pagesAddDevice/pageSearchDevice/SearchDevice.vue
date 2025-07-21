@@ -56,7 +56,7 @@ export default defineComponent({
         DeviceItem,
         HeaderBar,
     },
-    emits: ['goBack', 'newDevices', 'offset'],
+    emits: ['goBack', 'newDevices'],
     props: {
         chat: {
             type: Object as PropType<Chat>,
@@ -66,24 +66,22 @@ export default defineComponent({
     data(): {
         searchStatus: 'done' | 'loading' | 'start',
         itemsDevices: Array<Device>,
-        offset: string,
+        offset: string | null,
 
     } {
         return {
             searchStatus: 'start',
-            offset: "",
+            offset: null,
             itemsDevices: [],
         };
-    },
-
-    mounted() {
-        this.offset = CONFIG.offset
     },
 
     methods: {
         async handleSearchDevice() {
             this.searchStatus = 'loading'
-
+            if (this.offset) {
+                this.offset = await this.initConfigOffset();
+            }
             await this.SendCommand();
             const startTime = Date.now();
             while (Date.now() - startTime < DURATION_MS) {
@@ -96,8 +94,31 @@ export default defineComponent({
             } else {
                 this.searchStatus = 'start';
             }
-            this.$emit("offset", this.offset)
         },
+
+        async initConfigOffset() {
+            try {
+                const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
+                if (!result.length) return '0';
+                return result[result.length - 1].update_id;
+
+            } catch (error: any) {
+                if (error instanceof NetworkError) {
+                    console.error(error.message);
+
+                } else if (error instanceof HttpError) {
+                    console.error(`HTTP ошибка ${error.status}:`, error.message);
+
+                } else if (error instanceof InvalidJsonError) {
+                    console.error('Некорректный JSON:', error.message);
+
+                } else {
+                    console.error('Неизвестная ошибка:', error);
+                }
+                return '0'
+            }
+        },
+
 
         async SendCommand() {
             try {
@@ -122,15 +143,13 @@ export default defineComponent({
             try {
                 const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
                 if (!result.length) return;
-                console.log(result)
-                console.log(this.offset)
+
                 const newUpdates: TelegramUpdate[] = result
                     .filter(item => Number(item.update_id) > Number(this.offset))
-                    .sort((a, b) => Number(a.update_id) - Number(b.update_id)); 
-                
-                console.log(newUpdates)
+                    .sort((a, b) => Number(a.update_id) - Number(b.update_id));
+
                 newUpdates.forEach((item) => {
-                    
+
 
                     const chatId: string = item.channel_post.chat.id;
                     const text: string = item.channel_post.text;
@@ -153,7 +172,6 @@ export default defineComponent({
                             );
 
                             this.itemsDevices.push(device);
-                            console.log("ok")
                         }
                         catch (error: any) {
                             console.error(error.message);
