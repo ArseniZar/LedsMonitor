@@ -103,8 +103,8 @@ export default defineComponent({
 
         updateDevice() {
             const newStatus = Number(this.localDevice.currentNumberBox) === Number(0);
-            if (this.localDevice.status !== newStatus) {
-                this.localDevice.status = newStatus;
+            if (this.localDevice.status === newStatus) {
+                this.localDevice.status = !newStatus;
             }
             this.$emit("updateDevice", this.localDevice);
         },
