@@ -53,6 +53,7 @@ bool WiFiSetup::stopAP()
     WiFi.softAPdisconnect(true);
     _logger.log("Wi-Fi Access Point stopped.", LOG_WARN);
     WiFi.mode(WIFI_STA);
+    return true;
 }
 
 String WiFiSetup::scanNetworks()

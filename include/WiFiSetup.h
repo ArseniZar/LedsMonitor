@@ -16,7 +16,6 @@ public:
     bool tryConnect(const String SSID, const String PASS);
     bool status();
 
-
 private:
     Logger &_logger;
     ESP8266WebServer _server = ESP8266WebServer(80);
@@ -38,9 +37,9 @@ private:
     bool stopAP();
 
     void setupServer(EEPROMSetup &_eeprom);
-    void stopServer()
+    void stopServer();
 
-        static String decodeHtmlEntities(String input);
+    static String decodeHtmlEntities(String input);
     String scanNetworks();
     bool tryConnectFromEEPROM(EEPROMSetup &eeprom);
 };
