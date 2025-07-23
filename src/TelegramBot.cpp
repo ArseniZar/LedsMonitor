@@ -38,7 +38,7 @@ void TelegramBot::begin()
 void TelegramBot::updateMsg(fb::Update &u)
 {
     Info info = parseMessage(u.message().text());
-    switch (SH(info.command))
+    switch (SH(info.command.c_str()))
     {
     case SH(CMD_SCAN):
         onScan(u.message().chat());
@@ -46,7 +46,7 @@ void TelegramBot::updateMsg(fb::Update &u)
 
     case SH(CMD_UPDATE):
         onUpdate(info);
-    default:
+        break;
     }
 }
 
@@ -59,7 +59,6 @@ void TelegramBot::onScan(fb::ChatRead chat)
 
 void TelegramBot::onUpdate(Info &info)
 {
-    
 }
 
 Info TelegramBot::parseMessage(su::Text message)
@@ -84,17 +83,17 @@ Info TelegramBot::parseMessage(su::Text message)
 
         key.trim();
         value.trim();
-        switch (key)
+        switch (SH(key.c_str()))
         {
-        case CMD_COMMAND:
+        case SH(CMD_COMMAND):
             info.command = String(value);
-        case CMD_MAC:
+        case SH(CMD_MAC):
             info.mac = String(value);
-        case CMD_CHAT:
+        case SH(CMD_CHAT):
             info.chat_id = String(value);
-        case CMD_COLOR:
+        case SH(CMD_COLOR):
             info.color = String(value);
-        case CMD_STATUS:
+        case SH(CMD_STATUS):
             info.status = String(value);
         }
     }

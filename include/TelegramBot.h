@@ -24,7 +24,7 @@ private:
     static void updateMsg(fb::Update &u);
     static void onScan(fb::ChatRead chat);
     static Info parseMessage(su::Text message);
-    static onUpdate(Info &info);
+    static void onUpdate(Info &info);
 
 public:
     TelegramBot(Logger *logger, EEPROMSetup *eeprom);
