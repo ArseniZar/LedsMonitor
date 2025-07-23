@@ -1,6 +1,7 @@
 import { CONFIG, DEVICE_UPDATE_DEBOUNCE_DELAY_MS, MIN_DEVICE_SEND_INTERVAL_MS } from "./config";
 import type { Device } from "./interface";
 import { postCommandToTelegramChat } from "./telegram/api";
+import { formatDeviceInfo } from "./telegram/commands";
 import { NetworkError, HttpError, InvalidJsonError } from "./telegram/errors";
 
 let pendingDevice: Device | null = null;
@@ -55,7 +56,7 @@ async function sendPendingDevice() {
 
     isSending = true;
     try {
-        const text = formatDeviceMessage(pendingDevice);
+        const text = formatDeviceInfo(pendingDevice);
         await postCommandToTelegramChat(CONFIG.token, pendingDevice.chat.id, text);
         console.log("Device sent successfully");
     } catch (error: any) {
@@ -75,23 +76,4 @@ async function sendPendingDevice() {
     }
 }
 
-function formatDeviceMessage(device: Device): string {
-    const { currentNumberBox, boxColorMain, boxColorOff, boxColorsList } = device;
 
-    const getColor = (): string => {
-        if (currentNumberBox === boxColorOff.numberBox) {
-            return boxColorOff.color;
-        }
-        if (currentNumberBox === boxColorMain.numberBox) {
-            return boxColorMain.color;
-        }
-        const found = boxColorsList.find(
-            (bc) => bc.numberBox === currentNumberBox && bc.numberBox !== boxColorOff.numberBox
-        );
-        return found ? found.color : "";
-    };
-
-    const color = getColor();
-
-    return `/ID: ${device.id}\n/CHAT: ${device.chat.id}\n/COLOR: ${color}\n/STATUS: ${device.status ? "ON" : "OFF"}`;
-}
