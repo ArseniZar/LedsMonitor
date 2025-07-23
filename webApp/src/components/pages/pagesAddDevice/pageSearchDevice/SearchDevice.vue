@@ -33,7 +33,7 @@ import DeviceItem from './DeviceItem.vue';
 import Spin from '../../../basic/Spin.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
 import { CONFIG, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../config';
-import { TELEGRAM_COMMANDS } from '../../../../telegram/commands';
+import { formatScan } from '../../../../telegram/commands';
 import { postCommandToTelegramChat, getTelegramUpdates } from '../../../../telegram/api';
 import type { Chat, TelegramUpdate } from '../../../../telegram/types';
 import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors'
@@ -122,7 +122,7 @@ export default defineComponent({
 
         async SendCommand() {
             try {
-                await postCommandToTelegramChat(CONFIG.token, this.chat.id, TELEGRAM_COMMANDS.scan);
+                await postCommandToTelegramChat(CONFIG.token, this.chat.id, formatScan());
             } catch (error: any) {
                 if (error instanceof NetworkError) {
                     console.error(error.message);
