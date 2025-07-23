@@ -2,6 +2,8 @@
 Logger *TelegramBot::logger_ptr = nullptr;
 EEPROMSetup *TelegramBot::eeprom_ptr = nullptr;
 FastBot2 *TelegramBot::bot_ptr = nullptr;
+LedController *TelegramBot::device_ptr = nullptr;
+String TelegramBot::mac;
 
 TelegramBot::TelegramBot(Logger *logger, EEPROMSetup *eeprom)
 {
@@ -16,8 +18,14 @@ TelegramBot::~TelegramBot()
     bot_ptr = nullptr;
 }
 
-void TelegramBot::begin()
+void TelegramBot::begin(LedController *device)
 {
+    device_ptr = device;
+    logger_ptr->log("LedController pointer set", LOG_INFO);
+
+    mac = eeprom_ptr->readString(ADDR_MAC);
+    logger_ptr->log("MAC address loaded from EEPROM: " + mac, LOG_INFO);
+
     bot_ptr->setLimit(BOT_LIMIT);
     logger_ptr->log("Bot limit set to: " + String(BOT_LIMIT), LOG_INFO);
 
@@ -31,6 +39,7 @@ void TelegramBot::begin()
     logger_ptr->log("Skipped previous updates", LOG_INFO);
 
     bot_ptr->onUpdate(updateMsg);
+    logger_ptr->log("Set onUpdate callback for Telegram bot", LOG_INFO);
 
     logger_ptr->log("Telegram bot initialized successfully", LOG_INFO);
 }
@@ -59,6 +68,24 @@ void TelegramBot::onScan(fb::ChatRead chat)
 
 void TelegramBot::onUpdate(Info &info)
 {
+    logger_ptr->log("Received update: mac=" + info.mac + ", status=" + info.status + ", color=" + info.color, LOG_INFO);
+
+    if (!info.mac.equals(mac))
+    {
+        logger_ptr->log("Ignored update: MAC mismatch (expected " + mac + ", got " + info.mac + ")", LOG_WARN);
+        return;
+    }
+
+    if (info.status.equals("off"))
+    {
+        logger_ptr->log("Turning off device", LOG_INFO);
+        device_ptr->offDevice();
+    }
+    else
+    {
+        logger_ptr->log("Setting color: " + info.color, LOG_INFO);
+        device_ptr->setColor(info.color);
+    }
 }
 
 Info TelegramBot::parseMessage(su::Text message)

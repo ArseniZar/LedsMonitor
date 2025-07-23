@@ -4,6 +4,7 @@
 #include "Logger.h"
 #include "FastBot2.h"
 #include "EEPROMSetup.h"
+#include "LedController.h"
 
 struct Info
 {
@@ -20,6 +21,8 @@ private:
     static Logger *logger_ptr;
     static EEPROMSetup *eeprom_ptr;
     static FastBot2 *bot_ptr;
+    static LedController *device_ptr;
+    static String mac;
 
     static void updateMsg(fb::Update &u);
     static void onScan(fb::ChatRead chat);
@@ -29,7 +32,7 @@ private:
 public:
     TelegramBot(Logger *logger, EEPROMSetup *eeprom);
     ~TelegramBot();
-    void begin();
+    void begin( LedController *device);
     bool tick();
 };
 
