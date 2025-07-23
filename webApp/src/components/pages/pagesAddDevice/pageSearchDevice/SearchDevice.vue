@@ -197,22 +197,23 @@ export default defineComponent({
         },
 
         _textPars(command: string, text: string): string {
-            switch (command) {
+            switch (command.toLowerCase()) {
                 case 'mac': {
-                    const match = text.match(/\/MAC:\s*(([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})/);
+                    const regex = /\/mac:([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})/i;
+                    const match = text.match(regex);
                     if (!match) {
                         throw new ParseError('Failed to parse MAC address from text', command);
                     }
-                    return match[1];
+                    return match[1].toUpperCase();
                 }
                 case 'name': {
-                    const match = text.match(/NAME:\s*([^\s]+)/i);
+                    const regex = /\/name:([^\s]+)/i;
+                    const match = text.match(regex);
                     if (!match) {
-                        throw new Error('Failed to parse NAME from text');
+                        throw new ParseError('Failed to parse NAME from text', command);
                     }
                     return match[1].trim();
                 }
-
                 default:
                     throw new ParseError(`Unsupported command: ${command}`, command);
             }
