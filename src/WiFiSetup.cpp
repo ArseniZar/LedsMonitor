@@ -12,6 +12,9 @@ bool WiFiSetup::status()
 
 void WiFiSetup::begin(EEPROMSetup &_eeprom, const String &_apSSID, const String &_apPassword)
 {
+    _logger.log("Checking validity of saved MAC address in EEPROM...", LOG_INFO);
+    saveMAC(_eeprom);
+    
     _logger.log("Attempting to connect using credentials from EEPROM...", LOG_INFO);
     if (tryConnectFromEEPROM(_eeprom))
     {
@@ -111,7 +114,7 @@ void WiFiSetup::setupServer(EEPROMSetup &_eeprom)
         page += "</form></body></html>";
         _server.send(200, "text/html", page); });
 
-    _server.on("/", HTTP_POST, [this, &_eeprom]()
+    _server.on("/", HTTP_POST, [this]()
                {
         String ssid = _server.arg("ssid");
         ssid.trim();
@@ -180,13 +183,29 @@ void WiFiSetup::handle()
     _server.handleClient();
 }
 
-bool WiFiSetup::tryConnectFromEEPROM(EEPROMSetup &_eeprom)
+bool WiFiSetup::tryConnectFromEEPROM(EEPROMSetup &eeprom)
 {
-    String savedSSID = _eeprom.readString(ADDR_SSID);
-    String savedPASS = _eeprom.readString(ADDR_PASS);
+    String savedSSID = eeprom.readString(ADDR_SSID);
+    String savedPASS = eeprom.readString(ADDR_PASS);
     _logger.log("Loaded SSID from EEPROM: '" + savedSSID + "'", LOG_INFO);
     _logger.log("Loaded password from EEPROM: '" + savedPASS + "'", LOG_INFO);
     return tryConnect(savedSSID, savedPASS);
+}
+
+void WiFiSetup::saveMAC(EEPROMSetup &eeprom)
+{
+    String savedMAC = eeprom.readString(ADDR_MAC);
+    String mac = WiFi.macAddress();
+    if (mac.equals(savedMAC))
+    {
+        _logger.log("MAC address in EEPROM is valid", LOG_INFO);
+        return;
+    }
+    else
+    {
+        eeprom.writeString(mac, ADDR_MAC);
+        _logger.log("MAC address in EEPROM updated", LOG_WARN);
+    }
 }
 
 bool WiFiSetup::tryConnect(const String SSID, const String PASS)

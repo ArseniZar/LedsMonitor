@@ -42,6 +42,8 @@ private:
     static String decodeHtmlEntities(String input);
     String scanNetworks();
     bool tryConnectFromEEPROM(EEPROMSetup &eeprom);
+
+    void saveMAC(EEPROMSetup &eeprom);
 };
 
 #endif // WIFI_SETUP_H
