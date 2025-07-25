@@ -1,5 +1,11 @@
-import type { Chat } from './telegram/types';
+import type { ItemData } from "../types/itemData";
+import { Chat } from "./Chat";
 
+
+export interface BoxColor {
+  numberBox: Number;
+  color: string;
+}
 
 export class Device {
   id: string;
@@ -10,7 +16,7 @@ export class Device {
   boxColorsList: BoxColor[];
   boxColorMain: BoxColor;
   boxColorOff: BoxColor;
-  imgIcon?: string; //////
+  imgIcon?: string;
 
   constructor(
     id: string,
@@ -36,7 +42,7 @@ export class Device {
   ) {
     if (typeof idOrDevice === 'string') {
       this.id = idOrDevice;
-      this.chat = { ...chat! };
+      this.chat = chat!;
       this.name = name!;
       this.status = status!;
       this.currentNumberBox = currentNumberBox!;
@@ -46,7 +52,7 @@ export class Device {
     } else {
       const device = idOrDevice;
       this.id = device.id;
-      this.chat = { ...device.chat };
+      this.chat = new Chat(device.chat);
       this.name = device.name;
       this.status = device.status;
       this.currentNumberBox = device.currentNumberBox;
@@ -59,52 +65,13 @@ export class Device {
   equals(other: Device): boolean {
     return this.id === other.id && this.chat.id === other.chat.id;
   }
+
+  toItemData(defaultImgIcon?: string): ItemData {
+    return {
+      id: this.id,
+      imgIcon: this.imgIcon !== undefined ? this.imgIcon : defaultImgIcon,
+      title: this.name,
+    };
+  }
+
 }
-
-
-export interface BoxColor {
-  numberBox: Number;
-  color: string;
-}
-
-export type ItemData = {
-  id: string;
-  imgIcon: string;
-  title: string;
-}
-
-export type StepStartupApp = 'welcome' | 'token';
-export const StepStartupApp = {
-  Welcome: 'welcome' as StepStartupApp,
-  Token: 'token' as StepStartupApp
-}
-
-
-export type StepAddDevice = 'chatId' | 'searchDevices' | 'devices';
-export const StepAddDevice = {
-  ChatId: 'chatId' as StepAddDevice,
-  SearchDevices: 'searchDevices' as StepAddDevice,
-  Devices: 'devices' as StepAddDevice,
-};
-
-
-
-export type StepSettings = 'settings' | 'devices' | 'token';
-export const StepSettings = {
-  Settings: 'settings' as StepSettings,
-  Token: 'token' as StepSettings,
-  Devices: 'devices' as StepSettings,
-};
-
-
-export type StepMain = 'main' | 'select' | 'startup' | 'settings' | 'addDevices';
-export const StepMain = {
-  Main: 'main' as StepMain,
-  Select: 'select' as StepMain,
-  Startup: 'startup' as StepMain,
-  Settings: 'settings' as StepMain,
-  AddDevices: 'addDevices' as StepMain
-};
-
-
-
