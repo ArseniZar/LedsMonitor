@@ -1,4 +1,4 @@
-import type { Device } from "../interface";
+import { Device } from "../basic/classes/Device";
 
 export const TELEGRAM_COMMANDS = {
   scan: 'scan',
