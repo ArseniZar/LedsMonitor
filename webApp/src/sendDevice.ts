@@ -1,8 +1,9 @@
-import { CONFIG, DEVICE_UPDATE_DEBOUNCE_DELAY_MS, MIN_DEVICE_SEND_INTERVAL_MS } from "./config";
-import type { Device } from "./interface";
+import { CONFIG, DEVICE_UPDATE_DEBOUNCE_DELAY_MS, MIN_DEVICE_SEND_INTERVAL_MS } from "./basic/config";
+import { Device } from "./basic/classes/Device";
 import { postCommandToTelegramChat } from "./telegram/api";
 import { formatDeviceInfo } from "./telegram/commands";
 import { NetworkError, HttpError, InvalidJsonError } from "./telegram/errors";
+import emitter from "./basic/eventBus";
 
 let pendingDevice: Device | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -57,19 +58,21 @@ async function sendPendingDevice() {
     isSending = true;
     try {
         const text = formatDeviceInfo(pendingDevice);
-        await postCommandToTelegramChat(CONFIG.token, pendingDevice.chat.id, text);
+        await postCommandToTelegramChat(CONFIG!.token, pendingDevice.chat.id, text);
         console.log("Device sent successfully");
     } catch (error: any) {
         if (error instanceof NetworkError) {
-            console.error(error.message);
+            emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
         } else if (error instanceof HttpError) {
-            console.error(`HTTP ошибка ${error.status}:`, error.message);
+            emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
         } else if (error instanceof InvalidJsonError) {
-            console.error("Некорректный JSON:", error.message);
+            emitter.emit('alert', `Invalid JSON: ${error.message}`);
         } else {
-            console.error("Неизвестная ошибка:", error);
+            emitter.emit('alert', `Unknown error: ${String(error)}`);
         }
-    } finally {
+
+    }
+    finally {
         isSending = false;
         lastSentTime = Date.now();
         pendingDevice = null;
