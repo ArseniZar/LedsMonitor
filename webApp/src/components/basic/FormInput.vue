@@ -10,7 +10,7 @@
           className="p-2  px-3 text-xs  bg-black  shadow-md text-white/90 rounded-2xl focus:outline-none  focus:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] w-full"
           placeholder="Enter text here" />
         <div class="w-full rounded-2xl min-h-9 shadow-md">
-          <p className="text-white/80 text-center p-1 w-full block ">{{ alertValue }}</p>
+          <p className="text-white/80 text-center p-1 w-full block select-none">{{ alertValue }}</p>
           <Spin v-if="spinStatus" />
         </div>
 

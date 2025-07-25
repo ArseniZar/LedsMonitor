@@ -1,7 +1,7 @@
 <template>
     <div class="w-full flex flex-row gap-2.5 bg-black/30 p-2 rounded-xl ">
         <img :src="item.imgIcon" alt="Check" class="h-6" />
-        <span class="w-full  font-bold"> {{item.title}} </span>
+        <span class="w-full font-bold select-none"> {{item.title}} </span>
     </div>
 </template>
 

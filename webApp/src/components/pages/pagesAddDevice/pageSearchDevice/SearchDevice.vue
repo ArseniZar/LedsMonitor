@@ -2,7 +2,7 @@
     <HeaderBar @goBack="handleGoBack" :visible-mode="'back'" />
     <div class=" mt-3 w-full h-full flex flex-col items-center gap-2">
         <div class=" mb-3 w-full text-center ">
-            <span class="font-bold text-2xl  text-white/90 "> {{ chat.title }} </span>
+            <span class="font-bold text-2xl  text-white/90 select-none"> {{ chat.title }} </span>
         </div>
         <DeviceItem v-for="item in itemsDevices" :item="item.toItemData('img/icons8-device-48.png')" />
         <button @click="handleSearchDevice" v-if="searchStatus === 'start' || searchStatus === 'done'"
@@ -15,7 +15,7 @@
         <div class="mt-7 w-full">
             <button @click="handleConfirmDevices" v-if="searchStatus === 'done'"
                 class="text-center  w-full shadow-lg  mx-auto p-2 bg-black/30 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105 hover:bg-black/95 duration-400 active:bg-black/95 transition ">
-                <span class="font-bold text-white/90">Confirm</span>
+                <span class="font-bold text-white/90 select-none">Confirm</span>
             </button>
         </div>
     </div>

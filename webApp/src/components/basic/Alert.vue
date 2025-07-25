@@ -4,7 +4,7 @@
             @mouseleave="handleLongPressItemEnd" @touchstart="handleLongPressItemStart"
             @touchend="handleLongPressItemEnd" @touchcancel="handleLongPressItemEnd"
             class="flex w-full gap-3 flex-row justify-between p-2 px-4 items-center rounded-2xl pointer-events-auto bg-black/80 active:scale-105 transition-transform duration-400">
-            <span class="flex-1 text-center text-sm font-mono text-white">
+            <span class="select-none flex-1 text-center text-sm font-mono text-white">
                 {{ currentAlert }}
             </span>
         </button>
