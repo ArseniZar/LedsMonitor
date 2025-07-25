@@ -22,11 +22,11 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import iro from '@jaames/iro';
-import { Device } from '../../../interface';
-import ColorMainBox from './pageColorPanel/panelElements/ColorMainBox.vue';
-import ColorBox from './pageColorPanel/panelElements/ColorBox.vue';
-import OffBox from './pageColorPanel/panelElements/OffBox.vue';
-import SelectDeviceButton from './pageColorPanel/panelElements/SelectDeviceButton.vue';
+import { Device } from '../../../basic/classes/Device';
+import ColorMainBox from './pageColorPanel/ColorMainBox.vue';
+import ColorBox from './pageColorPanel/ColorBox.vue';
+import OffBox from './pageColorPanel/OffBox.vue';
+import SelectDeviceButton from './pageColorPanel/SelectDeviceButton.vue';
 export default defineComponent({
     name: 'MainColorPanel',
     components: {
@@ -71,9 +71,6 @@ export default defineComponent({
 
     mounted() {
         this.initColorPicker();
-        this.updateDevice();
-
-
     },
 
     methods: {
