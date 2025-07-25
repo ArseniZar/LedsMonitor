@@ -1,7 +1,7 @@
 <template>
     <HeaderBar :visible-mode="'back'" @goBack="goBack" />
-    <div class="mt-5 w-full h-full flex flex-col gap-3">
-        <DeviceItem v-for="item in devices" :device="deviceToItemData(item, 'img/icons8-device-48.png')"
+    <div class="mt-10 w-full h-full flex flex-col gap-3">
+        <DeviceItem v-for="item in devices" :device="item.toItemData('img/icons8-device-48.png')"
             @deleteDevice="deleteDevice" />
     </div>
     <ConfirmDelete v-if="deviceToDelete" :title="deviceToDelete.name" @hasPermission="hasPermission" />
@@ -10,10 +10,10 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { ItemData, Device } from '../../../../interface';
+import { Device } from '../../../../basic/classes/Device';
 import DeviceItem from './DeviceItem.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
-import ConfirmDelete from './ConfirmDelete.vue';
+import ConfirmDelete from '../../../basic/ConfirmDelete.vue';
 export default defineComponent({
     name: 'Device',
     components: {
@@ -26,8 +26,7 @@ export default defineComponent({
         devices: {
             type: Array as PropType<Device[]>,
             required: true,
-        }
-
+        },
     },
     data(): {
         deviceToDelete: Device | null;
@@ -38,18 +37,9 @@ export default defineComponent({
     },
     methods: {
 
-        deviceToItemData(device: Device, imgIcon: string): ItemData {
-            return {
-                id: device.id,
-                imgIcon: device.imgIcon !== undefined ? device.imgIcon : imgIcon,
-                title: device.name,
-            };
-        },
-
         findDeviceById(devices: Device[], id: string): Device | undefined {
             return devices.find(device => String(device.id) === String(id));
         },
-
 
         deleteDevice(id: string) {
             const device = this.findDeviceById(this.devices, id);
@@ -57,7 +47,6 @@ export default defineComponent({
                 this.deviceToDelete = device;
             }
         },
-
 
         hasPermission(isAllowed: boolean) {
             if (isAllowed && this.deviceToDelete) {
