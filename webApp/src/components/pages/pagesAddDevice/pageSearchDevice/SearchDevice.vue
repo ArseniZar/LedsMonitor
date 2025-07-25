@@ -4,7 +4,7 @@
         <div class=" mb-3 w-full text-center ">
             <span class="font-bold text-2xl  text-white/90 "> {{ chat.title }} </span>
         </div>
-        <DeviceItem v-for="itemDevice in itemsDevices" :item="{ id: itemDevice.id, name: itemDevice.name }" />
+        <DeviceItem v-for="item in itemsDevices" :item="item.toItemData('img/icons8-device-48.png')" />
         <button @click="handleSearchDevice" v-if="searchStatus === 'start' || searchStatus === 'done'"
             class='mt-6  h-7'>
             <img :src="'img/icons8-restart-64.png'" alt="Check" class="h-7" />
@@ -13,30 +13,31 @@
             <Spin />
         </div>
         <div class="mt-7 w-full">
-            <button @click="handleConfirmDevice" v-if="searchStatus === 'done'"
+            <button @click="handleConfirmDevices" v-if="searchStatus === 'done'"
                 class="text-center  w-full shadow-lg  mx-auto p-2 bg-black/30 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105 hover:bg-black/95 duration-400 active:bg-black/95 transition ">
                 <span class="font-bold text-white/90">Confirm</span>
-
             </button>
         </div>
-
-
-
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { BoxColor } from '../../../../interface';
-import { Device } from '../../../../interface';
 import DeviceItem from './DeviceItem.vue';
 import Spin from '../../../basic/Spin.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
-import { CONFIG, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../config';
+
+import type { TelegramUpdate } from '../../../../telegram/types';
 import { formatScan } from '../../../../telegram/commands';
 import { postCommandToTelegramChat, getTelegramUpdates } from '../../../../telegram/api';
-import type { Chat, TelegramUpdate } from '../../../../telegram/types';
-import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors'
+import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors';
+
+import { Device } from '../../../../basic/classes/Device';
+import { Chat } from '../../../../basic/classes/Chat';
+import type { BoxColor } from '../../../../basic/classes/Device';
+import emitter from '../../../../basic/eventBus';
+
+import { CONFIG, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../basic/config';
 
 
 class ParseError extends Error {
@@ -89,7 +90,7 @@ export default defineComponent({
                 await new Promise(r => setTimeout(r, RETRY_SEND_INTERVAL_MS));
             }
 
-            if (this.itemsDevices.length) {
+            if (this.itemsDevices.length > 0) {
                 this.searchStatus = 'done';
             } else {
                 this.searchStatus = 'start';
@@ -99,23 +100,20 @@ export default defineComponent({
         async initConfigOffset() {
             try {
                 const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
-                if (!result.length) return '0';
+                if (!result) return '0';
                 return result[result.length - 1].update_id;
 
             } catch (error: any) {
                 if (error instanceof NetworkError) {
-                    console.error(error.message);
-
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    console.error(`HTTP ошибка ${error.status}:`, error.message);
-
+                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    console.error('Неизвестная ошибка:', error);
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
-                return '0'
+                return '0';
             }
         },
 
@@ -125,16 +123,13 @@ export default defineComponent({
                 await postCommandToTelegramChat(CONFIG.token, this.chat.id, formatScan());
             } catch (error: any) {
                 if (error instanceof NetworkError) {
-                    console.error(error.message);
-
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    console.error(`HTTP ошибка ${error.status}:`, error.message);
-
+                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    console.error('Неизвестная ошибка:', error);
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
             }
         },
@@ -143,13 +138,11 @@ export default defineComponent({
             try {
                 const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
                 if (!result.length) return;
-
                 const newUpdates: TelegramUpdate[] = result
                     .filter(item => Number(item.update_id) > Number(this.offset))
                     .sort((a, b) => Number(a.update_id) - Number(b.update_id));
 
                 newUpdates.forEach((item) => {
-
 
                     const chatId: string = item.channel_post.chat.id;
                     const text: string = item.channel_post.text;
@@ -166,15 +159,15 @@ export default defineComponent({
                                 name,
                                 false,
                                 0,
-                                this._createDefaultboxColors(),
-                                this._createDefaultboxColorsMain(),
-                                this._createDefaultboxColorsOff(),
+                                this.createDefaultboxColors(),
+                                this.createDefaultboxColorsMain(),
+                                this.createDefaultboxColorsOff(),
                             );
 
                             this.itemsDevices.push(device);
                         }
                         catch (error: any) {
-                            console.error(error.message);
+                            emitter.emit('alert', `Parse error: ${error.message}`);
                         }
                     }
                     this.offset = String(item.update_id);
@@ -182,16 +175,13 @@ export default defineComponent({
 
             } catch (error: any) {
                 if (error instanceof NetworkError) {
-                    console.error(error.message);
-
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    console.error(`HTTP ошибка ${error.status}:`, error.message);
-
+                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    console.error('Неизвестная ошибка:', error);
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
             }
         },
@@ -223,15 +213,15 @@ export default defineComponent({
 
 
 
-        _createDefaultboxColorsOff(): BoxColor {
+        createDefaultboxColorsOff(): BoxColor {
             return { numberBox: Number(0), color: '#000000' }
         },
 
-        _createDefaultboxColorsMain(): BoxColor {
+        createDefaultboxColorsMain(): BoxColor {
             return { numberBox: Number(1), color: '#e5e5e5' }
         },
 
-        _createDefaultboxColors(): BoxColor[] {
+        createDefaultboxColors(): BoxColor[] {
             return [
                 { numberBox: Number(2), color: '#ffffff' },
                 { numberBox: Number(3), color: '#ffa500' },
@@ -244,7 +234,7 @@ export default defineComponent({
             this.$emit('goBack');
         },
 
-        handleConfirmDevice() {
+        handleConfirmDevices() {
             this.$emit('newDevices', this.itemsDevices);
         }
 

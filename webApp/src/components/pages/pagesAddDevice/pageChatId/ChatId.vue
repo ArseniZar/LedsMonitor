@@ -8,9 +8,11 @@
 import { defineComponent } from 'vue';
 import FormInput from '../../../basic/FormInput.vue';
 import { getChatMemberInfo, getChatInfo } from '../../../../telegram/api';
-import { CONFIG } from '../../../../config';
-import type { Chat, ChatInfo } from '../../../../telegram/types';
+import { CONFIG } from '../../../../basic/config';
+import type { ChatInfo } from '../../../../telegram/types';
+import { Chat } from '../../../../basic/classes/Chat'
 import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors';
+import emitter from '../../../../basic/eventBus';
 
 
 export default defineComponent({
@@ -33,7 +35,7 @@ export default defineComponent({
     } {
         return {
             spinStatus: false,
-            alertInfo: 'Enter a valid chat ID',
+            alertInfo: '',
         };
     },
 
@@ -45,47 +47,50 @@ export default defineComponent({
 
             } catch (error: any) {
                 if (error instanceof NetworkError) {
-                    console.error(error.message);
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
 
                 } else if (error instanceof HttpError) {
                     if (error.status === 400) {
                         this.alertInfo = "Chat does not exist or the application is not a member"
                     } else {
-                        console.error(`HTTP ошибка ${error.status}:`, error.message);
+                        emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                     }
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    console.error('Неизвестная ошибка:', error);
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
+
                 return false;
             }
+
         },
 
-        async getChatTittile(chatId: string){
+        async getChatTittile(chatId: string) {
             try {
                 const result: ChatInfo = await getChatInfo(CONFIG.token, chatId);
                 return result.title
 
             } catch (error: any) {
                 if (error instanceof NetworkError) {
-                    console.error(error.message);
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    console.error(`HTTP ошибка ${error.status}:`, error.message);
+                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    console.error('Неизвестная ошибка:', error);
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
-               return "" 
+                return null;
             }
         },
 
         async handleChatIdSubmit(chatId: string) {
             const title = await this.getChatTittile(chatId);
-            const chat: Chat  = { id: chatId, title: title};
-            this.$emit('newChat', chat);
+            if (title && chatId) {
+                const chat = new Chat(chatId, title);
+                this.$emit('newChat', chat);
+            }
         },
 
 

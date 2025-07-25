@@ -2,7 +2,7 @@
     <ChatId v-if="stepStack[stepStack.length - 1] === StepAddDevice.ChatId" @goBack="handleGoBack" :headerStatus="true"
         @newChat="handleChatIdSubmit" />
     <SearchDevice v-if="stepStack[stepStack.length - 1] === StepAddDevice.SearchDevices" @goBack="handleGoBack"
-        :chat="newChat" @newDevices="handleNewDevices" />
+        :chat="newChat!" @newDevices="handleNewDevices" />
 
 
 </template>
@@ -10,10 +10,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { StepAddDevice, type Device } from '../../../interface';
+import { Device } from '../../../basic/classes/Device';
+import { StepAddDevice } from '../../../basic/types/steps';
 import SearchDevice from './pageSearchDevice/SearchDevice.vue';
 import ChatId from './pageChatId/ChatId.vue';
-import type { Chat } from '../../../telegram/types';
+import { Chat } from '../../../basic/classes/Chat';
 
 
 export default defineComponent({
@@ -26,15 +27,13 @@ export default defineComponent({
     data(): {
         stepStack: StepAddDevice[],
         StepAddDevice: typeof StepAddDevice,
-        newChat: Chat,
-        alertInfo: string,
+        newChat: Chat | null,
 
     } {
         return {
-            newChat: {} as Chat,
+            newChat: null,
             stepStack: [StepAddDevice.ChatId],
             StepAddDevice: StepAddDevice,
-            alertInfo: 'Enter a valid chat ID',
         };
     },
 
