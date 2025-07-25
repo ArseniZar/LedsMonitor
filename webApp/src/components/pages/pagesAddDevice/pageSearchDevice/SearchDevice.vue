@@ -164,7 +164,12 @@ export default defineComponent({
                                 this.createDefaultboxColorsOff(),
                             );
 
-                            this.itemsDevices.push(device);
+                            const index = this.itemsDevices.findIndex(d => d.equals(device));
+                            if (index !== -1) {
+                                this.itemsDevices[index] = device;
+                            } else {
+                                this.itemsDevices.push(device);
+                            }
                         }
                         catch (error: any) {
                             emitter.emit('alert', `Parse error: ${error.message}`);
