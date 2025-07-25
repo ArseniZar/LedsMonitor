@@ -77,6 +77,7 @@ export default defineComponent({
     },
 
     async submit() {
+      this.alertValue = '';
       this.spinStatus = true;
       const trimmedValue = this.value.trim();
       if (this.validData) {
