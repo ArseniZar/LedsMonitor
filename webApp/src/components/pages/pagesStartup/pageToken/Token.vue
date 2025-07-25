@@ -10,6 +10,7 @@ import FormInput from '../../../basic/FormInput.vue';
 import { getBotInfo } from '../../../../telegram/api';
 import type { BotInfo } from '../../../../telegram/types';
 import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors';
+import emitter from '../../../../basic/eventBus';
 
 export default defineComponent({
     name: 'Token',
@@ -21,7 +22,7 @@ export default defineComponent({
         alertInfo: string,
     } {
         return {
-            alertInfo: 'Enter a valid token',
+            alertInfo: '',
         };
     },
 
@@ -34,16 +35,17 @@ export default defineComponent({
             }
             catch (error: any) {
                 if (error instanceof NetworkError) {
-                    this.alertInfo = 'Network issue, please try again later';
-
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    this.alertInfo = 'Invalid token, please check';
-
+                    if (error.status === 401 || error.status === 404) {
+                        this.alertInfo = "Invalid token. Please enter a valid value."
+                    } else {
+                        emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
+                    }
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    this.alertInfo = 'An error occurred: ' + error.message;
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
                 return false;
             }
@@ -56,25 +58,24 @@ export default defineComponent({
             }
             catch (error: any) {
                 if (error instanceof NetworkError) {
-                    this.alertInfo = 'Network issue, please try again later';
-
+                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
                 } else if (error instanceof HttpError) {
-                    this.alertInfo = 'Invalid token, please check';
-
+                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
                 } else if (error instanceof InvalidJsonError) {
-                    console.error('Некорректный JSON:', error.message);
-
+                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
                 } else {
-                    this.alertInfo = 'An error occurred: ' + error.message;
+                    emitter.emit('alert', `Unknown error: ${String(error)}`);
                 }
-                return "";
+                return null;
             }
         },
 
 
         async handleTokenSubmit(token: string) {
             const botId = await this.getBotId(token);
-            this.$emit('tokenAndBotId', { token, botId });
+            if (botId) {
+                this.$emit('tokenAndBotId', { token, botId });
+            }
         },
 
         handleGoBack() {

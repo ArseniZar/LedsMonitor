@@ -7,7 +7,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { StepStartupApp } from '../../../interface';
+import { StepStartupApp } from '../../../basic/types/steps';
 import Welcome from './pageWelcome/Welcome.vue';
 import Token from './pageToken/Token.vue';
 
