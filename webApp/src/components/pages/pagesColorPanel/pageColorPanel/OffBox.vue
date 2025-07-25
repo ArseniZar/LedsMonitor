@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { BoxColor } from '../../../../../interface';
+import type { BoxColor } from '../../../../basic/classes/Device';
 
 export default {
     name: 'OffBox',
