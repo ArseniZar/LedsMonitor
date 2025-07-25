@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { ItemData } from "../../../interface";
+import type { ItemData } from '../../../basic/types/itemData';
 export default defineComponent({
     name: 'HeaderButton',
     emits: ['event'],

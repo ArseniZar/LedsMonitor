@@ -8,8 +8,8 @@
                     <span class="text-center font-bold text-lg text-white/80">Yes</span>
                 </button>
                 <button @click="() => { hasPermission(false) }"
-                    class="bg-red-600 mx-auto px-20 py-1 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105 transition ">
-                    <span class="text-center font-bold text-lg text-white/80">No</span> </button>
+                    class="bg-red-600/90 mx-auto px-20 py-1 rounded-4xl hover:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] hover:scale-105 transition ">
+                    <span class="text-center font-bold text-lg text-white">No</span> </button>
             </div>
         </div>
     </div>
