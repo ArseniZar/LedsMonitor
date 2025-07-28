@@ -7,7 +7,7 @@
         <DeviceItem v-for="item in itemsDevices" :item="item.toItemData('img/icons8-device-48.png')" />
         <button @click="handleSearchDevice" v-if="searchStatus === 'start' || searchStatus === 'done'"
             class='mt-6  h-7'>
-            <img :src="'img/icons8-restart-64.png'" alt="Check" class="h-7" />
+            <img :src="getImage('img/icons8-restart-64.png')" alt="Check" class="h-7" />
         </button>
         <div v-if="searchStatus === 'loading'" class="mt-6 h-7">
             <Spin />
@@ -32,6 +32,8 @@ import { formatScan } from '../../../../telegram/commands';
 import { Device } from '../../../../basic/classes/Device';
 import { Chat } from '../../../../basic/classes/Chat';
 import type { BoxColor } from '../../../../basic/classes/Device';
+import { getPreloadedImage } from '../../../../basic/utils/imagePreloader';
+
 
 import { bot, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../basic/config';
 import { parseMac, parseName } from '../../../../basic/utils/parse';
@@ -173,6 +175,10 @@ export default defineComponent({
 
         handleConfirmDevices() {
             this.$emit('newDevices', this.itemsDevices);
+        },
+        getImage(url: string): string | undefined {
+            const img = getPreloadedImage(url);
+            return img ? img.src : undefined;
         }
 
     },

@@ -11,7 +11,7 @@
                 {{ bot!.token }}
             </span>
             <button @click="hadleCopyText">
-                <img :src="'img/icons8-copy-24.png'" alt="Check" class="h-5 w-5" />
+                <img :src="getImage('img/icons8-copy-24.png')" alt="Check" class="h-5 w-5" />
             </button>
         </div>
         <span class="text-sm w-full bg-black/20 rounded-3xl p-3 px-4 text-white/80 select-none">{{ message }} </span>
@@ -26,6 +26,8 @@ import { bot } from '../../../../basic/config';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
 import ConfirmDelete from '../../../basic/ConfirmDelete.vue';
 import { LongPressHandler } from '../../../../basic/classes/LongPressHadler';
+import { getPreloadedImage } from '../../../../basic/utils/imagePreloader';
+
 
 export default defineComponent({
     name: 'Token',
@@ -77,6 +79,11 @@ export default defineComponent({
 
         goBack() {
             this.$emit('goBack');
+        },
+
+        getImage(url: string): string | undefined {
+            const img = getPreloadedImage(url);
+            return img ? img.src : undefined;
         },
     },
 });

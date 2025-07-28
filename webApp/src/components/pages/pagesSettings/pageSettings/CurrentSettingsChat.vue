@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-full flex items-center gap-1 flex-col rounded-xl">
-    <img :src="item.imgIcon" alt="Check" class="h-20" />
+    <img v-if="item.imgIcon" :src="getImage(item.imgIcon)" alt="Check" class="h-20" />
     <span :class="[
       'font-bold text-center text-2xl transition-all duration-300 select-none',
       isUpdated ? 'text-sky-600 scale-105' : 'text-white'
@@ -14,6 +14,7 @@
 import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
 import type { ItemData } from '../../../../basic/types/itemData';
+import { getPreloadedImage } from '../../../../basic/utils/imagePreloader';
 
 export default defineComponent({
   name: 'CurrentSettingsChat',
@@ -37,6 +38,12 @@ export default defineComponent({
           this.isUpdated = false;
         }, 600);
       }
+    }
+  },
+  methods: {
+    getImage(url: string): string | undefined {
+      const img = getPreloadedImage(url);
+      return img ? img.src : undefined;
     }
   }
 });
