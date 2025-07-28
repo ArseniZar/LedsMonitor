@@ -109,8 +109,7 @@ export default defineComponent({
             const result: ResultData<Update> = await getUpdates(bot.value!.getToken());
             if (result.status) {
 
-                const newUpdates: Update[] = result.value as Update[];
-                newUpdates.filter(item => item.update_id > this.offset!).sort((a, b) => a.update_id - b.update_id);
+                const newUpdates: Update[] = (result.value as Update[]).filter(item => item.update_id > this.offset!).sort((a, b) => a.update_id - b.update_id);
                 newUpdates.forEach((item: Update) => {
                     if (('channel_post' in item)) {
                         const channel_post: Update.Channel = item.channel_post;
@@ -139,7 +138,7 @@ export default defineComponent({
                                         this.itemsDevices.push(device);
                                     }
                                 } catch (error: any) {
-                                    
+
                                 }
                             }
                         }
@@ -149,7 +148,7 @@ export default defineComponent({
             }
         },
 
-        
+
 
         createDefaultboxColorsOff(): BoxColor {
             return { numberBox: Number(0), color: '#000000' }
