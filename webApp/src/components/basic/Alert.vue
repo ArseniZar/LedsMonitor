@@ -60,7 +60,7 @@ export default defineComponent({
             this.clearTimer();
             this.timerId = window.setTimeout(() => {
                 this.removeCurrentAlert();
-            }, 3000);
+            }, 4000);
         },
         clearTimer() {
             if (this.timerId !== null) {

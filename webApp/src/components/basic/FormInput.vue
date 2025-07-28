@@ -27,8 +27,10 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import type { ResultData } from '../../telegram/telegramService';
 import HeaderBar from './header/HeaderBar.vue';
 import Spin from './Spin.vue';
+
 export default defineComponent({
   name: 'Form',
   emits: ['goBack', 'submit'],
@@ -43,10 +45,6 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: true
-    },
-    alert: {
-      type: String,
-      required: true
     },
     text: {
       type: String,
@@ -88,9 +86,9 @@ export default defineComponent({
       this.spinStatus = true;
       const trimmedValue = this.value.trim();
       if (this.validData) {
-        const isValid = await this.validData(trimmedValue);
-        if (!isValid) {
-          this.alertValue = this.alert;
+        const isValid: ResultData<typeof this.validData> = await this.validData(trimmedValue);
+        if (!isValid.status) {
+          this.alertValue = isValid.alertMessage || 'Invalid data';
           this.spinStatus = false;
           return;
         }
