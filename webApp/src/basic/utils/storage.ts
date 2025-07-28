@@ -95,53 +95,9 @@ export class LocalDB<T extends Record<string, any>> {
   public replaceAll(newData: T[]): void {
     this.saveData(newData);
   }
-}
 
-
-
-
-export class LocalConfig<T extends Record<string, any>> {
-  private key: string;
-
-  constructor(storageKey: string) {
-    this.key = storageKey;
-    if (!localStorage.getItem(this.key)) {
-      this.save({} as T);
-    }
-  }
-
-  /** Получить весь конфиг */
-  getAll(): T {
-    const json = localStorage.getItem(this.key);
-    return json ? JSON.parse(json) : {} as T;
-  }
-
-  /** Полностью заменить конфиг */
-  setAll(config: T): void {
-    this.save(config);
-  }
-
-  /** Получить одно поле по ключу */
-  get<K extends keyof T>(key: K): T[K] | undefined {
-    const config = this.getAll();
-    return config[key];
-  }
-
-  /** Обновить одно поле */
-  set<K extends keyof T>(key: K, value: T[K]): void {
-    const config = this.getAll();
-    config[key] = value;
-    this.save(config);
-  }
-
-  /** Очистить конфиг */
-  clear(): void {
-    this.save({} as T);
-  }
-
-  /** Внутренний метод для сохранения */
-  private save(config: T): void {
-    localStorage.setItem(this.key, JSON.stringify(config));
+  // Добавленный метод очистки
+  public clear(): void {
+    this.saveData([]);
   }
 }
-

@@ -8,7 +8,7 @@
             transition">
             <span
                 class="font-mono text-white text-sm cursor-default select-none max-w-[calc(100%-3rem)] overflow-hidden whitespace-nowrap truncate block">
-                {{ CONFIG.token }}
+                {{ bot!.token }}
             </span>
             <button @click="hadleCopyText">
                 <img :src="'img/icons8-copy-24.png'" alt="Check" class="h-5 w-5" />
@@ -22,7 +22,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { CONFIG } from '../../../../basic/config';
+import { bot } from '../../../../basic/config';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
 import ConfirmDelete from '../../../basic/ConfirmDelete.vue';
 import { LongPressHandler } from '../../../../basic/classes/LongPressHadler';
@@ -36,14 +36,14 @@ export default defineComponent({
     emits: ['goBack', 'deleteToken'],
     data(): {
         longPressHandler: LongPressHandler | null;
-        CONFIG: typeof CONFIG,
         tokenToDelete: boolean;
         message: string;
+        bot: typeof bot;
     } {
         return {
             longPressHandler: null,
-            CONFIG: CONFIG,
             tokenToDelete: false,
+            bot: bot,
             message: `This is the bot token that will be used to handle 
                         sending messages in the chat with devices.`
         };
@@ -56,7 +56,7 @@ export default defineComponent({
 
     methods: {
         async hadleCopyText() {
-            await navigator.clipboard.writeText(this.CONFIG.token);
+            await navigator.clipboard.writeText(bot.value!.token);
         },
 
         handleLongPressItemStart() {

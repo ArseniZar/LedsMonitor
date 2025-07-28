@@ -1,4 +1,4 @@
-import { CONFIG, DEVICE_UPDATE_DEBOUNCE_DELAY_MS, MIN_DEVICE_SEND_INTERVAL_MS } from "./basic/config";
+import { bot, DEVICE_UPDATE_DEBOUNCE_DELAY_MS, MIN_DEVICE_SEND_INTERVAL_MS } from "./basic/config";
 import { Device } from "./basic/classes/Device";
 import { postCommandToTelegramChat } from "./telegram/api";
 import { formatDeviceInfo } from "./telegram/commands";
@@ -58,7 +58,7 @@ async function sendPendingDevice() {
     isSending = true;
     try {
         const text = formatDeviceInfo(pendingDevice);
-        await postCommandToTelegramChat(CONFIG!.token, pendingDevice.chat.id, text);
+        await postCommandToTelegramChat(bot.value!.token, pendingDevice.chat.id, text);
         console.log("Device sent successfully");
     } catch (error: any) {
         if (error instanceof NetworkError) {

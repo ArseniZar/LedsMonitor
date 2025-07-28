@@ -8,7 +8,7 @@
       v-on:goSettings="hadleCheckDataAndStepChange(NavigationCommand.OpenSettings)" />
 
     <MainStartup v-if="[StepMain.Startup].includes(stepStack[stepStack.length - 1])"
-      v-on:tokenAndBotId="(data) => { handleAddTokenAndBotId(data); hadleCheckDataAndStepChange(NavigationCommand.OpenColorPanel) }" />
+      v-on:addBot="(bot) => { handleAddBot(bot); hadleCheckDataAndStepChange(NavigationCommand.OpenColorPanel) }" />
 
     <MainAddDevice v-if="[StepMain.AddDevices].includes(stepStack[stepStack.length - 1])"
       v-on:goBack="hadleCheckDataAndStepChange(NavigationCommand.GoBack)"
@@ -65,9 +65,9 @@ import BottomBar from "./components/basic/header/BottomBar.vue";
 import Alert from "./components/basic/Alert.vue";
 
 
-import { CONFIG } from "./basic/config";
+import { bot } from "./basic/config";
 import { NavigationCommand } from "./navigationCommand";
-import { LocalDB, LocalConfig } from "./basic/utils/storage";
+import { LocalDB } from "./basic/utils/storage";
 import { StepMain } from "./basic/types/steps";
 import { Device } from "./basic/classes/Device";
 import { Chat } from "./basic/classes/Chat";
@@ -76,8 +76,8 @@ import { scheduleSendDevice } from './sendDevice'
 
 
 
-import type { ConfigType } from "./basic/config";
 import type { NavigationCommandValue } from "./navigationCommand";
+import { Bot } from "./basic/classes/Bot";
 
 
 
@@ -97,13 +97,13 @@ export default {
   data(): {
     deviceController: DeviceController | null,
     devicesDB: LocalDB<Device> | null;
-    configDB: LocalConfig<ConfigType> | null;
+    configDB: LocalDB<Bot> | null;
     tg: WebApp | null;
 
     stepStack: StepMain[];
     StepMain: typeof StepMain;
     NavigationCommand: typeof NavigationCommand;
-    CONFIG: ConfigType;
+
   } {
 
     return {
@@ -111,7 +111,6 @@ export default {
       devicesDB: null,
       configDB: null,
       tg: null,
-      CONFIG: CONFIG,
       stepStack: [],
       StepMain: StepMain,
       NavigationCommand: NavigationCommand,
@@ -162,7 +161,7 @@ export default {
       deep: true
     },
 
-    CONFIG: {
+    bot: {
       handler() {
         this.hadleCheckDataAndStepChange(NavigationCommand.NoChange);
       },
@@ -182,7 +181,7 @@ export default {
 
   methods: {
     hadleCheckDataAndStepChange(id: NavigationCommandValue) {
-      if (!CONFIG.token || CONFIG.token === '' || !CONFIG.botId || CONFIG.botId === '') {
+      if (!bot.value || !bot.value.hasAll()) {
         this.stepStackChange(NavigationCommand.OpenStartup);
         return;
       }
@@ -268,18 +267,13 @@ export default {
     },
 
 
-    handleAddTokenAndBotId(data: { token: string; botId: string }) {
-      CONFIG.token = data.token;
-      CONFIG.botId = data.botId;
-      this.configDB!.set("botId", CONFIG.botId);
-      this.configDB!.set("token", CONFIG.token);
+    handleAddBot(newBot: Bot) {
+      bot.value! = newBot;
+      this.configDB!.upsert(newBot);
     },
 
     handleRemoveToken() {
-      CONFIG.token = '';
-      CONFIG.botId = '';
-      this.configDB!.set("token", CONFIG.token);
-      this.configDB!.set("botId", CONFIG.botId);
+      this.configDB!.clear();
     },
 
     commitDB() {
@@ -354,15 +348,14 @@ export default {
 
     initializeDataBase() {
       this.devicesDB = new LocalDB<Device>("devices", ["id", "chat.id"], Device);
-      this.configDB = new LocalConfig<ConfigType>("CONFIG");
+      this.configDB = new LocalDB<Bot>("bot", ["token"], Bot);
 
       const savedDevices: Device[] = this.devicesDB.getAll();
-      const savedBotId: string = String(this.configDB.getAll().botId);
-      const savedToken: string = String(this.configDB.getAll().token);
+      const savedBot: Bot[] = this.configDB.getAll();
 
-      if (savedBotId !== "undefined" && savedToken !== "undefined" && savedBotId.trim() && savedToken.trim()) {
-        CONFIG.botId = savedBotId;
-        CONFIG.token = savedToken;
+
+      if (savedBot !== undefined && savedBot.length > 0) {
+        bot.value = savedBot[0];
       }
 
       if (savedDevices !== undefined && savedDevices.length > 0) {
