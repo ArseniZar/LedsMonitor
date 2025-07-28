@@ -2,7 +2,7 @@
   <div class="w-full h-full flex items-center gap-1 flex-col rounded-xl">
     <img :src="item.imgIcon" alt="Check" class="h-20" />
     <span :class="[
-      'font-bold text-center text-2xl transition-all duration-300',
+      'font-bold text-center text-2xl transition-all duration-300 select-none',
       isUpdated ? 'text-sky-600 scale-105' : 'text-white'
     ]">
       {{ item.title }}

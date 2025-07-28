@@ -14,7 +14,7 @@
                 <img :src="'img/icons8-copy-24.png'" alt="Check" class="h-5 w-5" />
             </button>
         </button>
-        <span class="text-sm w-full bg-black/20 rounded-3xl p-3 px-4 text-white/80">{{ message }} </span>
+        <span class="text-sm w-full bg-black/20 rounded-3xl p-3 px-4 text-white/80 select-none">{{ message }} </span>
     </div>
     <ConfirmDelete v-if="tokenToDelete" :title="'Delete token'" @hasPermission="hasPermission" />
 </template>

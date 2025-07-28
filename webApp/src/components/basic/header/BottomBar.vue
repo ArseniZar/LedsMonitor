@@ -1,5 +1,5 @@
 <template>
-    <div className="fixed  w-full left-1/2 bottom-8  -translate-x-1/2">
+    <div className="fixed  w-full left-1/2 bottom-8 z-10 -translate-x-1/2">
         <div class="w-10/12 max-w-md mx-auto">
             <div class=" flex flex-row  p-2 rounded-4xl  bg-black/20 justify-between gap-5 ">
                 <BottomButton :checked="false" class="ml-5 " @event="goBack" v-bind:data="bottomButtons[0]" />

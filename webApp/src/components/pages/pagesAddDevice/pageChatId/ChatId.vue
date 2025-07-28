@@ -1,5 +1,5 @@
 <template>
-    <FormInput :alert="alertInfo" :text="'Enter your chat ID from WebApp'" :validData="validateChatId"
+    <FormInput :alert="alertInfo" :text="'Enter your chat ID with devices'" :validData="validateChatId"
         :spinStatus="spinStatus" :headerStatus="headerStatus" @submit="handleChatIdSubmit" @goBack="handleGoBack" />
 </template>
 

@@ -1,15 +1,15 @@
 <template>
-  <div className="fixed inset-0 backdrop-blur-md  bg-black/40 min-h-screen">
+  <div @click="onBackgroundClick" className="fixed inset-0 backdrop-blur-md  bg-black/40 min-h-screen">
     <div class="h-full w-10/12 p-4 mx-auto max-w-md">
       <div class="fixed left-1/2 transform -translate-x-1/2 max-w-md w-10/12 p-4">
         <HeaderBar v-if="headerStatus" :visibleMode="'back'" @goBack="handleGoBack" />
       </div>
       <div className="flex gap-2 flex-col items-center justify-center h-full">
         <h1 className="text-center text-2xl font-bold text-white/90">{{ text }}</h1>
-        <input v-model="value" type="text"
+        <input v-model="value" type="text" ref="myInput"
           className="p-2  px-3 text-xs  bg-black  shadow-md text-white/90 rounded-2xl focus:outline-none  focus:shadow-[0_0_10px_3px_rgba(255,255,255,0.8)] w-full"
           placeholder="Enter text here" />
-        <div class="w-full rounded-2xl min-h-9 shadow-md">
+        <div class="w-full rounded-2xl min-h-9">
           <p className="text-white/80 text-center p-1 w-full block select-none">{{ alertValue }}</p>
           <Spin v-if="spinStatus" />
         </div>
@@ -74,6 +74,13 @@ export default defineComponent({
   methods: {
     handleGoBack() {
       this.$emit('goBack');
+    },
+
+    onBackgroundClick(event: MouseEvent) {
+      const input = this.$refs.myInput as HTMLInputElement | undefined;
+      if (input && !input.contains(event.target as Node)) {
+        input.blur();
+      }
     },
 
     async submit() {
