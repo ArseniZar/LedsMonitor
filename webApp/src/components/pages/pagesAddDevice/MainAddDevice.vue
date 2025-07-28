@@ -1,5 +1,5 @@
 <template>
-    <ChatId v-if="stepStack[stepStack.length - 1] === StepAddDevice.ChatId" @goBack="handleGoBack" :headerStatus="true"
+    <ChatId v-if="stepStack[stepStack.length - 1] === StepAddDevice.ChatId" @goBack="handleGoBack"
         @newChat="handleChatIdSubmit" />
     <SearchDevice v-if="stepStack[stepStack.length - 1] === StepAddDevice.SearchDevices" @goBack="handleGoBack"
         :chat="newChat!" @newDevices="handleNewDevices" />

@@ -1,18 +1,19 @@
 <template>
-    <FormInput :alert="alertInfo" :text="'Enter your chat ID with devices'" :validData="validateChatId"
-        :spinStatus="spinStatus" :headerStatus="headerStatus" @submit="handleChatIdSubmit" @goBack="handleGoBack" />
+    <FormInput :text="'Enter your chat ID with devices'" :validData="validateChatId" @submit="handleChatSubmit"
+        @goBack="handleGoBack" />
 </template>
 
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import type { Chat as TelegramChat } from '@telegraf/types';
+
+import { bot } from '../../../../basic/config';
+import { Chat } from '../../../../basic/classes/Chat';
 import FormInput from '../../../basic/FormInput.vue';
-import { getChatMemberInfo, getChatInfo } from '../../../../telegram/api';
-import { CONFIG } from '../../../../basic/config';
-import type { ChatInfo } from '../../../../telegram/types';
-import { Chat } from '../../../../basic/classes/Chat'
-import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors';
-import emitter from '../../../../basic/eventBus';
+
+import { getChat, validateChatId } from '../../../../telegram/telegramService';
+import type { ResultData } from '../../../../telegram/telegramService';
 
 
 export default defineComponent({
@@ -21,78 +22,29 @@ export default defineComponent({
         FormInput,
     },
     emits: ['goBack', 'newChat'],
-    props: {
-        headerStatus: {
-            type: Boolean,
-            required: false,
-            default: true
-        },
-    },
-
     data(): {
-        spinStatus: boolean,
-        alertInfo: string,
     } {
         return {
-            spinStatus: false,
-            alertInfo: '',
         };
     },
 
     methods: {
-        async validateChatId(chatId: string): Promise<boolean> {
-            try {
-                await getChatMemberInfo(CONFIG.token, chatId, CONFIG.botId);
-                return true;
+        async validateChatId(chatId: string): Promise<ResultData<unknown>> {
+            return validateChatId(bot.value!.getToken(), chatId, bot.value!.getBotId());
+        },
 
-            } catch (error: any) {
-                if (error instanceof NetworkError) {
-                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
 
-                } else if (error instanceof HttpError) {
-                    if (error.status === 400) {
-                        this.alertInfo = "Chat does not exist or the application is not a member"
-                    } else {
-                        emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
-                    }
-                } else if (error instanceof InvalidJsonError) {
-                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
-                } else {
-                    emitter.emit('alert', `Unknown error: ${String(error)}`);
+        async handleChatSubmit(chatId: string) {
+            const result: ResultData<TelegramChat> = await getChat(bot.value!.getToken(), chatId);
+            if (result.status) {
+                const chatInfo = result.value as TelegramChat;
+                if (chatInfo.type === 'channel') {
+                    const chat = new Chat(String(chatInfo.id), chatInfo.title, chatInfo.type);
+                    this.$emit('newChat', chat);
+                    return;
                 }
-
-                return false;
-            }
-
-        },
-
-        async getChatTittile(chatId: string) {
-            try {
-                const result: ChatInfo = await getChatInfo(CONFIG.token, chatId);
-                return result.title
-
-            } catch (error: any) {
-                if (error instanceof NetworkError) {
-                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
-                } else if (error instanceof HttpError) {
-                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
-                } else if (error instanceof InvalidJsonError) {
-                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
-                } else {
-                    emitter.emit('alert', `Unknown error: ${String(error)}`);
-                }
-                return null;
             }
         },
-
-        async handleChatIdSubmit(chatId: string) {
-            const title = await this.getChatTittile(chatId);
-            if (title && chatId) {
-                const chat = new Chat(chatId, title);
-                this.$emit('newChat', chat);
-            }
-        },
-
 
         handleGoBack() {
             this.$emit('goBack');

@@ -23,31 +23,23 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
+
 import DeviceItem from './DeviceItem.vue';
 import Spin from '../../../basic/Spin.vue';
 import HeaderBar from '../../../basic/header/HeaderBar.vue';
 
-import type { TelegramUpdate } from '../../../../telegram/types';
 import { formatScan } from '../../../../telegram/commands';
-import { postCommandToTelegramChat, getTelegramUpdates } from '../../../../telegram/api';
-import { HttpError, InvalidJsonError, NetworkError } from '../../../../telegram/errors';
-
 import { Device } from '../../../../basic/classes/Device';
 import { Chat } from '../../../../basic/classes/Chat';
 import type { BoxColor } from '../../../../basic/classes/Device';
-import emitter from '../../../../basic/eventBus';
 
-import { CONFIG, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../basic/config';
+import { bot, DEVICE_SEND_SESSION_DURATION_MS, RETRY_SEND_INTERVAL_MS } from '../../../../basic/config';
+import { parseMac, parseName } from '../../../../basic/utils/parse';
+import { getOffset, getUpdates, sendMessage, type ResultData } from '../../../../telegram/telegramService';
+import type { Update } from '@telegraf/types';
 
 
-class ParseError extends Error {
-    command: string;
-    constructor(message: string, command: string) {
-        super(message);
-        this.command = command;
-        this.name = 'ParseError';
-    }
-}
+
 
 
 export default defineComponent({
@@ -67,7 +59,7 @@ export default defineComponent({
     data(): {
         searchStatus: 'done' | 'loading' | 'start',
         itemsDevices: Array<Device>,
-        offset: string | null,
+        offset: number | null,
 
     } {
         return {
@@ -80,10 +72,8 @@ export default defineComponent({
     methods: {
         async handleSearchDevice() {
             this.searchStatus = 'loading'
-            if (!this.offset) {
-                this.offset = await this.initConfigOffset();
-            }
-            await this.SendCommand();
+            this.offset = await this.getOffset();
+            await this.sendCommand();
             const startTime = Date.now();
             while (Date.now() - startTime < DEVICE_SEND_SESSION_DURATION_MS) {
                 await this.getDevice();
@@ -97,126 +87,69 @@ export default defineComponent({
             }
         },
 
-        async initConfigOffset() {
-            try {
-                const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
-                if (!result) return '0';
-                return result[result.length - 1].update_id;
 
-            } catch (error: any) {
-                if (error instanceof NetworkError) {
-                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
-                } else if (error instanceof HttpError) {
-                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
-                } else if (error instanceof InvalidJsonError) {
-                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
-                } else {
-                    emitter.emit('alert', `Unknown error: ${String(error)}`);
-                }
-                return '0';
+        async getOffset(): Promise<number> {
+            const result: ResultData<number> = await getOffset(bot.value!.getToken());
+            if (result.status) {
+                const offset = result.value as number;
+                return offset;
+
             }
+            return 0;
+        },
+
+        async sendCommand(): Promise<boolean> {
+            const result: ResultData<unknown> = await sendMessage(bot.value!.getToken(), this.chat.id, formatScan());
+            return result.status;
         },
 
 
-        async SendCommand() {
-            try {
-                await postCommandToTelegramChat(CONFIG.token, this.chat.id, formatScan());
-            } catch (error: any) {
-                if (error instanceof NetworkError) {
-                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
-                } else if (error instanceof HttpError) {
-                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
-                } else if (error instanceof InvalidJsonError) {
-                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
-                } else {
-                    emitter.emit('alert', `Unknown error: ${String(error)}`);
-                }
-            }
-        },
 
         async getDevice() {
-            try {
-                const result: TelegramUpdate[] = await getTelegramUpdates(CONFIG.token);
-                if (!result.length) return;
-                const newUpdates: TelegramUpdate[] = result
-                    .filter(item => Number(item.update_id) > Number(this.offset))
-                    .sort((a, b) => Number(a.update_id) - Number(b.update_id));
+            const result: ResultData<Update> = await getUpdates(bot.value!.getToken());
+            if (result.status) {
 
-                newUpdates.forEach((item) => {
+                const newUpdates: Update[] = result.value as Update[];
+                newUpdates.filter(item => item.update_id > this.offset!).sort((a, b) => a.update_id - b.update_id);
+                newUpdates.forEach((item: Update) => {
+                    if (('channel_post' in item)) {
+                        const channel_post: Update.Channel = item.channel_post;
+                        if ('text' in channel_post && 'entities' in channel_post && Array.isArray(channel_post.entities)) {
+                            const chatId: string = String(channel_post.chat.id);
+                            const text: string = String(channel_post.text);
+                            if (String(chatId) === String(this.chat.id)) {
+                                try {
+                                    const mac: string = parseMac(text);
+                                    const name: string = parseName(text);
+                                    const device = new Device(
+                                        mac,
+                                        this.chat,
+                                        name,
+                                        false,
+                                        0,
+                                        this.createDefaultboxColors(),
+                                        this.createDefaultboxColorsMain(),
+                                        this.createDefaultboxColorsOff(),
+                                    );
 
-                    const chatId: string = item.channel_post.chat.id;
-                    const text: string = item.channel_post.text;
-                    const typeMessage: string = item.channel_post.entities[0].type
-
-                    if (String(chatId) === String(this.chat.id) && String(typeMessage) === String('bot_command') && text) {
-
-                        try {
-                            const mac: string = this._textPars('mac', text);
-                            const name: string = this._textPars('name', text);
-                            const device = new Device(
-                                mac,
-                                this.chat,
-                                name,
-                                false,
-                                0,
-                                this.createDefaultboxColors(),
-                                this.createDefaultboxColorsMain(),
-                                this.createDefaultboxColorsOff(),
-                            );
-
-                            const index = this.itemsDevices.findIndex(d => d.equals(device));
-                            if (index !== -1) {
-                                this.itemsDevices[index] = device;
-                            } else {
-                                this.itemsDevices.push(device);
+                                    const index = this.itemsDevices.findIndex(d => d.equals(device));
+                                    if (index !== -1) {
+                                        this.itemsDevices[index] = device;
+                                    } else {
+                                        this.itemsDevices.push(device);
+                                    }
+                                } catch (error: any) {
+                                    
+                                }
                             }
                         }
-                        catch (error: any) {
-                            emitter.emit('alert', `Parse error: ${error.message}`);
-                        }
                     }
-                    this.offset = String(item.update_id);
+                    this.offset = item.update_id;
                 });
-
-            } catch (error: any) {
-                if (error instanceof NetworkError) {
-                    emitter.emit('alert', `Network error: Please check your internet connection and try again.`);
-                } else if (error instanceof HttpError) {
-                    emitter.emit('alert', `HTTP error ${error.status}: ${error.message}`);
-                } else if (error instanceof InvalidJsonError) {
-                    emitter.emit('alert', `Invalid JSON: ${error.message}`);
-                } else {
-                    emitter.emit('alert', `Unknown error: ${String(error)}`);
-                }
             }
         },
 
-        _textPars(command: string, text: string): string {
-            switch (command.toLowerCase()) {
-                case 'mac': {
-                    const regex = /\/mac:([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})/i;
-                    const match = text.match(regex);
-                    if (!match) {
-                        throw new ParseError('Failed to parse MAC address from text', command);
-                    }
-                    return match[1].toUpperCase();
-                }
-                case 'name': {
-                    const regex = /\/name:([^\s]+)/i;
-                    const match = text.match(regex);
-                    if (!match) {
-                        throw new ParseError('Failed to parse NAME from text', command);
-                    }
-                    return match[1].trim();
-                }
-                default:
-                    throw new ParseError(`Unsupported command: ${command}`, command);
-            }
-        },
-
-
-
-
+        
 
         createDefaultboxColorsOff(): BoxColor {
             return { numberBox: Number(0), color: '#000000' }

@@ -1,6 +1,6 @@
 <template>
     <Welcome v-if="stepStack[stepStack.length - 1] === StepStartupApp.Welcome" @addToken="onButtonStart" />
-    <Token v-if="stepStack[stepStack.length - 1] === StepStartupApp.Token" @tokenAndBotId="onAddTokenAndChat"
+    <Token v-if="stepStack[stepStack.length - 1] === StepStartupApp.Token" @addBot="onAddBot"
         @goBack="handleGoBack" />
 </template>
 
@@ -10,6 +10,7 @@ import { defineComponent } from 'vue';
 import { StepStartupApp } from '../../../basic/types/steps';
 import Welcome from './pageWelcome/Welcome.vue';
 import Token from './pageToken/Token.vue';
+import type { Bot } from '../../../basic/classes/Bot';
 
 
 
@@ -19,7 +20,7 @@ export default defineComponent({
         Welcome,
         Token,
     },
-    emits: ['tokenAndBotId'],
+    emits: ['addBot'],
     data(): {
         stepStack: StepStartupApp[],
         StepStartupApp: typeof StepStartupApp,
@@ -37,8 +38,8 @@ export default defineComponent({
 
 
 
-        onAddTokenAndChat(data: { token: string, botId: string }) {
-            this.$emit('tokenAndBotId', data);
+        onAddBot(bot: Bot) {
+            this.$emit('addBot', bot);
         },
 
 
