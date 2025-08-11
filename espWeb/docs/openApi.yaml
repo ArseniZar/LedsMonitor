@@ -1,0 +1,122 @@
+openapi: 3.0.0              
+info:                     
+  title: espWeb
+  description:  
+  version: 1.0.0           
+
+servers:                  
+  - url: http://192.168.4.1/
+    description: Main server
+
+paths:                      
+  /scan:                  
+    get:                     
+      summary: Get available networks list
+      description: Returns a list of available networks with their details
+      responses:          
+        '200':             
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Network'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+paths:
+  /network:
+    post:
+      summary: Connect to a network
+      description: Send object Network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                   $ref: '#/components/schemas/Network'
+                  
+                
+            
+
+
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+          example: false
+        error_code:
+          type: integer
+          enum: [400, 401, 403, 404, 500]
+          example: 400
+        message: 
+          type: string
+          example: "Bad request"
+
+    Network:
+      type: object
+      properties:
+        ssid:
+          type: string
+          example: "HomeWiFi"
+        password:
+          type: string
+          example: "12345678"
+        rssi:
+          type: integer
+          example: -40
+        encryptionType:
+          type: integer
+          enum:
+            - 7
+            - 5
+            - 2
+            - 4
+            - 8 
+          x-enumNames:
+            - "OPEN"
+            - "WEP"
+            - "WPA"
+            - "WPA2"
+            - "UNKNOWN"
+          example: 7
+        channel:
+          type: integer
+          example: 6
+        bssid:
+          type: string
+          example: "00:11:22:33:44:55"
+        hidden:
+          type: boolean
+          example: false

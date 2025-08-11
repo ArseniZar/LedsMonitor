@@ -18,8 +18,7 @@ struct Info
 class TelegramBot
 {
 private:
-    static Logger *logger_ptr;
-    static EEPROMSetup *eeprom_ptr;
+    Logger &logger_ptr;
     static FastBot2 *bot_ptr;
     static LedController *device_ptr;
     static String mac;
