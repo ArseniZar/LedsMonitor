@@ -3,9 +3,10 @@
 Logger &logger = Logger::init(LOGGER_DEBUG_MODE);
 Eeprom &eeprom = Eeprom::init(512);
 WiFiSetup &wifi = WiFiSetup::init(logger);
+MacAddress &mac = MacAddress::init("48:E7:29:64:FF:9B", "FF:FF:FF:FF:FF:FF");
+TelegramBot &bot = TelegramBot::init(logger, BOT_TOKEN, mac);
 
 // LedController device(logger);
-// TelegramBot bot(&logger, &eeprom);
 
 const String savedSsid = eeprom.readString(ADDR_SSID);
 const String savedPass = eeprom.readString(ADDR_PASS);
@@ -18,13 +19,8 @@ void setup()
     delay(3000);
   }
 
-  if (LOGGER_DEBUG_MODE)
-  {
-    bool status = wifi.begin("", "");
-  }
-  else{
-    bool status = wifi.begin(savedSsid, savedPass);
-  }
+  bool status = wifi.begin(savedSsid, savedPass);
+
   if (status)
   {
     const String &newSsid = wifi.getSsid();
@@ -38,11 +34,40 @@ void setup()
       eeprom.writeString(newPass, ADDR_PASS);
     }
   }
+  bot.begin();
+  bot.registerCommand<telegram::ModelBaseRequest, void>("scan", [](telegram::ModelBaseRequest &request)
+                                                        { Serial.println(request.id); });
 }
 
 void loop()
 {
+  bot.tick();
 }
+
+// void setup()
+// {
+//   Serial.begin(115200);
+//   delay(2000);
+//   const su::Text text = "/command=update;mac=48:E7:29:64:FF:09;color=#e5757c;status=on/";
+//   auto parse_ptr = telegram::parseTelegramRequest<telegram::UpdateLedDevice>(text);
+//   if (parse_ptr->isOk())
+//   {
+//     auto *success_parse_ptr = static_cast<telegram::TelegramSuccessRequest<telegram::BaseModelRequest> *>(parse_ptr.get());
+//     telegram::BaseModelRequest obj = success_parse_ptr->data;
+//     Serial.println(obj.command);
+//     Serial.println(obj.mac);
+//     // Serial.println(obj.color);
+//     // Serial.println(obj.status);
+//   }
+//   else
+//   {
+//     auto *error_ptr = static_cast<telegram::TelegramErrorRequest *>(parse_ptr.get());
+//     Serial.println(error_ptr->message);
+//   }
+// }
+// void loop()
+// {
+// }
 
 // #include <Arduino.h>
 // #include <Adafruit_NeoPixel.h>

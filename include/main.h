@@ -9,6 +9,7 @@
 #include "WiFiSetup.h"
 #include "TelegramBot.h"
 #include "LedController.h"
+#include "MacAddress.h"
 
 #ifndef LOGGER_DEBUG_MODE
 #define LOGGER_DEBUG_MODE 1
