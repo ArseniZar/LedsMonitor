@@ -7,23 +7,22 @@ WiFiSetup &WiFiSetup::init(Logger &logger)
 }
 
 WiFiSetup::WiFiSetup(Logger &logger)
-    : logger(logger), webserver(logger, 80)
+    : logger(logger),
+      webserver(logger, 80),
+      apSsid("SmartHome"),
+      apPassword("12345678"),
+      ssid(""),
+      password(""),
+      mdnsName("smarthome")
 {
-    // WiFi.onStationModeConnected([this](const WiFiEventStationModeConnected &event)
-    //                             {   this->logger.log("hadleConnect");
-    //                                 this->connState = ConnState::CONNECTED; });
-
-    // WiFi.onStationModeDisconnected([this](const WiFiEventStationModeDisconnected &event)
-    //                                {this->logger.log("hadleDisconected");
-    //                                 this->connState = ConnState::FAILED; });
 }
 
 ConnState WiFiSetup::status()
 {
-     return static_cast<ConnState>(WiFi.status());
+    return static_cast<ConnState>(WiFi.status());
 }
 
-bool WiFiSetup::begin(const String &ssid, const String &password)
+bool WiFiSetup::begin()
 {
     logger.log("(WiFiSetup::begin) Starting Wi-Fi setup...", LOG_INFO);
 
@@ -33,17 +32,13 @@ bool WiFiSetup::begin(const String &ssid, const String &password)
         return true;
     }
 
-    String actualSsid = apSsid.isEmpty() ? DEFAULT_AP_SSID : apSsid;
-    String actualPassword = apPassword.isEmpty() ? DEFAULT_AP_PASSWORD : apPassword;
-
-    if (!startAP(actualSsid, actualPassword))
+    if (!startAP(apSsid, apPassword))
     {
         logger.log("(WiFiSetup::begin) Failed to start Access Point. Setup aborted.", LOG_ERROR);
         return false;
     }
 
-    String actualMdnsName = mdnsName.isEmpty() ? DEFAULT_MDNS_NAME : apSsid;
-    startMDNS(actualMdnsName);
+    startMDNS(mdnsName);
 
     while (status() != ConnState::WL_CONNECTED || webserver.isRunning())
     {
@@ -100,6 +95,12 @@ bool WiFiSetup::attemptConnection(const String &ssid, const String &password)
         return true;
     }
     return false;
+}
+
+void WiFiSetup::setWiFiConfig(const String &ssid, const String &password)
+{
+    this->ssid = ssid;
+    this->password = password;
 }
 
 void WiFiSetup::setAPConfig(const String &apSsid, const String &apPassword)

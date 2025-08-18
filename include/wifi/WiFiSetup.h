@@ -11,9 +11,6 @@
 #include "Network.h"
 #include "WebServer.h"
 
-#define DEFAULT_AP_SSID "SmartHome"
-#define DEFAULT_AP_PASSWORD "12345678"
-#define DEFAULT_MDNS_NAME "smarthome"
 #define WIFI_CONNECTION_TIMEOUT_MS 10000
 
 enum class ConnState : int
@@ -33,10 +30,11 @@ enum class ConnState : int
 class WiFiSetup
 {
 public:
+    bool begin();
     static WiFiSetup &init(Logger &logger);
-    bool begin(const String &ssid, const String &password);
     bool attemptConnection(const String &ssid, const String &password);
     void setAPConfig(const String &apSsid, const String &apPassword);
+    void setWiFiConfig(const String &ssid, const String &password);
     void setMdnsName(const String &mdnsName);
     const String getMAC() const;
     const String &getSsid() const;
@@ -44,11 +42,7 @@ public:
     ConnState status();
 
 private:
-    WiFiSetup(const WiFiSetup &) = default;
-    WiFiSetup(WiFiSetup &&) = default;
-    WiFiSetup &operator=(const WiFiSetup &) = default;
-    WiFiSetup &operator=(WiFiSetup &&) = default;
-    explicit WiFiSetup(Logger &logger);
+    WiFiSetup(Logger &logger);
 
     Logger &logger;
     espweb::WebServer webserver;

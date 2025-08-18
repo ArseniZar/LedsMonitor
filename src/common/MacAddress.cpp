@@ -1,10 +1,10 @@
 #include "MacAddress.h"
 
-MacAddress::MacAddress(const String &macAddr, const String &bcast) : address(normalize(macAddr)), broadcast(normalize(bcast)) {}
+MacAddress::MacAddress(const String &macAddr) : address(normalize(macAddr)), broadcast(normalize("FF:FF:FF:FF:FF:FF")) {}
 
-MacAddress &MacAddress::init(const String &macAddr, const String &bcast)
+MacAddress &MacAddress::init(const String &macAddr)
 {
-    static MacAddress instance(macAddr, bcast);
+    static MacAddress instance(macAddr);
     return instance;
 }
 
