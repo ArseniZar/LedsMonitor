@@ -1,47 +1,79 @@
 #include "main.h"
 
 Logger &logger = Logger::init(LOGGER_DEBUG_MODE);
-Eeprom &eeprom = Eeprom::init(512);
-WiFiSetup &wifi = WiFiSetup::init(logger);
+// Eeprom &eeprom = Eeprom::init(512);
+// WiFiSetup &wifi = WiFiSetup::init(logger);
 MacAddress &mac = MacAddress::init("48:E7:29:64:FF:9B", "FF:FF:FF:FF:FF:FF");
-TelegramBot &bot = TelegramBot::init(logger, BOT_TOKEN, mac);
+// TelegramBot &bot = TelegramBot::init(logger, BOT_TOKEN, mac);
+DeviceLed<NeoBrgFeature, NeoEsp8266BitBangWs2811Method> device(logger, mac, LED_COUNT, DEVICE_PIN);
 
-// LedController device(logger);
-
-const String savedSsid = eeprom.readString(ADDR_SSID);
-const String savedPass = eeprom.readString(ADDR_PASS);
+// const String savedSsid = eeprom.readString(ADDR_SSID);1
+// const String savedPass = eeprom.readString(ADDR_PASS);
 
 void setup()
 {
-  Serial.begin(115200);
-  if (LOGGER_DEBUG_MODE)
-  {
-    delay(3000);
-  }
+  delay(2000);
+  device.begin();
+  device.setBrightness(50);
+  device.setPower(true);
+  // device.setPower(true);
+  // Serial.begin(115200);
+  // if (LOGGER_DEBUG_MODE)
+  // {
+  //   delay(3000);
+  // }
 
-  bool status = wifi.begin(savedSsid, savedPass);
+  // bool status = wifi.begin(savedSsid, savedPass);
 
-  if (status)
-  {
-    const String &newSsid = wifi.getSsid();
-    const String &newPass = wifi.getPass();
-    if (newSsid != savedSsid)
-    {
-      eeprom.writeString(newSsid, ADDR_SSID);
-    }
-    if (newPass != savedPass)
-    {
-      eeprom.writeString(newPass, ADDR_PASS);
-    }
-  }
-  bot.begin();
-  bot.registerCommand<telegram::ModelBaseRequest, void>("scan", [](telegram::ModelBaseRequest &request)
-                                                        { Serial.println(request.id); });
+  // if (status)
+  // {
+  //   const String &newSsid = wifi.getSsid();
+  //   const String &newPass = wifi.getPass();
+  //   if (newSsid != savedSsid)
+  //   {
+  //     eeprom.writeString(newSsid, ADDR_SSID);
+  //   }
+  //   if (newPass != savedPass)
+  //   {
+  //     eeprom.writeString(newPass, ADDR_PASS);
+  //   }
+  // }
+  // bot.begin();
+  // device.begin();
+  // bot.registerCommand<telegram::ModelBaseRequest, void>("scan", [](telegram::ModelBaseRequest &request)
+  //                                                       { Serial.println(request.id); });
 }
 
 void loop()
 {
-  bot.tick();
+  // bot.tick();
+  delay(5000);
+  device.setColor("#ff0000"); // красный
+  delay(2000);
+
+  device.setColor("#00ff00"); // зелёный
+  delay(2000);
+
+  device.setColor("#0000ff"); // синий
+  delay(2000);
+
+  device.setColor("#ffff00"); // жёлтый
+  delay(2000);
+
+  device.setColor("#800080"); // фиолетовый
+  delay(2000);
+
+  device.setColor("#00ff33f8"); // оранжевый
+  delay(2000);
+
+  device.setColor("#000000"); // чёрный
+  delay(2000);
+
+  device.setColor("#ffffff"); // белый
+  delay(2000);
+
+  device.setColor("#808080"); // серый
+  delay(2000);
 }
 
 // void setup()
