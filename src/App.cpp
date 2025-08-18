@@ -6,7 +6,7 @@ App::App() : cachedSsid(""), cachedPass(""),
              wifi(WiFiSetup::init(logger)),
              mac(MacAddress::init(wifi.getMAC())),
              bot(TelegramBot::init(logger, BOT_TOKEN, mac)),
-             device(DeviceLed<NeoBrgFeature, NeoEsp8266BitBangWs2811Method>(logger, mac, LED_COUNT, DEVICE_PIN))
+             device(DeviceLed<NeoBrgFeature, NeoEsp8266BitBangWs2811Method>(logger, mac, DEVICE_NAME, LED_COUNT, DEVICE_PIN))
 {
     cachedSsid = eeprom.readString(ADDR_WIFI_SSID);
     cachedPass = eeprom.readString(ADDR_WIFI_PASS);
@@ -31,11 +31,11 @@ void App::begin()
     if (wifi.status() == ConnState::WL_CONNECTED)
     {
         commitWiFiIfChanged();
-        #if ENABLE_TELEGRAM_BOT
-                bot.setLimitMessage(BOT_LIMIT);
-                bot.setPeriodUpdate(BOT_PERIOD);
-                bot.begin();
-        #endif
+#if ENABLE_TELEGRAM_BOT
+        bot.setLimitMessage(BOT_LIMIT);
+        bot.setPeriodUpdate(BOT_PERIOD);
+        bot.begin();
+#endif
     }
 #endif
 
@@ -51,19 +51,19 @@ void App::update()
     {
         wifi.setWiFiConfig(cachedSsid, cachedPass);
         wifi.begin();
-        #if ENABLE_WIFI_MODULE
-                if (wifi.status() == ConnState::WL_CONNECTED)
-                {
-                    commitWiFiIfChanged();
-                }
-        #endif
-    }
-    #if ENABLE_TELEGRAM_BOT
-        else
+#if ENABLE_WIFI_MODULE
+        if (wifi.status() == ConnState::WL_CONNECTED)
         {
-            bot.tick();
+            commitWiFiIfChanged();
         }
-    #endif
+#endif
+    }
+#if ENABLE_TELEGRAM_BOT
+    else
+    {
+        bot.tick();
+    }
+#endif
 #endif
 }
 

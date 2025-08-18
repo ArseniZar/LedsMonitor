@@ -2,13 +2,13 @@
 #include "DeviceLed.h"
 // DeviceLed.tpp
 template <typename T, typename E>
-DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, uint16_t countLed, uint8_t pin) : DeviceBase(mac),
-                                                                                                    logger(logger),
-                                                                                                    device(countLed, pin),
-                                                                                                    countLed(countLed),
-                                                                                                    brightness(255),
-                                                                                                    color(Colors::WHITE),
-                                                                                                    status(false) {}
+DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, const String &name, uint16_t countLed, uint8_t pin) : DeviceBase(mac, name),
+                                                                                                                       logger(logger),
+                                                                                                                       device(countLed, pin),
+                                                                                                                       countLed(countLed),
+                                                                                                                       brightness(255),
+                                                                                                                       color(Colors::WHITE),
+                                                                                                                       status(false) {}
 template <typename T, typename E>
 void DeviceLed<T, E>::begin()
 {
