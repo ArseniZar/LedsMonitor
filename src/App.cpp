@@ -6,7 +6,7 @@ App::App() : cachedSsid(""), cachedPass(""),
              wifi(WiFiSetup::init(logger)),
              mac(MacAddress::init(wifi.getMAC())),
              bot(TelegramBot::init(logger, BOT_TOKEN, mac)),
-             device(DeviceLed<NeoBrgFeature, NeoEsp8266BitBangWs2811Method>(logger, mac, DEVICE_NAME, LED_COUNT, DEVICE_PIN))
+             device(DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod>(logger, mac, DEVICE_NAME, LED_COUNT, DEVICE_PIN))
 {
     cachedSsid = eeprom.readString(ADDR_WIFI_SSID);
     cachedPass = eeprom.readString(ADDR_WIFI_PASS);
@@ -20,27 +20,47 @@ App &App::init()
 
 void App::begin()
 {
+    Serial.print("FreeHeap before wifi: ");
+    Serial.println(ESP.getFreeHeap());
+
+#if ENABLE_DEVICE_MODULE
+    Serial.print("FreeHeap before NeoPixelBus: ");
+    Serial.println(ESP.getFreeHeap());
+    device.begin();
+    Serial.print("FreeHeap after NeoPixelBus: ");
+    Serial.println(ESP.getFreeHeap());
+#endif
+
 #if ENABLE_WIFI_MODULE
     wifi.setMdnsName(MDNS_NAME);
     wifi.setAPConfig(AP_SSID, AP_PASS);
-    wifi.setWiFiConfig(cachedSsid, cachedPass);
+    wifi.setWiFiConfig(cachedSsid, "");
     wifi.begin();
 #endif
 
-#if ENABLE_WIFI_MODULE && ENABLE_TELEGRAM_BOT
+    Serial.print("FreeHeap after wifi: ");
+    Serial.println(ESP.getFreeHeap());
+
+#if ENABLE_WIFI_MODULE && ENABLE_TELEGRAM_BOT_MODULE
     if (wifi.status() == ConnState::WL_CONNECTED)
     {
         commitWiFiIfChanged();
-#if ENABLE_TELEGRAM_BOT
+#if ENABLE_TELEGRAM_BOT_MODULE
+        Serial.print("FreeHeap before bot: ");
+        Serial.println(ESP.getFreeHeap());
+
         bot.setLimitMessage(BOT_LIMIT);
         bot.setPeriodUpdate(BOT_PERIOD);
         bot.begin();
+#if ENABLE_DEVICE_MODULE && ENABLE_TELEGRAM_BOT_MODULE
+        bindDeviceToTelegramCommands();
+#endif
+        Serial.print("FreeHeap after bot: ");
+        Serial.println(ESP.getFreeHeap());
+
 #endif
     }
-#endif
 
-#if ENABLE_DEVICE_LED
-    device.begin();
 #endif
 }
 
@@ -58,7 +78,7 @@ void App::update()
         }
 #endif
     }
-#if ENABLE_TELEGRAM_BOT
+#if ENABLE_TELEGRAM_BOT_MODULE
     else
     {
         bot.tick();
@@ -80,4 +100,21 @@ void App::commitWiFiIfChanged()
         cachedSsid = currentSsid;
         cachedPass = currentPass;
     }
+}
+
+void App::bindDeviceToTelegramCommands()
+{
+    using namespace telegram;
+
+    bot.registerCommand<ScanLedDeviceRequest, ScanLedDeviceResponse>(BOT_CMD_SCAN, [this](ScanLedDeviceRequest &request) -> ScanLedDeviceResponse
+                                                                     { return ScanLedDeviceResponse(device.getName(), ModelBaseResponse(request.command, device.getMacAddress().getMac())); });
+    bot.registerCommand<UpdateLedDeviceRequest, void>(BOT_CMD_UPDATE, [this](UpdateLedDeviceRequest &request) -> void
+
+                                                      {   
+        Serial.print("FreeHeap before NeoPixelBus: "); 
+        Serial.println(ESP.getFreeHeap());
+        device.setColor(request.color);
+        device.setPower(request.status);
+        Serial.print("FreeHeap after NeoPixelBus: ");
+        Serial.println(ESP.getFreeHeap()); });
 }

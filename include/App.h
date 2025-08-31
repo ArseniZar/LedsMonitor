@@ -10,6 +10,7 @@
 #include "DeviceLed.h"
 #include "WiFiSetup.h"
 #include "TelegramBot.h"
+#include "LedDeviceModels.h"
 
 #ifndef LOGGER_DEBUG_MODE
 #define LOGGER_DEBUG_MODE 1
@@ -19,12 +20,12 @@
 #define ENABLE_WIFI_MODULE 1
 #endif
 
-#ifndef ENABLE_TELEGRAM_BOT
-#define ENABLE_TELEGRAM_BOT 1
+#ifndef ENABLE_TELEGRAM_BOT_MODULE
+#define ENABLE_TELEGRAM_BOT_MODULE 1
 #endif
 
-#ifndef ENABLE_DEVICE_LED
-#define ENABLE_DEVICE_LED 1
+#ifndef ENABLE_DEVICE_MODULE
+#define ENABLE_DEVICE_MODULE 1
 #endif
 
 class App
@@ -44,9 +45,10 @@ private:
     WiFiSetup &wifi;
     MacAddress &mac;
     TelegramBot &bot;
-    DeviceLed<NeoBrgFeature, NeoEsp8266BitBangWs2811Method> device;
+    DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod> device;
 
     App();
     void commitWiFiIfChanged();
+    void bindDeviceToTelegramCommands();
 };
 #endif // APP_H
