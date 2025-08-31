@@ -25,3 +25,8 @@ bool MacAddress::equals(const String &mac) const
 {
     return normalize(mac) == address;
 }
+
+String MacAddress::getMac() const
+{
+    return address;
+}

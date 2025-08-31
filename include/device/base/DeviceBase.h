@@ -9,7 +9,7 @@ class DeviceBase
 {
 public:
     virtual ~DeviceBase() = default;
-    const MacAddress &getMac() const { return mac; }
+    const MacAddress &getMacAddress() const { return mac; }
     const String getName() const { return name; }
 
 protected:

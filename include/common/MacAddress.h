@@ -10,7 +10,7 @@ public:
     static MacAddress &init(const String &macAddr);
     bool isBroadcast(const String &mac) const;
     bool equals(const String &mac) const;
-
+    String getMac() const;
 
 private:
     const String address;
@@ -18,7 +18,6 @@ private:
     static String normalize(const String &mac);
     MacAddress(const String &macAddr);
     MacAddress() = delete;
-
 };
 
 #endif // MAC_ADDRESS_H

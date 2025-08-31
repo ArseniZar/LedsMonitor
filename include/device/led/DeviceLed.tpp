@@ -50,9 +50,12 @@ void DeviceLed<T, E>::setColor(const String &color)
 {
     RgbColor hexColor = stringToRgbColor(color);
     this->color = hexColor;
-    device.ClearTo(brightnessColor());
-    device.Show();
-    status = true;
+    
+    if (status)
+    {
+        device.ClearTo(brightnessColor());
+        device.Show();
+    }
 }
 
 template <typename T, typename E>

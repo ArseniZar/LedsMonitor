@@ -23,7 +23,7 @@ namespace Colors
 }
 
 template <typename T, typename E>
-class DeviceLed final : private DeviceBase
+class DeviceLed final : public DeviceBase
 {
 public:
     DeviceLed(Logger &logger, const MacAddress &mac, const String &name, uint16_t countLed, uint8_t pin);
