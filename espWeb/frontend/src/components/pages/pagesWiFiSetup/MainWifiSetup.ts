@@ -41,7 +41,6 @@ export function MainWifiSetup() {
 
   function hadleConnected() {
     pushStep(StepWifiSetup.End);
-    window.close();
   }
 
   // prettier-ignore

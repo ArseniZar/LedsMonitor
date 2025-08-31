@@ -85,7 +85,7 @@ namespace espweb
     void WebServer::handleEnd()
     {
         logger.log("(WebServer::handleEnd) Request accepted, stopping server.", LOG_INFO);
-        server.send(202, "text/plain", "Request accepted");
+        server.send(200, "text/plain", "Request accepted");
         stop();
     }
 

@@ -166,7 +166,7 @@ const char index[] PROGMEM =
 "    </div>\n"
 "  `}function Pt(t){const[e,n]=y([oe.Connect]);function o(){n(l=>l.slice(0,-1))}function i(l){n(_=>[..._,l])}function s(){i(oe.End),t.connectedEmit()}function c(){if(e.length-1>0){o();return}t.goBack()}return h`\n"
 "    ${[oe.Connect].includes(e[e.length-1])&&h`<${Bt} network=${t.network} connectedEmit=${s} goBack=${c}/>`}\n"
-"  `}function Nt(){const[t,e]=y(null),[n,o]=y(D.Option1),[i,s]=y([I.Start]);function c(f){const g=f.target;o(g.value)}function l(){s(f=>f.slice(0,-1))}function _(f){s(g=>[...g,f])}function a(){i.length-1>0&&l()}function u(f){e(f),_(I.Connect)}function r(){_(I.End),window.close()}function d(f){return h` \n"
+"  `}function Nt(){const[t,e]=y(null),[n,o]=y(D.Option1),[i,s]=y([I.Start]);function c(f){const g=f.target;o(g.value)}function l(){s(f=>f.slice(0,-1))}function _(f){s(g=>[...g,f])}function a(){i.length-1>0&&l()}function u(f){e(f),_(I.Connect)}function r(){_(I.End)}function d(f){return h` \n"
 "      <label class=\"w-full\">\n"
 "        <input\n"
 "          onChange=${c}\n"

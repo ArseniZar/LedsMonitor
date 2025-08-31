@@ -8,7 +8,6 @@ WiFiSetup &WiFiSetup::init(Logger &logger)
 
 WiFiSetup::WiFiSetup(Logger &logger)
     : logger(logger),
-      webserver(logger, 80),
       apSsid("SmartHome"),
       apPassword("12345678"),
       ssid(""),
@@ -39,11 +38,11 @@ bool WiFiSetup::begin()
     }
 
     startMDNS(mdnsName);
-
-    while (status() != ConnState::WL_CONNECTED || webserver.isRunning())
+    webserver = new espweb::WebServer(logger, 80);
+    while (status() != ConnState::WL_CONNECTED || webserver->isRunning())
     {
 
-        if (!webserver.isRunning())
+        if (!webserver->isRunning())
         {
             if (!initServer())
             {
@@ -52,7 +51,7 @@ bool WiFiSetup::begin()
             }
         }
 
-        webserver.handleClient();
+        webserver->handleClient();
         MDNS.update();
 
         if (can_yield())
@@ -61,6 +60,9 @@ bool WiFiSetup::begin()
 
     stopAP();
     stopMDNS();
+    delete webserver;
+    webserver = nullptr;
+
     logger.log("(WiFiSetup::begin) Wi-Fi suetup finished successfully.", LOG_INFO);
     return true;
 }
@@ -68,8 +70,7 @@ bool WiFiSetup::begin()
 bool WiFiSetup::initServer()
 {
     logger.log("(WiFiSetup::initServer) Initializing web server...", LOG_INFO);
-
-    bool serverStarted = webserver.begin(
+    bool serverStarted = webserver->begin(
         [this]()
         {
             return this->scanNetworks();

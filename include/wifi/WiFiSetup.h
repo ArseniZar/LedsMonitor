@@ -11,7 +11,9 @@
 #include "Network.h"
 #include "WebServer.h"
 
+#ifndef WIFI_CONNECTION_TIMEOUT_MS
 #define WIFI_CONNECTION_TIMEOUT_MS 10000
+#endif
 
 enum class ConnState : int
 {
@@ -45,7 +47,7 @@ private:
     WiFiSetup(Logger &logger);
 
     Logger &logger;
-    espweb::WebServer webserver;
+     espweb::WebServer* webserver;
 
     String apSsid;
     String apPassword;
