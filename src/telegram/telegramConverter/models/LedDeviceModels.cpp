@@ -2,7 +2,9 @@
 
 namespace telegram
 {
-    namespace UpdateLedDeviceKey
+    /*===================================== UpdateLedDevice =======================================================*/
+
+    namespace UpdateLedDeviceRequestKey
     {
         constexpr const char *COLOR = "color";
         constexpr const char *STATUS = "status";
@@ -11,37 +13,76 @@ namespace telegram
             {STATUS, std::regex("^(on|off)$")}};
     }
 
-    int UpdateLedDevice::countKey() const
+    int UpdateLedDeviceRequest::countKey() const
     {
-        return int(UpdateLedDeviceKey::keys.size());
+        return int(UpdateLedDeviceRequestKey::keys.size() + ModelBaseRequest::countKey());
     }
 
-    UpdateLedDevice::UpdateLedDevice(const String &color, const bool &status, const ModelBaseRequest &obj) : ModelBaseRequest(obj), color(color), status(status) {}
+    UpdateLedDeviceRequest::UpdateLedDeviceRequest(const String &color, const bool &status, const ModelBaseRequest &obj) : ModelBaseRequest(obj), color(color), status(status) {}
 
-    std::unique_ptr<MessageConvertible> UpdateLedDevice::fromMessage(const su::Text pairs[], const int pairsLength)
+    std::unique_ptr<MessageConvertible> UpdateLedDeviceRequest::fromMessage(const su::Text pairs[], const int pairsLength)
     {
         auto parseBasePtr = ModelBaseRequest::fromMessage(pairs, pairsLength);
         if (!parseBasePtr->isOk())
         {
             return parseBasePtr;
         }
-        using namespace UpdateLedDeviceKey;
+        using namespace UpdateLedDeviceRequestKey;
         std::map<String, String> map;
         if (auto parseUpdateLedDevicePtr = MessageParse::parsePairs(pairs, pairsLength, keys, map))
         {
             return parseUpdateLedDevicePtr;
         }
         auto *successParseBasePtr = static_cast<MessageParseSuccess<ModelBaseRequest> *>(parseBasePtr.get());
-        return std::make_unique<MessageParseSuccess<UpdateLedDevice>>(UpdateLedDevice(map[COLOR], map[STATUS] == "on", successParseBasePtr->result));
+        return std::make_unique<MessageParseSuccess<UpdateLedDeviceRequest>>(UpdateLedDeviceRequest(map[COLOR], map[STATUS] == "on", successParseBasePtr->result));
     }
 
-    // String UpdateLedDevice::toMessage() const
-    // {
-    //     using namespace UpdateLedDeviceKey;
-    //     std::vector<std::pair<String, String>> pairs = {
-    //         {COLOR, color},
-    //         {STATUS, status ? "on" : "off"},
-    //     };
-    //     return BaseModelRequest::toMessage() + ';' + MessageSerialization::serializationPairs(pairs);
-    // }
+    /*===================================== ScanLedDevice ==========================================================*/
+
+    namespace ScanLedDeviceRequestKey
+    {
+        inline const std::map<String, std::regex> keys = {};
+    }
+
+    int ScanLedDeviceRequest::countKey() const
+    {
+        return int(ScanLedDeviceRequestKey::keys.size() + ModelBaseRequest::countKey());
+    }
+
+    ScanLedDeviceRequest::ScanLedDeviceRequest(const ModelBaseRequest &obj) : ModelBaseRequest(obj) {}
+
+    std::unique_ptr<MessageConvertible> ScanLedDeviceRequest::fromMessage(const su::Text pairs[], const int pairsLength)
+    {
+        auto parseBasePtr = ModelBaseRequest::fromMessage(pairs, pairsLength);
+        if (!parseBasePtr->isOk())
+        {
+            return parseBasePtr;
+        }
+        using namespace ScanLedDeviceRequestKey;
+        std::map<String, String> map;
+        if (auto parseUpdateLedDevicePtr = MessageParse::parsePairs(pairs, pairsLength, keys, map))
+        {
+            return parseUpdateLedDevicePtr;
+        }
+        auto *successParseBasePtr = static_cast<MessageParseSuccess<ModelBaseRequest> *>(parseBasePtr.get());
+        return std::make_unique<MessageParseSuccess<ScanLedDeviceRequest>>(ScanLedDeviceRequest(successParseBasePtr->result));
+    }
+
+    namespace ScanLedDeviceResponseKey
+    {
+        constexpr const char *NAME = "name";
+    }
+
+    ScanLedDeviceResponse::ScanLedDeviceResponse(const String &name, const ModelBaseResponse &obj) : ModelBaseResponse(obj), name(name) {}
+
+    String ScanLedDeviceResponse::toMessage() const
+    {
+        using namespace ScanLedDeviceResponseKey;
+        std::vector<std::pair<String, String>> pairs = {
+            {NAME, name},
+        };
+        return ModelBaseResponse::toMessage() + ';' + MessageSerialization::serializationPairs(pairs);
+    }
+
+    /*========================================= other ==========================================================*/
 }

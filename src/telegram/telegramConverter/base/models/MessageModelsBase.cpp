@@ -2,8 +2,6 @@
 
 namespace telegram
 {
-    /* ================================================ModelBaseRequest================================================*/
-
     namespace ModelsBaseRequestResponceKey
     {
         constexpr const char *COMMAND = "command";
@@ -14,11 +12,13 @@ namespace telegram
             {ID, std::regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")}};
     }
 
+    /* ================================================ModelBaseRequest================================================*/
+
     int ModelBaseRequest::countKey() const
     {
         return int(ModelsBaseRequestResponceKey::keys.size());
     }
-    
+
     ModelBaseRequest::ModelBaseRequest(const ModelBaseRequest &other) : command(other.command), id(other.id) {}
     ModelBaseRequest::ModelBaseRequest(const String &command, const String &id) : command(command), id(id) {}
 
@@ -37,8 +37,9 @@ namespace telegram
     /* ================================================ModelBaseResponse================================================*/
 
     ModelBaseResponse::ModelBaseResponse(const ModelBaseResponse &other) : command(other.command), id(other.id) {}
+    ModelBaseResponse::ModelBaseResponse(const ModelBaseRequest &other) : command(other.command), id(other.id) {}
     ModelBaseResponse::ModelBaseResponse(const String &command, const String &id) : command(command), id(id) {}
-    
+
     String ModelBaseResponse::toMessage() const
     {
         using namespace ModelsBaseRequestResponceKey;

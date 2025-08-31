@@ -32,6 +32,7 @@ namespace telegram
         ModelBaseResponse() = delete;
         String toMessage() const override;
         ModelBaseResponse(const ModelBaseResponse &other);
+        ModelBaseResponse(const ModelBaseRequest &other);
         ModelBaseResponse(const String &command, const String &id);
     };
 }

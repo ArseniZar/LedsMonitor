@@ -25,23 +25,30 @@ void TelegramBot::handleUpdateMsg(fb::Update &u)
     if (parseBasePtr->isOk())
     {
         auto *successParseBasePtr = static_cast<TelegramSuccessRequest<ModelBaseRequest> *>(parseBasePtr.get());
+        String &parseCommand = successParseBasePtr->data.command;
         String &parseId = successParseBasePtr->data.id;
+        logger.log("[TelegramBot] Successfully parsed ModelBaseRequest: command=" + parseCommand + ", id=" + parseId, LOG_DEBUG);
         if (mac.equals(parseId) || mac.isBroadcast(parseId))
         {
-            auto it = handlers.find(successParseBasePtr->data.command);
+            auto it = handlers.find(parseCommand);
             if (it != handlers.end())
             {
                 it->second(u);
             }
             else
             {
+                logger.log("[TelegramBot] Command not implemented: " + parseCommand, LOG_DEBUG);
             }
+        }
+        else
+        {
+            logger.log("[TelegramBot] Received command '" + parseCommand + "' not intended for this device (MAC: " + mac.getMac() + ", target ID: " + parseId + ")", LOG_DEBUG);
         }
     }
     else
     {
         auto *errorParseBasePtr = static_cast<TelegramErrorRequest *>(parseBasePtr.get());
-        logger.log("[TelegramBot] Failed to parse incoming message: " + errorParseBasePtr->message, LOG_WARN);
+        logger.log("[TelegramBot] Failed to parse ModelBaseRequest: " + String(u.message().text()) + " nError: " + errorParseBasePtr->message, LOG_WARN);
     }
 }
 
