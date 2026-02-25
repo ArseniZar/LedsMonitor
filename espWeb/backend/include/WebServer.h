@@ -12,7 +12,6 @@
 #include "DeviceModels.h"
 #include "ApiParse.h"
 #include "ApiSerialization.h"
-#include "WiFiTypes.h"
 
 namespace espweb
 {
@@ -29,7 +28,7 @@ namespace espweb
         
         void begin(std::function<bool()> scanWifiNetworksStarted,
                    std::function<ScanState()> scanStatus,
-                   std::function<std::vector<api::Network>()> getScanWifiNetworksResults,
+                   std::function<std::vector<WifiNetwork>()> getScanWifiNetworksResults,
                    std::function<bool(const char *, const char *)> attemptConnectionStarted,
                    std::function<ConnState()> wifiStatus);
 
@@ -45,7 +44,7 @@ namespace espweb
         void handleNotFound();
         void handleScanStarted(std::function<bool()> scanWifiNetworksStarted);
         void handleScanStatus(std::function<ScanState()> scanStatus);
-        void handleScanResult(std::function<std::vector<api::Network>()> getScanWifiNetworksResults);
+        void handleScanResult(std::function<std::vector<WifiNetwork>()> getScanWifiNetworksResults);
         void handleConnect(std::function<bool(const char *, const char *)> attemptConnectionStarted);
         void handleWifiStatus(std::function<ConnState()> wifiStatus);
     };

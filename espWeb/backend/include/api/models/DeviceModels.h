@@ -4,37 +4,11 @@
 
 #include <Arduino.h>
 #include "JsonModelBase.h"
-#include "WiFiTypes.h"
+#include "WifiNetwork.h"
+#include "WifiTypes.h"
 
 namespace api
-{ /*===================================== Network ===========================================================*/
-
-    class Network
-    {
-    public:
-        String32 ssid;
-        String32 password;
-        int rssi;
-        int encryptionType;
-        int channel;
-        StringN<18> bssid;
-        bool hidden;
-
-        Network() = delete;
-        Network(const Network &other) = default;
-        Network(Network &&other) = default;
-        Network(const char *ssid, const char *password, int rssi, int encryptionType, int channel, const char *bssid, bool hidden)
-            : ssid(ssid),
-              password(password),
-              rssi(rssi),
-              encryptionType(encryptionType),
-              channel(channel),
-              bssid(bssid),
-              hidden(hidden)
-        {
-        }
-    };
-
+{
     /*===================================== ScanNetworkStarted =======================================================*/
 
     class ScanNetworkStartedResponce final : public ModelBaseResponse
@@ -73,10 +47,10 @@ namespace api
     class ScanNetworkResponce final : public ModelBaseResponse
     {
     public:
-        std::vector<Network> networks;
+        std::vector<WifiNetwork> networks;
         ScanNetworkResponce() = delete;
-        ScanNetworkResponce(const std::vector<Network> &networks, const ModelBaseResponse &base);
-        ScanNetworkResponce(std::vector<Network> &&networks, ModelBaseResponse &&base);
+        ScanNetworkResponce(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base);
+        ScanNetworkResponce(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base);
         gson::Str toJson() const override;
     };
 
@@ -85,10 +59,10 @@ namespace api
     class ConnectNetworkRequest final : public ModelBaseRequest
     {
     public:
-        Network network;
+        WifiNetwork network;
         ConnectNetworkRequest() = delete;
-        ConnectNetworkRequest(Network &&network, ModelBaseRequest &&base);
-        ConnectNetworkRequest(const Network &network, const ModelBaseRequest &base);
+        ConnectNetworkRequest(WifiNetwork &&network, ModelBaseRequest &&base);
+        ConnectNetworkRequest(const WifiNetwork &network, const ModelBaseRequest &base);
         static std::unique_ptr<JsonConvertible> fromJson(const gson::Entry &data);
     };
 

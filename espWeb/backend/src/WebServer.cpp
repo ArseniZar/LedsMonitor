@@ -12,7 +12,7 @@ namespace espweb
     void WebServer::begin(
                    std::function<bool()> scanWifiNetworksStarted,
                    std::function<ScanState()> scanStatus,
-                   std::function<std::vector<api::Network>()> getScanWifiNetworksResults,
+                   std::function<std::vector<WifiNetwork>()> getScanWifiNetworksResults,
                    std::function<bool(const char *, const char *)> attemptConnection,
                    std::function<ConnState()> wifiStatus)
     {
@@ -140,7 +140,7 @@ namespace espweb
 
     /*======================================== handleScanResult =============================================================*/
 
-    void WebServer::handleScanResult(std::function<std::vector<api::Network>()> getScanWifiNetworksResults)
+    void WebServer::handleScanResult(std::function<std::vector<WifiNetwork>()> getScanWifiNetworksResults)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
                    {String128 buf; buf.add(F("(WebServer::handleScanResult) Processing scan result request.")); return buf; });

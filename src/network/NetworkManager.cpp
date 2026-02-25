@@ -1,12 +1,12 @@
-#include "WiFiSetup.h"
+#include "NetworkManager.h"
 
-WiFiSetup &WiFiSetup::init(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName)
+NetworkManager &NetworkManager::init(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName)
 {
-    static WiFiSetup instance(logger, apSsid, apPassword, mdnsName);
+    static NetworkManager instance(logger, apSsid, apPassword, mdnsName);
     return instance;
 }
 
-WiFiSetup::WiFiSetup(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName)
+NetworkManager::NetworkManager(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName)
     : logger(logger),
       webserver(logger, 80),
       apSsid(apSsid),
@@ -21,12 +21,12 @@ WiFiSetup::WiFiSetup(Logger &logger, const char* apSsid, const char* apPassword,
 {
 }
 
-ConnState WiFiSetup::statusWifi()
+ConnState NetworkManager::statusWifi()
 {
     return static_cast<ConnState>(WiFi.status());
 }
 
-ScanState WiFiSetup::statusScan() {
+ScanState NetworkManager::statusScan() {
     int result = WiFi.scanComplete();
 
     if (result >= 0) {
@@ -36,22 +36,22 @@ ScanState WiFiSetup::statusScan() {
     return static_cast<ScanState>(result);
 }
 
-bool WiFiSetup::begin()
+bool NetworkManager::begin()
 {
     logger.log(LOG_INFO, [&]() -> String128
-               { String128 buf; buf = F("(WiFiSetup::begin) Starting Wi-Fi setup..."); return buf; });
+               { String128 buf; buf = F("(NetworkManager::begin) Starting Network Manager..."); return buf; });
 
     if (attemptConnection(ssid, password))
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf = F("(WiFiSetup::begin) Wi-Fi setup finished successfully."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::begin) Network Manager finished successfully."); return buf; });
         return true;
     }
 
     if (!startAP(apSsid, apPassword))
     {
         logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(WiFiSetup::begin) Failed to start Access Point. Setup aborted."); return buf; });
+                   { String128 buf;  buf = F("(NetworkManager::begin) Failed to start Access Point. Setup aborted."); return buf; });
         return false;
     }
 
@@ -73,7 +73,7 @@ bool WiFiSetup::begin()
             now - lastWifiReconnectAttempt >= WIFI_RETRY_DELAY_MS) 
         {   
             logger.log(LOG_INFO, [&]() -> String128 
-                        { String128 buf; buf = F("(WiFiSetup::begin) Connect async background Wi-Fi reconnect (webserver idle)..."); return buf; }); 
+                        { String128 buf; buf = F("(NetworkManager::begin) Connect async background Wi-Fi reconnect (webserver idle)..."); return buf; }); 
 
             attemptConnectionAsync(ssid, password);
             lastWifiReconnectAttempt = now;
@@ -92,17 +92,17 @@ bool WiFiSetup::begin()
     stopMDNS();
     stopAP();
     logger.log(LOG_INFO, [&]() -> String128
-               { String128 buf; buf = F("(WiFiSetup::begin) Wi-Fi setup finished successfully."); return buf; });
+               { String128 buf; buf = F("(NetworkManager::begin) Wi-Fi setup finished successfully."); return buf; });
 
     return true;
 }
 
-void WiFiSetup::initServer()
+void NetworkManager::initServer()
 {
     logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::initServer) Initializing web server..."));
+                buf.add(F("(NetworkManager::initServer) Initializing web server..."));
                 return buf; });
 
     webserver.begin([this]()
@@ -117,22 +117,22 @@ void WiFiSetup::initServer()
                     { return this->statusWifi(); });
 }
 
-void WiFiSetup::configureWifiPerformance()
+void NetworkManager::configureWifiPerformance()
 {
     bool sleepModeSet = WiFi.setSleepMode(WIFI_NONE_SLEEP, 50);
     logger.log(sleepModeSet ? LOG_DEBUG : LOG_WARN, [&]() -> String128
                 {
                 String128 buf;
-                buf.add(F("(WiFiSetup::configureWifiPerformance) Wi-Fi sleep mode WIFI_NONE_SLEEP with 50 ms delay "));
+                buf.add(F("(NetworkManager::configureWifiPerformance) Wi-Fi sleep mode WIFI_NONE_SLEEP with 50 ms delay "));
                 buf.add(sleepModeSet ? F("enabled successfully") : F("failed to enable"));
                 return buf; });
 
     WiFi.setOutputPower(20.5f);
     logger.log(LOG_DEBUG, [&]() -> String128
-                { String128 buf; buf.add(F("(WiFiSetup::configureWifiPerformance) Wi-Fi output power set to 20.5 dBm")); return buf; });
+                { String128 buf; buf.add(F("(NetworkManager::configureWifiPerformance) Wi-Fi output power set to 20.5 dBm")); return buf; });
 }
 
-bool WiFiSetup::attemptConnection(const char *ssid, const char *password)
+bool NetworkManager::attemptConnection(const char *ssid, const char *password)
 {   
     for (int i = 0; i < MAX_WIFI_HANDLER; i++) 
     {
@@ -157,7 +157,7 @@ bool WiFiSetup::attemptConnection(const char *ssid, const char *password)
     return true;
 }   
 
-bool WiFiSetup::attemptConnectionAsync(const char *ssid, const char *password)
+bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *password)
 {   
     for (int i = 0; i < MAX_WIFI_HANDLER; i++) 
     {
@@ -204,24 +204,24 @@ bool WiFiSetup::attemptConnectionAsync(const char *ssid, const char *password)
     return true;
 }
 
-void WiFiSetup::setWiFiConfig(const char *ssid, const char *password)
+void NetworkManager::setWiFiConfig(const char *ssid, const char *password)
 {
     this->ssid = ssid;
     this->password = password;
 }
 
-void WiFiSetup::setAPConfig(const char *apSsid, const char *apPassword)
+void NetworkManager::setAPConfig(const char *apSsid, const char *apPassword)
 {
     this->apSsid = apSsid;
     this->apPassword = apPassword;
 }
 
-bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
+bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
 {
     logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::startAP) Attempting to start Wi-Fi Access Point with SSID: '"));
+                buf.add(F("(NetworkManager::startAP) Attempting to start Wi-Fi Access Point with SSID: '"));
                 buf.add(apSsid);
                 buf.add(F("'"));
                 return buf; });
@@ -231,18 +231,18 @@ bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
         logger.log(LOG_WARN, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::startAP) Failed to start Access Point: SSID is empty."));
+                    buf.add(F("(NetworkManager::startAP) Failed to start Access Point: SSID is empty."));
                     return buf; });
         return false;
     }
 
-    WiFi.mode(WIFI_AP);
+    WiFi.enableAP(true);
 
     bool phySet = WiFi.setPhyMode(WIFI_PHY_MODE_11G);
     logger.log(phySet ? LOG_DEBUG : LOG_WARN, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::startAP) PHY mode set to WIFI_PHY_MODE_11G with 50 ms delay "));
+                buf.add(F("(NetworkManager::startAP) PHY mode set to WIFI_PHY_MODE_11G with 50 ms delay "));
                 buf.add(phySet ? F("enabled successfully") : F("failed to enable"));
                 return buf; });
 
@@ -250,7 +250,7 @@ bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
     logger.log(apStarted ? LOG_INFO : LOG_ERROR, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::startAP) Starting Wi-Fi Access Point "));
+                buf.add(F("(NetworkManager::startAP) Starting Wi-Fi Access Point "));
                 buf.add(apStarted ? F("succeeded.") : F("failed. Please check configuration."));
                 return buf; });
 
@@ -262,7 +262,7 @@ bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
     logger.log(ipValid ? LOG_INFO : LOG_ERROR, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::startAP) AP IP address "));
+                buf.add(F("(NetworkManager::startAP) AP IP address "));
                 buf.add(ipValid ? F("is valid: ") : F("is invalid after starting softAP!"));
                 if (ipValid) buf.add(apIP.toString().c_str());
                 return buf; });
@@ -273,7 +273,7 @@ bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
     logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::startAP) Access Point started. SSID: "));
+                buf.add(F("(NetworkManager::startAP) Access Point started. SSID: "));
                 buf.add(apSsid);
                 buf.add(F(", Password: "));
                 buf.add(apPassword);
@@ -284,67 +284,67 @@ bool WiFiSetup::startAP(const String32 &apSsid, const String32 &apPassword)
     return true;
 }
 
-void WiFiSetup::setMdnsName(const char *mdnsName)
+void NetworkManager::setMdnsName(const char *mdnsName)
 {
     this->mdnsName = mdnsName;
 }
 
-bool WiFiSetup::stopMDNS()
+bool NetworkManager::stopMDNS()
 {
     bool status = MDNS.end();
 
     if (status)
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf.add(F("(WiFiSetup::stopMDNS) mDNS responder stopped successfully.")); return buf; });
+                   { String128 buf; buf.add(F("(NetworkManager::stopMDNS) mDNS responder stopped successfully.")); return buf; });
     }
     else
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf.add(F("(WiFiSetup::stopMDNS) Failed to stop mDNS responder.")); return buf; });
+                   { String128 buf; buf.add(F("(NetworkManager::stopMDNS) Failed to stop mDNS responder.")); return buf; });
     }
 
     return status;
 }
 
-bool WiFiSetup::startMDNS(const String32 &mdnsName)
+bool NetworkManager::startMDNS(const String32 &mdnsName)
 {
     bool status = MDNS.begin(mdnsName);
     if (status)
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf =  F("(WiFiSetup::startMDNS) mDNS responder started successfully with name: "); buf.add(mdnsName); return buf; });
+                   { String128 buf; buf =  F("(NetworkManager::startMDNS) mDNS responder started successfully with name: "); buf.add(mdnsName); return buf; });
         return status;
     }
 
     logger.log(LOG_WARN, [&]() -> String128
-               { String128 buf; buf =  F("(WiFiSetup::startMDNS) Failed to start mDNS responder with name: "); buf.add(mdnsName); return buf; });
+               { String128 buf; buf =  F("(NetworkManager::startMDNS) Failed to start mDNS responder with name: "); buf.add(mdnsName); return buf; });
 
     return status;
 }
 
-bool WiFiSetup::stopAP()
+bool NetworkManager::stopAP()
 {
     bool status = WiFi.softAPdisconnect(true);
     if (status)
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf =  F("(WiFiSetup::stopAP) Wi-Fi Access Point stopped."); return buf; });
+                   { String128 buf; buf =  F("(NetworkManager::stopAP) Wi-Fi Access Point stopped."); return buf; });
         return status;
     }
 
     logger.log(LOG_WARN, [&]() -> String128
-               { String128 buf; buf =  F("(WiFiSetup::stopAP) Wi-Fi Access Point was not stopped."); return buf; });
+               { String128 buf; buf =  F("(NetworkManager::stopAP) Wi-Fi Access Point was not stopped."); return buf; });
 
     return status;
 }
 
-std::vector<api::Network> WiFiSetup::scanWifiNetworks()
+std::vector<WifiNetwork> NetworkManager::scanWifiNetworks()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::scanWifiNetworks) Starting Wi-Fi scan..."));
+                buf.add(F("(NetworkManager::scanWifiNetworks) Starting Wi-Fi scan..."));
                 return buf; });
 
     int networksFound = WiFi.scanNetworks();
@@ -353,7 +353,7 @@ std::vector<api::Network> WiFiSetup::scanWifiNetworks()
         logger.log(LOG_DEBUG, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::scanWifiNetworks) No Wi-Fi networks found."));
+                    buf.add(F("(NetworkManager::scanWifiNetworks) No Wi-Fi networks found."));
                     return buf; });
         return {};
     }
@@ -361,17 +361,17 @@ std::vector<api::Network> WiFiSetup::scanWifiNetworks()
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::scanWifiNetworks) Found "));
+                buf.add(F("(NetworkManager::scanWifiNetworks) Found "));
                 buf.add(networksFound);
                 buf.add(F(" Wi-Fi networks."));
                 return buf; });
 
-    std::vector<api::Network> networks;
+    std::vector<WifiNetwork> networks;
     networks.reserve(networksFound);
 
     for (int i = 0; i < networksFound; i++)
     {
-        api::Network newNetwork(
+        WifiNetwork newNetwork(
             WiFi.SSID(i).c_str(),
             "",
             WiFi.RSSI(i),
@@ -385,7 +385,7 @@ std::vector<api::Network> WiFiSetup::scanWifiNetworks()
         logger.log(LOG_DEBUG, [&i, &networks]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::scanWifiNetworks) SSID: "));
+                    buf.add(F("(NetworkManager::scanWifiNetworks) SSID: "));
                     buf.add(networks[i].ssid);
                     buf.add(F(", RSSI: "));
                     buf.add(networks[i].rssi);
@@ -403,10 +403,10 @@ std::vector<api::Network> WiFiSetup::scanWifiNetworks()
     return networks;
 }
 
-bool WiFiSetup::scanWifiNetworksAsync() {
+bool NetworkManager::scanWifiNetworksAsync() {
     logger.log(LOG_DEBUG, [&]() -> String128 {
         String128 buf;
-        buf.add(F("(WiFiSetup::scanWifiNetworksAsync) Starting asynchronous Wi-Fi scan..."));
+        buf.add(F("(NetworkManager::scanWifiNetworksAsync) Starting asynchronous Wi-Fi scan..."));
         return buf;
     });
 
@@ -415,7 +415,7 @@ bool WiFiSetup::scanWifiNetworksAsync() {
     if (static_cast<ScanState>(result) == ScanState::RUNNING) {
         logger.log(LOG_DEBUG, [&]() -> String128 {
             String128 buf;
-            buf.add(F("(WiFiSetup::scanWifiNetworksAsync) Asynchronous Wi-Fi scan started."));
+            buf.add(F("(NetworkManager::scanWifiNetworksAsync) Asynchronous Wi-Fi scan started."));
             return buf;
         });
         return true;
@@ -423,7 +423,7 @@ bool WiFiSetup::scanWifiNetworksAsync() {
 
     logger.log(LOG_ERROR, [&]() -> String128 {
         String128 buf;
-        buf.add(F("(WiFiSetup::scanWifiNetworksAsync) Failed to start. Error code: "));
+        buf.add(F("(NetworkManager::scanWifiNetworksAsync) Failed to start. Error code: "));
         buf.add(result);
         return buf;
     });
@@ -431,14 +431,14 @@ bool WiFiSetup::scanWifiNetworksAsync() {
     return false;
 }
 
-std::vector<api::Network> WiFiSetup::getScanWifiNetworksAsyncResults() {
+std::vector<WifiNetwork> NetworkManager::getScanWifiNetworksAsyncResults() {
     int networksFound = WiFi.scanComplete();
     if (networksFound <= 0)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan not found or scan not completed yet."));
+                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan not found or scan not completed yet."));
                     return buf; });
         return {};
     }
@@ -446,17 +446,17 @@ std::vector<api::Network> WiFiSetup::getScanWifiNetworksAsyncResults() {
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan completed. Found "));
+                buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan completed. Found "));
                 buf.add(networksFound);
                 buf.add(F(" Wi-Fi networks."));
                 return buf; });
 
-    std::vector<api::Network> networks;
+    std::vector<WifiNetwork> networks;
     networks.reserve(networksFound);
 
     for (int i = 0; i < networksFound; i++)
     {
-        api::Network newNetwork(
+        WifiNetwork newNetwork(
             WiFi.SSID(i).c_str(),
             "",
             WiFi.RSSI(i),
@@ -470,7 +470,7 @@ std::vector<api::Network> WiFiSetup::getScanWifiNetworksAsyncResults() {
         logger.log(LOG_DEBUG, [&i, &networks]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::getScanWifiNetworksAsyncResults) SSID: "));
+                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) SSID: "));
                     buf.add(networks[i].ssid);
                     buf.add(F(", RSSI: "));
                     buf.add(networks[i].rssi);
@@ -488,27 +488,27 @@ std::vector<api::Network> WiFiSetup::getScanWifiNetworksAsyncResults() {
     return networks;
 }
 
-StringN<18> WiFiSetup::getMacAddress() const
+StringN<18> NetworkManager::getMacAddress() const
 {
     return WiFi.macAddress().c_str();
 }
 
-const char *WiFiSetup::getSsid() const
+const char *NetworkManager::getSsid() const
 {
     return ssid;
 }
 
-const char *WiFiSetup::getPass() const
+const char *NetworkManager::getPass() const
 {
     return password;
 }
 
-bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
+bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &password)
 {
     logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(WiFiSetup::tryConnectWifi) Attempting to connect to SSID: '"));
+                buf.add(F("(NetworkManager::tryConnectWifi) Attempting to connect to SSID: '"));
                 buf.add(ssid);
                 buf.add(F("'  PASS: '"));
                 buf.add(password);
@@ -518,7 +518,7 @@ bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
     if (ssid.length() == 0)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf.add(F("(WiFiSetup::tryConnectWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
+                   { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
         return false;
     }
 
@@ -528,7 +528,7 @@ bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
     while (statusWifi() != ConnState::WL_CONNECTED && millis() - startTime < WIFI_CONNECTION_TIMEOUT_MS)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf.add(F("(WiFiSetup::tryConnectWifi) Connecting to Wi-Fi...")); return buf; });
+                   { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Connecting to Wi-Fi...")); return buf; });
         delay(500);
     }
 
@@ -537,7 +537,7 @@ bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
         logger.log(LOG_INFO, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::tryConnectWifi) Successfully connected to Wi-Fi network: '"));
+                    buf.add(F("(NetworkManager::tryConnectWifi) Successfully connected to Wi-Fi network: '"));
                     buf.add(ssid);
                     buf.add(F("' with IP: "));
                     buf.add(WiFi.localIP().toString().c_str());
@@ -551,7 +551,7 @@ bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
         logger.log(LOG_WARN, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::tryConnectWifi) Failed to connect to Wi-Fi network: '"));
+                    buf.add(F("(NetworkManager::tryConnectWifi) Failed to connect to Wi-Fi network: '"));
                     buf.add(ssid);
                     buf.add(F("'"));
                     return buf; });
@@ -561,12 +561,12 @@ bool WiFiSetup::tryConnectWifi(const String32 &ssid, const String32 &password)
     }
 }
 
-bool WiFiSetup::tryConnectWifiAsync(const String32 &ssid, const String32 &password)
+bool NetworkManager::tryConnectWifiAsync(const String32 &ssid, const String32 &password)
 {
     logger.log(LOG_INFO, [&]() -> String128
             {
                 String128 buf;
-                buf.add(F("(WiFiSetup::tryConnectWifiAsync) Attempting to connect to SSID: '"));
+                buf.add(F("(NetworkManager::tryConnectWifiAsync) Attempting to connect to SSID: '"));
                 buf.add(ssid);
                 buf.add(F("'  PASS: '"));
                 buf.add(password);
@@ -576,7 +576,7 @@ bool WiFiSetup::tryConnectWifiAsync(const String32 &ssid, const String32 &passwo
     if (ssid.length() == 0)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                { String128 buf; buf.add(F("(WiFiSetup::tryConnectAsyncWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
+                { String128 buf; buf.add(F("(NetworkManager::tryConnectAsyncWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
         return false;
     }
 
@@ -584,7 +584,7 @@ bool WiFiSetup::tryConnectWifiAsync(const String32 &ssid, const String32 &passwo
 
     logger.log(LOG_INFO, [&]() -> String128 {
         String128 buf;
-        buf.add(F("(WiFiSetup::tryConnectWifiAsync) Async connection started"));
+        buf.add(F("(NetworkManager::tryConnectWifiAsync) Async connection started"));
         return buf;
     });
 
@@ -592,7 +592,7 @@ bool WiFiSetup::tryConnectWifiAsync(const String32 &ssid, const String32 &passwo
         logger.log(LOG_INFO, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(WiFiSetup::tryConnectWifiAsync) Successfully connected to Wi-Fi network: '"));
+                    buf.add(F("(NetworkManager::tryConnectWifiAsync) Successfully connected to Wi-Fi network: '"));
                     buf.add(ssid);
                     buf.add(F("' with IP: "));
                     buf.add(WiFi.localIP().toString().c_str());
@@ -616,7 +616,7 @@ bool WiFiSetup::tryConnectWifiAsync(const String32 &ssid, const String32 &passwo
             logger.log(LOG_WARN, [&]() -> String128
                    {
                     String128 buf;
-            buf.add(F("(WiFiSetup::tryConnectWifiAsync) Failed to connect to Wi-Fi network: '"));
+            buf.add(F("(NetworkManager::tryConnectWifiAsync) Failed to connect to Wi-Fi network: '"));
                     buf.add(ssid);
                     buf.add(F("'"));
                     buf.add(F(" Reason: "));

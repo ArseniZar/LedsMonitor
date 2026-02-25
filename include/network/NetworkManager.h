@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WIFI_SETUP_H
-#define WIFI_SETUP_H
+#ifndef NETWORK_MANAGER_H
+#define NETWORK_MANAGER_H
 
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -9,7 +9,8 @@
 #include <vector>
 #include "Logger.h"
 #include "WebServer.h"
-#include "WiFiTypes.h"
+#include "WifiNetwork.h"
+#include "WifiTypes.h"
 
 #ifndef WIFI_CONNECTION_TIMEOUT_MS
 #define WIFI_CONNECTION_TIMEOUT_MS 10000
@@ -23,11 +24,11 @@
 #define WIFI_AFTER_WEBSERVER_IDLE_MS 120000
 #endif
 
-class WiFiSetup
+class NetworkManager
 {
 public:
     bool begin();
-    static WiFiSetup &init(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
+    static NetworkManager &init(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
     bool attemptConnection(const char *ssid, const char *password);
     bool attemptConnectionAsync(const char *ssid, const char *password);
     void setAPConfig(const char *apSsid, const char *apPassword);
@@ -40,7 +41,7 @@ public:
     ScanState statusScan();
 
 private:
-    WiFiSetup(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
+    NetworkManager(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
 
     Logger &logger;
     espweb::WebServer webserver;
@@ -64,8 +65,8 @@ private:
     void configureWifiPerformance();
 
     bool scanWifiNetworksAsync();
-    std::vector<api::Network> scanWifiNetworks();
-    std::vector<api::Network> getScanWifiNetworksAsyncResults();
+    std::vector<WifiNetwork> scanWifiNetworks();
+    std::vector<WifiNetwork> getScanWifiNetworksAsyncResults();
 
     bool stopAP();
     bool stopMDNS();
@@ -77,4 +78,4 @@ private:
 
 };
 
-#endif // WIFI_SETUP_H
+#endif // NETWORK_MANAGER_H

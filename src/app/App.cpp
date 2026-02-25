@@ -3,8 +3,8 @@
 App::App() : savedWifiData(),
              storage(Storage<SavedWifiData>("/data.dat", 'W')),
              logger(Logger::init(LOGGER_DEBUG_MODE)),
-             wifi(WiFiSetup::init(logger, AP_SSID, AP_PASS, MDNS_NAME)),
-             mac(MacAddress::init(wifi.getMacAddress())),
+             network(NetworkManager::init(logger, AP_SSID, AP_PASS, MDNS_NAME)),
+             mac(MacAddress::init(network.getMacAddress())),
              bot(TelegramBot::init(logger, BOT_TOKEN, mac)),
              device(DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod>(logger, mac, DEVICE_NAME, LED_COUNT, DEVICE_PIN))
 {
@@ -18,7 +18,7 @@ App &App::init()
 
 void App::begin()
 {
-    
+
 #if ENABLE_STORAGE_MODULE
     storage.begin();
     savedWifiData = storage.readData();
@@ -29,14 +29,14 @@ void App::begin()
 #endif
 
 #if ENABLE_WIFI_MODULE
-    wifi.setMdnsName(MDNS_NAME);
-    wifi.setAPConfig(AP_SSID, AP_PASS);
-    wifi.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
-    wifi.begin();
+    network.setMdnsName(MDNS_NAME);
+    network.setAPConfig(AP_SSID, AP_PASS);
+    network.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
+    network.begin();
 #endif
 
 #if ENABLE_WIFI_MODULE
-    if (wifi.statusWifi() == ConnState::WL_CONNECTED)
+    if (network.statusWifi() == ConnState::WL_CONNECTED)
     {
         commitWiFiIfChanged();
     }
@@ -56,11 +56,11 @@ void App::begin()
 void App::update()
 {
 #if ENABLE_WIFI_MODULE
-    if (wifi.statusWifi() != ConnState::WL_CONNECTED)
+    if (network.statusWifi() != ConnState::WL_CONNECTED)
     {
-        wifi.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
-        wifi.begin();
-        if (wifi.statusWifi() == ConnState::WL_CONNECTED)
+        network.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
+        network.begin();
+        if (network.statusWifi() == ConnState::WL_CONNECTED)
         {
             commitWiFiIfChanged();
         }
@@ -80,8 +80,8 @@ void App::update()
 
 void App::commitWiFiIfChanged()
 {
-    String32 currentSsid = wifi.getSsid();
-    String32 currentPass = wifi.getPass();
+    String32 currentSsid = network.getSsid();
+    String32 currentPass = network.getPass();
 
     if (currentSsid != savedWifiData.ssid || currentPass != savedWifiData.password)
     {

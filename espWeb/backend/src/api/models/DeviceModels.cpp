@@ -96,8 +96,8 @@ namespace api
         constexpr const char *NETWORKS = "networks";
     }
 
-    ScanNetworkResponce::ScanNetworkResponce(const std::vector<Network> &networks, const ModelBaseResponse &base) : ModelBaseResponse(base), networks(networks) {};
-    ScanNetworkResponce::ScanNetworkResponce(std::vector<Network> &&networks, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), networks(std::move(networks)) {};
+    ScanNetworkResponce::ScanNetworkResponce(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base) : ModelBaseResponse(base), networks(networks) {};
+    ScanNetworkResponce::ScanNetworkResponce(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), networks(std::move(networks)) {};
 
     gson::Str ScanNetworkResponce::toJson() const
     {
@@ -137,8 +137,8 @@ namespace api
         constexpr const char *HIDDEN = "hidden";
     }
 
-    ConnectNetworkRequest::ConnectNetworkRequest(const Network &network, const ModelBaseRequest &base) : ModelBaseRequest(base), network(network) {}
-    ConnectNetworkRequest::ConnectNetworkRequest(Network &&network, ModelBaseRequest &&base) : ModelBaseRequest(std::move(base)), network(std::move(network)) {}
+    ConnectNetworkRequest::ConnectNetworkRequest(const WifiNetwork &network, const ModelBaseRequest &base) : ModelBaseRequest(base), network(network) {}
+    ConnectNetworkRequest::ConnectNetworkRequest(WifiNetwork &&network, ModelBaseRequest &&base) : ModelBaseRequest(std::move(base)), network(std::move(network)) {}
 
     std::unique_ptr<JsonConvertible> ConnectNetworkRequest::fromJson(const gson::Entry &data)
     {
@@ -166,7 +166,7 @@ namespace api
         }
         auto *successParseConnectNetworkPtr = static_cast<JsonParseSuccess<std::map<const char *, String>> *>(parseConnectNetworkPtr.get());
         std::map<const char *, String> map = std::move(successParseConnectNetworkPtr->result);
-        return std::make_unique<JsonParseSuccess<ConnectNetworkRequest>>(std::move(ConnectNetworkRequest(std::move(Network(map[SSID].c_str(), map[PASSWORD].c_str(), map[RSSI].toInt(), map[ENCRYPTION].toInt(), map[CHANNEL].toInt(), map[BSSID].c_str(), map[HIDDEN].equalsIgnoreCase("true"))), std::move(successParseBasePtr->result))));
+        return std::make_unique<JsonParseSuccess<ConnectNetworkRequest>>(std::move(ConnectNetworkRequest(std::move(WifiNetwork(map[SSID].c_str(), map[PASSWORD].c_str(), map[RSSI].toInt(), map[ENCRYPTION].toInt(), map[CHANNEL].toInt(), map[BSSID].c_str(), map[HIDDEN].equalsIgnoreCase("true"))), std::move(successParseBasePtr->result))));
     }
 
     /*--------------------------------------------------------------------------------------------------------------*/

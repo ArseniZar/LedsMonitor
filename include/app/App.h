@@ -8,7 +8,7 @@
 #include "Storage.h"
 #include "MacAddress.h"
 #include "DeviceLed.h"
-#include "WiFiSetup.h"
+#include "NetworkManager.h"
 #include "TelegramBot.h"
 #include "TelegramCommands.h"
 #include "LedDeviceModels.h"
@@ -44,7 +44,7 @@ private:
     Storage<SavedWifiData> storage;
 
     Logger &logger;
-    WiFiSetup &wifi;
+    NetworkManager &network;
     MacAddress &mac;
     TelegramBot &bot;
     DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod> device;
