@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include "JsonModelBase.h"
 #include "WifiNetwork.h"
-#include "WifiTypes.h"
+#include "WifiStates.h"
 
 namespace api
 {
