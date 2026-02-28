@@ -14,14 +14,16 @@ class Storage
 public:
     void begin();
     T readData();
-    void writeData(T &data);
-    
+    void writeData(const T &data);
+    bool isLoaded() const;
+
     Storage() = delete;
     Storage(const char *path, const uint8_t key);
 
 private:
     T savedData;
     FileData file;
+    bool loaded;
 };
 
 #include "Storage.tpp"
