@@ -7,16 +7,19 @@ NetworkConfig *NetworkConfig::defaultInstance = nullptr;
 NetworkConfig::NetworkConfig(const NetworkConfig &def)
     : ssid(def.ssid), password(def.password),
       apSsid(def.apSsid), apPassword(def.apPassword),
-      mdnsName(def.mdnsName)
+      mdnsName(def.mdnsName),
+      wifiConnectionTimeout(def.wifiConnectionTimeout)
 {
 }
 
 NetworkConfig::NetworkConfig(const char *ssid, const char *password,
                              const char *apSsid, const char *apPassword,
-                             const char *mdnsName)
+                             const char *mdnsName,
+                             unsigned long wifiConnectionTimeout)
     : ssid(ssid), password(password),
       apSsid(apSsid), apPassword(apPassword),
-      mdnsName(mdnsName)
+      mdnsName(mdnsName),
+      wifiConnectionTimeout(wifiConnectionTimeout)
 {
 }
 
@@ -24,11 +27,12 @@ const NetworkConfig &NetworkConfig::defaultConfig(const char *ssid,
                                                   const char *password,
                                                   const char *apSsid,
                                                   const char *apPassword,
-                                                  const char *mdnsName)
+                                                  const char *mdnsName,
+                                                  unsigned long wifiConnectionTimeout)
 {
     if (!defaultInstance)
     {
-        defaultInstance = new NetworkConfig(ssid, password, apSsid, apPassword, mdnsName);
+        defaultInstance = new NetworkConfig(ssid, password, apSsid, apPassword, mdnsName, wifiConnectionTimeout);
     }
     return *defaultInstance;
 }
@@ -46,6 +50,7 @@ void NetworkConfig::operator=(const NetworkRuntimeConfig &config)
     apSsid = config.apSsid;
     apPassword = config.apPassword;
     mdnsName = config.mdnsName;
+    wifiConnectionTimeout = config.wifiConnectionTimeout;
 }
 
 void NetworkConfig::operator=(const NetworkConfig &config)
@@ -55,12 +60,14 @@ void NetworkConfig::operator=(const NetworkConfig &config)
     apSsid = config.apSsid;
     apPassword = config.apPassword;
     mdnsName = config.mdnsName;
+    wifiConnectionTimeout = config.wifiConnectionTimeout;
 }
 
 NetworkRuntimeConfig::NetworkRuntimeConfig(const NetworkConfig &config)
     : ssid(config.ssid), password(config.password),
       apSsid(config.apSsid), apPassword(config.apPassword),
-      mdnsName(config.mdnsName)
+      mdnsName(config.mdnsName),
+      wifiConnectionTimeout(config.wifiConnectionTimeout)
 {
 }
 
@@ -71,11 +78,12 @@ void NetworkRuntimeConfig::operator=(const NetworkConfig &config)
     apSsid = config.apSsid;
     apPassword = config.apPassword;
     mdnsName = config.mdnsName;
+    wifiConnectionTimeout = config.wifiConnectionTimeout;
 }
 
 /* ================= DeviceLedConfig ================= */
 
-DeviceLedConfig* DeviceLedConfig::defaultInstance = nullptr; 
+DeviceLedConfig *DeviceLedConfig::defaultInstance = nullptr;
 
 DeviceLedConfig::DeviceLedConfig(const DeviceLedConfig &def)
     : pin(def.pin), countLed(def.countLed), deviceName(def.deviceName)
@@ -126,7 +134,7 @@ void DeviceLedRuntimeConfig::operator=(const DeviceLedConfig &config)
 
 /* ================= TelegramBotConfig ================= */
 
-TelegramBotConfig* TelegramBotConfig::defaultInstance = nullptr;
+TelegramBotConfig *TelegramBotConfig::defaultInstance = nullptr;
 
 TelegramBotConfig::TelegramBotConfig(const TelegramBotConfig &def)
     : token(def.token), limitMessage(def.limitMessage), periodUpdate(def.periodUpdate)

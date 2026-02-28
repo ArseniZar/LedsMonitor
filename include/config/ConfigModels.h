@@ -17,16 +17,18 @@ public:
     String32 apSsid;
     String32 apPassword;
     String32 mdnsName;
+    unsigned long wifiConnectionTimeout;
 
     static const NetworkConfig &defaultConfig(const char *ssid,
                                               const char *password,
                                               const char *apSsid,
                                               const char *apPassword,
-                                              const char *mdnsName);
+                                              const char *mdnsName,
+                                              unsigned long wifiConnectionTimeout);
 
     static NetworkConfig fromDefault();
 
-    explicit NetworkConfig(const NetworkConfig &def);
+    NetworkConfig(const NetworkConfig &def);
 
     void operator=(const NetworkRuntimeConfig &config);
     void operator=(const NetworkConfig &config);
@@ -34,7 +36,8 @@ public:
 private:
     NetworkConfig(const char *ssid, const char *password,
                   const char *apSsid, const char *apPassword,
-                  const char *mdnsName);
+                  const char *mdnsName,
+                  unsigned long wifiConnectionTimeout);
 
     static NetworkConfig* defaultInstance;
 };
@@ -46,6 +49,7 @@ struct NetworkRuntimeConfig
     String32 apSsid;
     String32 apPassword;
     String32 mdnsName;
+    unsigned long wifiConnectionTimeout;
     NetworkRuntimeConfig() = default;
     NetworkRuntimeConfig(const NetworkConfig &config);
     void operator=(const NetworkConfig &config);
@@ -66,7 +70,7 @@ public:
 
     static DeviceLedConfig fromDefault();
 
-    explicit DeviceLedConfig(const DeviceLedConfig &def);
+    DeviceLedConfig(const DeviceLedConfig &def);
 
     void operator=(const DeviceLedRuntimeConfig &config);
     void operator=(const DeviceLedConfig &config);
@@ -102,7 +106,7 @@ public:
 
     static TelegramBotConfig fromDefault();
 
-    explicit TelegramBotConfig(const TelegramBotConfig &def);
+    TelegramBotConfig(const TelegramBotConfig &def);
 
     void operator=(const TelegramBotRuntimeConfig &config);
     void operator=(const TelegramBotConfig &config);

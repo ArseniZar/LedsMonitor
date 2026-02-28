@@ -10,7 +10,8 @@ const NetworkConfig& DEFAULT_NETWORK_CONFIG = NetworkConfig::defaultConfig(
     "",          // password
     "SmartHome", // AP SSID
     "12345678",  // AP password
-    "smarthome"  // mDNS name
+    "smarthome",  // mDNS name
+    10000UL       // Wi-Fi connection timeout (ms)
 );
 
 
