@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WIFI_TYPES_H
-#define WIFI_TYPES_H
+#ifndef WIFI_STATES_H
+#define WIFI_STATES_H
 
 enum class ConnState : int
 {

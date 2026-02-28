@@ -10,30 +10,49 @@
 #include "Logger.h"
 #include "WebServer.h"
 #include "WifiNetwork.h"
-#include "WifiTypes.h"
+#include "WifiStates.h"
+#include "ConfigModels.h"
+
+#ifndef WIFI_SSID
+#define WIFI_SSID ""
+#endif
+
+#ifndef WIFI_PASS
+#define WIFI_PASS ""
+#endif
+
+#ifndef AP_SSID 
+#define AP_SSID "SmartHome"
+#endif
+
+#ifndef AP_PASS
+#define AP_PASS "12345678"
+#endif
+
+#ifndef MDNS_NAME
+#define MDNS_NAME "smarthome"
+#endif
 
 #ifndef WIFI_CONNECTION_TIMEOUT_MS
 #define WIFI_CONNECTION_TIMEOUT_MS 10000
-#endif
-
-#ifndef WIFI_RETRY_DELAY_MS
-#define WIFI_RETRY_DELAY_MS 60000
-#endif
-
-#ifndef WIFI_AFTER_WEBSERVER_IDLE_MS
-#define WIFI_AFTER_WEBSERVER_IDLE_MS 120000
 #endif
 
 class NetworkManager
 {
 public:
     bool begin();
-    static NetworkManager &init(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
+    static NetworkManager &init(Logger &logger);
     bool attemptConnection(const char *ssid, const char *password);
     bool attemptConnectionAsync(const char *ssid, const char *password);
+    bool startWebServerNetwork();
+    bool stopWebServerNetwork();
     void setAPConfig(const char *apSsid, const char *apPassword);
-    void setWiFiConfig(const char *ssid, const char *password);
+    void setWifiConfig(const char *ssid, const char *password);
     void setMdnsName(const char *mdnsName);
+    void setWifiConnectionTimeout(unsigned long timeout);
+    void applyConfig(const NetworkConfig &config);
+    NetworkConfig getConfig() const;
+    unsigned long getWifiConnectionTimeout() const;
     StringN<18> getMacAddress() const;
     const char *getSsid() const;
     const char *getPass() const;
@@ -41,10 +60,9 @@ public:
     ScanState statusScan();
 
 private:
-    NetworkManager(Logger &logger, const char* apSsid, const char* apPassword, const char* mdnsName);
+    NetworkManager(Logger &logger);
 
     Logger &logger;
-    espweb::WebServer webserver;
 
     String32 apSsid;
     String32 apPassword;
@@ -57,11 +75,12 @@ private:
 
     String32 mdnsName;
     
+    unsigned long wifiConnectionTimeout;
+
     static constexpr uint8_t MAX_WIFI_HANDLER = 2;;
     WiFiEventHandler onGotIpHandlers[MAX_WIFI_HANDLER];
     WiFiEventHandler onDisconnectedHandlers[MAX_WIFI_HANDLER];
 
-    void initServer();
     void configureWifiPerformance();
 
     bool scanWifiNetworksAsync();
