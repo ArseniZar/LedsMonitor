@@ -1,10 +1,10 @@
 #include "TelegramBot.h"
 
-TelegramBot::TelegramBot(Logger &logger, const char *token, const MacAddress &mac) : logger(logger), bot(FastBot2(token)), mac(mac), limitMessage(10), periodUpdate(1000) {}
+TelegramBot::TelegramBot(Logger &logger, const MacAddress &mac) : logger(logger), bot(TELEGRAM_BOT_TOKEN), mac(mac), limitMessage(TELEGRAM_LIMIT_MESSAGE), periodUpdate(TELEGRAM_PERIOD_UPDATE) {}
 
-TelegramBot &TelegramBot::init(Logger &logger, const char *token, const MacAddress &mac)
+TelegramBot &TelegramBot::init(Logger &logger, const MacAddress &mac)
 {
-    static TelegramBot instance(logger, token, mac);
+    static TelegramBot instance(logger, mac);
     return instance;
 }
 
@@ -17,6 +17,7 @@ void TelegramBot::begin()
     bot.onUpdate([this](fb::Update &u)
                  { this->handleUpdateMsg(u); });
 }
+
 void TelegramBot::handleUpdateMsg(fb::Update &u)
 {
     logger.log(LOG_DEBUG, [&]() -> String256
@@ -122,16 +123,52 @@ void TelegramBot::handleUpdateMsg(fb::Update &u)
     }
 }
 
-void TelegramBot::setLimitMessage(int limitMessage)
+void TelegramBot::setLimitMessage(uint8_t limitMessage)
 {
     this->limitMessage = limitMessage;
     bot.setLimit(limitMessage);
 }
 
-void TelegramBot::setPeriodUpdate(int periodUpdate)
+void TelegramBot::setPeriodUpdate(uint16_t periodUpdate)
 {
     this->periodUpdate = periodUpdate;
-    bot.setPollMode(fb::Poll::Sync, periodUpdate);
+    bot.setPollMode(bot.getPollMode(), periodUpdate);
+}
+
+void TelegramBot::setToken(const char *token)
+{
+    bot.setToken(token);
+}
+
+void TelegramBot::applyConfig(const TelegramBotConfig &config)
+{
+    setToken(config.token);
+    setLimitMessage(config.limitMessage);
+    setPeriodUpdate(config.periodUpdate);
+}
+TelegramBotConfig TelegramBot::getConfig() const
+{
+    TelegramBotConfig config = TelegramBotConfig::fromDefault();
+    config.token = getToken();
+    config.limitMessage = getLimitMessage();
+    config.periodUpdate = getPeriodUpdate();
+    return config;
+}
+
+uint8_t TelegramBot::getLimitMessage() const 
+{   
+    
+    return limitMessage;
+}
+
+const char * TelegramBot::getToken() const 
+{
+    return const_cast<FastBot2&>(bot).getToken().c_str();
+}
+
+uint16_t TelegramBot::getPeriodUpdate() const 
+{
+    return periodUpdate;
 }
 
 bool TelegramBot::tick()

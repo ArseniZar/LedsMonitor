@@ -10,33 +10,52 @@
 #include "TelegramParse.h"
 #include "TelegramSerialization.h"
 #include "MacAddress.h"
+#include "ConfigModels.h"
 
-class TelegramBot
+#ifndef TELEGRAM_BOT_TOKEN
+#define TELEGRAM_BOT_TOKEN ""
+#endif
+
+#ifndef TELEGRAM_LIMIT_MESSAGE
+#define TELEGRAM_LIMIT_MESSAGE 10
+#endif
+
+#ifndef TELEGRAM_PERIOD_UPDATE
+#define TELEGRAM_PERIOD_UPDATE 1000
+#endif
+
+class TelegramBot 
 {
 public:
     void begin();
     bool tick();
 
     ~TelegramBot() = default;
-    void setLimitMessage(int limitMessage);
-    void setPeriodUpdate(int periodUpdate);
-
+    void setLimitMessage(uint8_t limitMessage);
+    void setPeriodUpdate(uint16_t periodUpdate);
+    void setToken(const char *token);
+    void applyConfig(const TelegramBotConfig &config);
+    TelegramBotConfig getConfig() const;
+    uint8_t getLimitMessage() const;
+    uint16_t getPeriodUpdate() const; 
+    const char * getToken() const; 
+    
     template <typename T, typename E = void>
     void registerCommand(const String &command, std::function<E(T &)> handler);
-    static TelegramBot &init(Logger &logger, const char *token, const MacAddress &mac);
+    static TelegramBot &init(Logger &logger, const MacAddress &mac);
 
 private:
     Logger &logger;
     FastBot2 bot;
     const MacAddress &mac;
 
-    int limitMessage;
-    int periodUpdate;
+    uint8_t limitMessage;
+    uint16_t periodUpdate;
 
     std::map<String, std::function<void(fb::Update &)>> handlers;
 
     TelegramBot() = delete;
-    TelegramBot(Logger &logger, const char *token, const MacAddress &mac);
+    TelegramBot(Logger &logger, const MacAddress &mac);
     void handleUpdateMsg(fb::Update &u);
 };
 
