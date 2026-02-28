@@ -11,11 +11,11 @@ class DeviceBase
 public:
     virtual ~DeviceBase() = default;
     const MacAddress &getMacAddress() const { return mac; }
-    const String getName() const { return name; }
-
+    const char * getName() const { return name; }
+    void setName(const char *name) { this->name = name; }
 protected:
     const MacAddress &mac;
-    const String name;
+    String32 name;
     DeviceBase() = delete;
     DeviceBase(const MacAddress &mac, const char *name) : mac(mac), name(name) {}
 };
