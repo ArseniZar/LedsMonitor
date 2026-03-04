@@ -197,6 +197,19 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
 
 void NetworkManager::applyConfig(const NetworkConfig &config)
 {
+    logger.log(LOG_INFO, [&]() -> String128
+               {
+                String128 buf;
+                buf.add(F("(NetworkManager::applyConfig) Applying network configuration. SSID: '"));
+                buf.add(config.ssid);
+                buf.add(F("', AP SSID: '"));
+                buf.add(config.apSsid);
+                buf.add(F("', mDNS: '"));
+                buf.add(config.mdnsName);
+                buf.add(F("', Wi-Fi timeout (ms): "));
+                buf.add(config.wifiConnectionTimeout);
+                return buf; });
+
     setWifiConfig(config.ssid, config.password);
     setAPConfig(config.apSsid, config.apPassword);
     setMdnsName(config.mdnsName);

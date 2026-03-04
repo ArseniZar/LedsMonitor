@@ -85,6 +85,16 @@ bool DeviceLed<T, E>::getStatus()
 template <typename T, typename E>
 void DeviceLed<T, E>::applyConfig(const DeviceLedConfig &config)
 {
+    logger.log(LOG_INFO, [&]() -> String128
+               {
+                String128 buf;
+                buf.add(F("(DeviceLed::applyConfig) Applying LED device configuration. CountLed: "));
+                buf.add(config.countLed);
+                buf.add(F(", Name: '"));
+                buf.add(config.deviceName);
+                buf.add(F("'"));
+                return buf; });
+
     setCountLed(config.countLed);
     setName(config.deviceName);
 }

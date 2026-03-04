@@ -142,6 +142,17 @@ void TelegramBot::setToken(const char *token)
 
 void TelegramBot::applyConfig(const TelegramBotConfig &config)
 {
+    logger.log(LOG_INFO, [&]() -> String128
+               {
+                String128 buf;
+                buf.add(F("(TelegramBot::applyConfig) Applying Telegram bot configuration. Token: '"));
+                buf.add(config.token && config.token[0] ? F("***HIDDEN***") : F("<empty>"));
+                buf.add(F("', LimitMessage: "));
+                buf.add(config.limitMessage);
+                buf.add(F(", PeriodUpdate (ms): "));
+                buf.add(config.periodUpdate);
+                return buf; });
+
     setToken(config.token);
     setLimitMessage(config.limitMessage);
     setPeriodUpdate(config.periodUpdate);
