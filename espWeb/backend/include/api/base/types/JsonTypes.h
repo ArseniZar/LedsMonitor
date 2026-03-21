@@ -1,0 +1,31 @@
+#pragma once
+#ifndef JSON_TYPES_H
+#define JSON_TYPES_H
+
+#include <Arduino.h>
+#include <StringN.h>
+#include <GSON.h>
+#include <variant>
+
+namespace api::json
+{
+    using JsonType = gson::Type;
+    
+    enum class ValueType : uint8_t
+    {
+        Bool,
+        Int,
+        Float,
+        U_Long,
+        U_Int8,
+        U_Int16,
+        String32,
+        String64,
+    };
+
+    using Value = std::variant<std::monostate, bool, int, float, unsigned long, uint8_t, uint16_t, String32, String64>;
+    
+    const __FlashStringHelper* readType(ValueType t);
+}
+
+#endif // JSON_TYPES_H

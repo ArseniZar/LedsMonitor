@@ -1,46 +1,24 @@
 #include "JsonSerializationBase.h"
 
-namespace api
+namespace api::json
 {
-    gson::Str JsonSerialization::serializationJson(std::tuple<const char *, gson::Type, String> *pairs, const int size)
+    gson::Str Serialization::serialization(const std::map<const char *, Field> &pairs)
     {
         gson::Str j;
         j('{');
-        for (int i = 0; i < size; ++i)
+        for (const auto &[key, field] : pairs)
         {
-            const char *key = std::get<0>(pairs[i]);
-            const gson::Type type = std::move(std::get<1>(pairs[i]));
-            const String value = std::move(std::get<2>(pairs[i]));
-
-            switch (type)
+            std::visit([&j, key](auto &&arg)
             {
-            case gson::Type::Int:
-                j[key] = value.toInt();
-                break;
-
-            case gson::Type::Float:
-                j[key] = value.toFloat();
-                break;
-
-            case gson::Type::String:
-                j[key] = value;
-                break;
-
-            case gson::Type::Bool:
-            {
-                bool result = value.equalsIgnoreCase("true");
-                j[key] = result;
-                break;
-            }
-
-            case gson::Type::Null:
-                j[key] = nullptr;
-                break;
-
-            default:
-                j[key] = value;
-                break;
-            }
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, std::monostate>) {
+                     // ingnore monostate
+                }
+                else 
+                {
+                    j[key] = arg;
+                }
+            }, field.value);
         }
         j('}');
         return j;

@@ -9,8 +9,8 @@
 namespace api
 {
     template <typename T>
-    String serializeApiResponse(const ApiSuccessResponse<T> &response);
-    String serializeApiResponse(const ApiErrorResponse &response);
+    String serializeResponse(const SuccessResponse<T> &response);
+    String serializeResponse(const ErrorResponse &response);
 
 }
 #include "ApiSerialization.tpp"

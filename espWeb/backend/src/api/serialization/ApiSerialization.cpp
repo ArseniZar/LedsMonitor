@@ -2,7 +2,7 @@
 
 namespace api
 {
-    String serializeApiResponse(const ApiErrorResponse &response)
+    String serializeResponse(const ErrorResponse &response)
     {
 
         gson::Str j;

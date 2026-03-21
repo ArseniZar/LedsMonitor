@@ -4,19 +4,28 @@
 
 #include <Arduino.h>
 #include <GSON.h>
-#include <utility>
+#include <map>
+#include "JsonTypes.h"
 
-namespace api
+namespace api::json
 {
-    class JsonSerialization
+    class Serialization
     {
     public:
-        virtual ~JsonSerialization() = default;
+        struct Field
+        {
+            const Value &value;
+
+            Field() = delete;
+            Field(const Value &value) : value(value) {}
+        };
+
+        virtual ~Serialization() = default;
         virtual gson::Str toJson() const = 0;
 
     protected:
-        static gson::Str serializationJson(std::tuple<const char *, gson::Type, String> *pairs, const int size);
+        static gson::Str serialization(const std::map<const char *, Field> &pairs);
     };
 }
 
-#endif // JSON_SERIALIZATION_BASE_H
+#endif // JSON_SERIALIZATION_H

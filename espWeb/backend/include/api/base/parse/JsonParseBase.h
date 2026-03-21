@@ -8,16 +8,27 @@
 #include <memory>
 #include <map>
 #include "JsonResult.h"
+#include "JsonConverter.h"
+#include "JsonTypes.h"
 
-namespace api
+namespace api::json
 {
-    class JsonParse
+    class Parse
     {
     public:
-        virtual ~JsonParse() = default;
+        struct Field
+        {
+            const ValueType expectedType;
+            bool required;
+
+            Field() = delete;
+            Field(ValueType expectedType, bool required = true) : expectedType(expectedType), required(required) {}
+        };
+
+        virtual ~Parse() = default;
 
     protected:
-        static std::unique_ptr<JsonConvertible> parseData(const gson::Entry &data, const std::map<const char *, gson::Type> &expectedKeys);
+        static std::unique_ptr<Convertible> parse(const gson::Entry &json, const std::map<const char *, Field> &expectedKeys);
     };
 }
 

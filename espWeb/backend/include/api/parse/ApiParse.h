@@ -10,7 +10,7 @@
 namespace api
 {
     template <typename T>
-    std::unique_ptr<ApiRequest> parseApiRequest(const char* message);
+    std::unique_ptr<Request> parseRequest(const char* message);
 }
 
 #include "ApiParse.tpp"

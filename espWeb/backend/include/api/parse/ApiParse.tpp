@@ -5,7 +5,7 @@ namespace api
 {
 
     template <typename T>
-    std::unique_ptr<ApiRequest> parseApiRequest(const char *message)
+    std::unique_ptr<Request> parseRequest(const char *message)
     {
 
         gson::Parser parser;
@@ -18,23 +18,23 @@ namespace api
             buf.add(parser.errorIndex());
             buf.add(F(": "));
             buf.add(parser.readError());
-            return std::make_unique<ApiErrorRequest>(buf);
+            return std::make_unique<ErrorRequest>(buf);
         }
         
-        const gson::Entry &data = parser.get(F("data"));
-        if (!data.valid())
+        const gson::Entry &json = parser.get(F("data"));
+        if (!json.valid())
         {   
-            return std::make_unique<ApiErrorRequest>(String64(F("Api Parsing error: expected key 'data' not found")));
+            return std::make_unique<ErrorRequest>(String64(F("Api Parsing error: expected key 'data' not found")));
         }
 
-        auto parsePtr = T::fromJson(data);
+        auto parsePtr = T::fromJson(json);
         if (!parsePtr->isOk())
         {
-            JsonError *errorPtr = static_cast<JsonError *>(parsePtr.get());
-            return std::make_unique<ApiErrorRequest>(errorPtr->message);
+            json::Error *errorPtr = static_cast<json::Error *>(parsePtr.get());
+            return std::make_unique<ErrorRequest>(errorPtr->message);
         }
 
-        JsonParseSuccess<T> *successPtr = static_cast<JsonParseSuccess<T> *>(parsePtr.get());
-        return std::make_unique<ApiSuccessRequest<T>>(std::move(successPtr->result));
+        json::ParseSuccess<T> *successPtr = static_cast<json::ParseSuccess<T> *>(parsePtr.get());
+        return std::make_unique<SuccessRequest<T>>(std::move(successPtr->result));
     }
 }

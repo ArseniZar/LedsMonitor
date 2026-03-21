@@ -1,6 +1,6 @@
 #pragma once
-#ifndef JSON_MODELS_BASE_H
-#define JSON_MODELS_BASE_H
+#ifndef API_MODELS_BASE_H
+#define API_MODELS_BASE_H
 
 #include <Arduino.h>
 #include "JsonParseBase.h"
@@ -10,13 +10,13 @@ namespace api
 {
     /*==========================================================ModelRequest===============================================*/
 
-    class ModelBaseRequest : public JsonParse
+    class ModelBaseRequest : public json::Parse
     {
     public:
         ModelBaseRequest();
         ModelBaseRequest(ModelBaseRequest &&base);
         ModelBaseRequest(const ModelBaseRequest &base);
-        static std::unique_ptr<JsonConvertible> fromJson(const gson::Entry &data);
+        static std::unique_ptr<json::Convertible> fromJson(const gson::Entry &json);
 
         // const String32 meta;
         // ModelBaseRequest() = delete;
@@ -25,7 +25,7 @@ namespace api
 
     /*==========================================================ModelResponse==============================================*/
 
-    class ModelBaseResponse : public JsonSerialization
+    class ModelBaseResponse : public json::Serialization
     {
     public:
         ModelBaseResponse();
@@ -41,4 +41,4 @@ namespace api
     };
 }
 
-#endif // JSON_MODELS_BASE_H
+#endif // API_MODELS_BASE_H

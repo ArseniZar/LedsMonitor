@@ -1,4 +1,4 @@
-#include "JsonModelBase.h"
+#include "ApiModelsBase.h"
 
 namespace api
 {
@@ -17,9 +17,9 @@ namespace api
     // ModelBaseRequest::ModelBaseRequest(ModelBaseRequest &&base) : meta(std::move(base.meta)) {}
     // ModelBaseRequest::ModelBaseRequest(const ModelBaseRequest &base) : meta(base.meta) {}
 
-    std::unique_ptr<JsonConvertible> ModelBaseRequest::fromJson(const gson::Entry &data)
+    std::unique_ptr<json::Convertible> ModelBaseRequest::fromJson(const gson::Entry &json)
     {
-        return std::make_unique<JsonParseSuccess<ModelBaseRequest>>(std::move(ModelBaseRequest()));
+        return std::make_unique<json::ParseSuccess<ModelBaseRequest>>(std::move(ModelBaseRequest()));
 
         // using namespace ModelsBaseRequestResponceKey;
         // static const std::map<const char *, gson::Type> keys = {
