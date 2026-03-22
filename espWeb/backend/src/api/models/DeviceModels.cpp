@@ -2,54 +2,20 @@
 
 namespace api
 {
-    /*===================================== ScanWifiNetworkStarted ==========================================================*/
-
-    // namespace ScanNetworkRequestKey
-    // {
-
-    // }
-
-    // ScanNetworkRequest::ScanNetworkRequest(const ModelBaseRequest &base) : ModelBaseRequest(base) {}
-    // ScanNetworkRequest::ScanNetworkRequest(ModelBaseRequest &&base) : ModelBaseRequest(std::move(base)) {}
-
-    // std::unique_ptr<JsonConvertible> ScanNetworkRequest::fromJson(const gson::Entry &data)
-    // {
-    //     using namespace ScanNetworkRequestKey;
-    //     static const std::map<const char *, gson::Type> keys = {};
-
-    //     auto parseBasePtr = ModelBaseRequest::fromJson(data);
-    //     if (!parseBasePtr->isOk())
-    //     {
-    //         return parseBasePtr;
-    //     }
-    //     auto *successParseBasePtr = static_cast<JsonParseSuccess<ModelBaseRequest> *>(parseBasePtr.get());
-
-    //     auto parseScanNetworkPtr = JsonParse::parseData(data, keys);
-    //     if (!parseScanNetworkPtr->isOk())
-    //     {
-    //         return parseScanNetworkPtr;
-    //     }
-    //     auto *successParseScanNetworkPtr = static_cast<JsonParseSuccess<std::map<const char *, String>> *>(parseScanNetworkPtr.get());
-    //     std::map<const char *, String> _ = std::move(successParseScanNetworkPtr->result);
-    //     return std::make_unique<JsonParseSuccess<ScanNetworkRequest>>(std::move(ScanNetworkRequest(std::move(successParseBasePtr->result))));
-    // }
-
-    /*--------------------------------------------------------------------------------------------------------------*/
-
     namespace ScanWifiNetworkStartedResponceKey
     {
         constexpr const char *SCAN = "scan";
         constexpr const char *STARTED = "started";
     }
 
-    ScanWifiNetworkStartedResponce::ScanWifiNetworkStartedResponce(const bool status, const ModelBaseResponse &base) : ModelBaseResponse(base), status(status) {};
-    ScanWifiNetworkStartedResponce::ScanWifiNetworkStartedResponce(bool status, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), status(status) {};
+    ScanWifiNetworkStartedResponse::ScanWifiNetworkStartedResponse(const bool status, const ModelBaseResponse &base) : ModelBaseResponse(base), status(status) {};
+    ScanWifiNetworkStartedResponse::ScanWifiNetworkStartedResponse(bool status, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), status(status) {};
 
-    gson::Str ScanWifiNetworkStartedResponce::toJson() const
+    gson::Str ScanWifiNetworkStartedResponse::toJson() const
     {
         using namespace ScanWifiNetworkStartedResponceKey;
-        std::map<const char *, Field> pairs = {
-            {STARTED, {status}}};
+        std::array<std::pair<const char *, Field>, 1> pairs = {{
+            {STARTED, {status}}}};
         gson::Str j;
         j += ModelBaseResponse::toJson();
         j[SCAN] = json::Serialization::serialization(pairs);
@@ -70,8 +36,8 @@ namespace api
     gson::Str GetScanStatusResponse::toJson() const
     {
         using namespace GetScanStatusResponseKey;
-        std::map<const char *, Field> pairs = {
-            {CODE, {static_cast<int>(status)}}};
+        std::array<std::pair<const char *, Field>, 1> pairs = {{
+            {CODE, {static_cast<int>(status)}}}};
         gson::Str j;
         j += ModelBaseResponse::toJson();
         j[STATUS] = json::Serialization::serialization(pairs);
@@ -92,10 +58,10 @@ namespace api
         constexpr const char *NETWORKS = "networks";
     }
 
-    ScanWifiNetworkResponce::ScanWifiNetworkResponce(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base) : ModelBaseResponse(base), networks(networks) {};
-    ScanWifiNetworkResponce::ScanWifiNetworkResponce(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), networks(std::move(networks)) {};
+    ScanWifiNetworkResponse::ScanWifiNetworkResponse(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base) : ModelBaseResponse(base), networks(networks) {};
+    ScanWifiNetworkResponse::ScanWifiNetworkResponse(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), networks(std::move(networks)) {};
 
-    gson::Str ScanWifiNetworkResponce::toJson() const
+    gson::Str ScanWifiNetworkResponse::toJson() const
     {
         gson::Str j;
         j += ModelBaseResponse::toJson();
@@ -104,14 +70,14 @@ namespace api
         for (size_t i = 0; i < networks.size(); i++)
         {
             using namespace ScanNetworksResponceKey;
-            std::map<const char *, Field> pairs = {
+            std::array<std::pair<const char *, Field>, 7> pairs = {{
                 {SSID, {networks[i].ssid}},
                 {PASSWORD, {networks[i].password}},
                 {RSSI, {networks[i].rssi}},
                 {ENCRYPTION, {networks[i].encryptionType}},
                 {CHANNEL, {networks[i].channel}},
                 {BSSID, {networks[i].bssid}},
-                {HIDDEN, {networks[i].hidden}}};
+                {HIDDEN, {networks[i].hidden}}}};
             j += json::Serialization::serialization(pairs);
         }
         j(']');
@@ -166,14 +132,14 @@ namespace api
 
     }
 
-    ConnectWifiNetworkStartedResponce::ConnectWifiNetworkStartedResponce(const bool status, const ModelBaseResponse &base) : ModelBaseResponse(base), status(status) {}
-    ConnectWifiNetworkStartedResponce::ConnectWifiNetworkStartedResponce(bool status, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), status(status) {}
+    ConnectWifiNetworkStartedResponse::ConnectWifiNetworkStartedResponse(const bool status, const ModelBaseResponse &base) : ModelBaseResponse(base), status(status) {}
+    ConnectWifiNetworkStartedResponse::ConnectWifiNetworkStartedResponse(bool status, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), status(status) {}
 
-    gson::Str ConnectWifiNetworkStartedResponce::toJson() const
+    gson::Str ConnectWifiNetworkStartedResponse::toJson() const
     {
         using namespace ConnectWifiNetworkStartedResponceKey;
-        std::map<const char *, Field> pairs = {
-            {STARTED, {status}}};
+        std::array<std::pair<const char *, Field>, 1> pairs = {{
+            {STARTED, {status}}}};
         gson::Str j;
         j += ModelBaseResponse::toJson();
         j[CONNECT] = json::Serialization::serialization(pairs);
@@ -194,8 +160,8 @@ namespace api
     gson::Str GetWifiStatusResponse::toJson() const
     {
         using namespace GetStatusWifiResponceKey;
-        std::map<const char *, Field> pairs = {
-            {CODE, {static_cast<int>(status)}}};
+        std::array<std::pair<const char *, Field>, 1> pairs = {{
+            {CODE, {static_cast<int>(status)}}}};
         gson::Str j;
         j += ModelBaseResponse::toJson();
         j[STATUS] = json::Serialization::serialization(pairs);
@@ -330,7 +296,7 @@ namespace api
     gson::Str GetConfigResponse::toJson() const
     {
         using namespace GetConfigResponseKey;
-        std::map<const char *, Field> pairs = {
+        std::array<std::pair<const char *, Field>, 9> pairs = {{
             {AP_SSID, {apSsid}},
             {AP_PASSWORD, {apPassword}},
             {MDNS_NAME, {mdnsName}},
@@ -339,7 +305,7 @@ namespace api
             {DEVICE_NAME, {deviceName}},
             {TOKEN, {token}},
             {LIMIT_MESSAGE, {limitMessage}},
-            {PERIOD_UPDATE, {periodUpdate}}};
+            {PERIOD_UPDATE, {periodUpdate}}}};
 
         gson::Str j;
         j += ModelBaseResponse::toJson();

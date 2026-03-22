@@ -10,24 +10,13 @@
 // TODO: назвать файл по другому ApiDeviceModels.h
 namespace api
 {
-    /*===================================== ScanWifiNetworkStarted =======================================================*/
-
-    // class ScanNetworkRequest final : public ModelBaseRequest
-    // {
-    // public:
-    //     ScanNetworkRequest() = delete;
-    //     ScanNetworkRequest(ModelBaseRequest &&base);
-    //     ScanNetworkRequest(const ModelBaseRequest &base);
-    //     static std::unique_ptr<JsonConvertible> fromJson(const gson::Entry &data);
-    // };
-
-    class ScanWifiNetworkStartedResponce final : public ModelBaseResponse
+    class ScanWifiNetworkStartedResponse final : public ModelBaseResponse
     {
     public:
         bool status;
-        ScanWifiNetworkStartedResponce() = delete;
-        ScanWifiNetworkStartedResponce(const bool status, const ModelBaseResponse &base);
-        ScanWifiNetworkStartedResponce(bool status, ModelBaseResponse &&base);
+        ScanWifiNetworkStartedResponse() = delete;
+        ScanWifiNetworkStartedResponse(const bool status, const ModelBaseResponse &base);
+        ScanWifiNetworkStartedResponse(bool status, ModelBaseResponse &&base);
         gson::Str toJson() const override;
     };
 
@@ -45,13 +34,13 @@ namespace api
 
     /*===================================== ScanWifiNetwork =======================================================*/
 
-    class ScanWifiNetworkResponce final : public ModelBaseResponse
+    class ScanWifiNetworkResponse final : public ModelBaseResponse
     {
     public:
         std::vector<WifiNetwork> networks;
-        ScanWifiNetworkResponce() = delete;
-        ScanWifiNetworkResponce(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base);
-        ScanWifiNetworkResponce(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base);
+        ScanWifiNetworkResponse() = delete;
+        ScanWifiNetworkResponse(const std::vector<WifiNetwork> &networks, const ModelBaseResponse &base);
+        ScanWifiNetworkResponse(std::vector<WifiNetwork> &&networks, ModelBaseResponse &&base);
         gson::Str toJson() const override;
     };
 
@@ -68,13 +57,13 @@ namespace api
         static std::unique_ptr<json::Convertible> fromJson(const gson::Entry &json);
     };
 
-    class ConnectWifiNetworkStartedResponce final : public ModelBaseResponse
+    class ConnectWifiNetworkStartedResponse final : public ModelBaseResponse
     {
     public:
         bool status;
-        ConnectWifiNetworkStartedResponce() = delete;
-        ConnectWifiNetworkStartedResponce(const bool status, const ModelBaseResponse &base);
-        ConnectWifiNetworkStartedResponce(bool status, ModelBaseResponse &&base);
+        ConnectWifiNetworkStartedResponse() = delete;
+        ConnectWifiNetworkStartedResponse(const bool status, const ModelBaseResponse &base);
+        ConnectWifiNetworkStartedResponse(bool status, ModelBaseResponse &&base);
         gson::Str toJson() const override;
     };
 
@@ -153,5 +142,3 @@ namespace api
     /*===================================== other =======================================================*/
 }
 #endif // DEVICE_MODELS_H
-
-// TODO исправить массово название Responce -> ResponSe

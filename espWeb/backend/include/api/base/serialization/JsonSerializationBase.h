@@ -4,7 +4,8 @@
 
 #include <Arduino.h>
 #include <GSON.h>
-#include <map>
+#include <array>
+#include <utility>
 #include "JsonTypes.h"
 
 namespace api::json
@@ -24,7 +25,8 @@ namespace api::json
         virtual gson::Str toJson() const = 0;
 
     protected:
-        static gson::Str serialization(const std::map<const char *, Field> &pairs);
+        template <std::size_t N>
+        static gson::Str serialization(const std::array<std::pair<const char *, Field>, N> &pairs);
     };
 }
 

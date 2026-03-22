@@ -2,7 +2,8 @@
 
 namespace api::json
 {
-    gson::Str Serialization::serialization(const std::map<const char *, Field> &pairs)
+    template <std::size_t N>
+    gson::Str Serialization::serialization(const std::array<std::pair<const char *, Field>, N> &pairs)
     {
         gson::Str j;
         j('{');
