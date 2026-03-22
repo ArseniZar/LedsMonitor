@@ -12,3 +12,5 @@ function App() {
 }
 
 render(html`<${App} />`, document.querySelector("#app")!);
+
+// TODO: применить новое api к стараницам

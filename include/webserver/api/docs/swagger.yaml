@@ -342,7 +342,7 @@ components:
 
     ConnectNetworkResponseEnvelope:
       type: object
-      description: Successful response ApiSuccessResponse<ConnectNetworkResponce>.
+      description: Successful response ApiSuccessResponse<ConnectNetworkStartedResponce>.
       properties:
         ok:
           type: boolean

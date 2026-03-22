@@ -1,7 +1,6 @@
 import os
 import sys
 
-VAR_NAME = "index"
 
 # Цвета для терминала (ANSI escape codes)
 class Colors:
@@ -52,15 +51,16 @@ def generate_header(input_file: str, output_file: str, var_name: str) -> None:
         sys.exit(1)
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print_error("Error: input file and output header file path are required.")
         print("Usage: python generate_header.py path_to_input.html path_to_output.h")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
+    output_file_name = sys.argv[3]
 
-    generate_header(input_file, output_file, VAR_NAME)
+    generate_header(input_file, output_file, output_file_name)
 
 if __name__ == "__main__":
     main()

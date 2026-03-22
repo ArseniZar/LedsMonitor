@@ -2,7 +2,7 @@
 #include <pgmspace.h>
 
 namespace espweb {
-const char index[] PROGMEM =
+const char index.h[] PROGMEM =
 "<!doctype html>\n"
 "<html lang=\"en\">\n"
 "  <head>\n"
