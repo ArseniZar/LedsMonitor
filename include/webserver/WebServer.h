@@ -8,44 +8,51 @@
 #include <ESP8266mDNS.h>
 #include "Logger.h"
 #include "index.h"
-#include "DeviceModels.h"
+#include "ApiConfigModels.h"
 #include "ApiParse.h"
 #include "ApiSerialization.h"
-#include "IWebServerNetwork.h"
 
-namespace espweb
+class WebServer
 {
-    class WebServer
-    {
-    public:
-        WebServer() = delete;
-        WebServer(Logger &logger, int port);
+public:
+    void begin();  
 
-        void stop();
-        void handleClient();
-        bool isRunning() const; 
-        unsigned long getLastRequestTime() const;
-        
-        void begin(IWebServerNetwork &network);
+    ~WebServer() = default;
 
-    private:
-        Logger &logger;
-        IWebServerNetwork *network;
+    void stop();
+    void handleClient();
+    bool isRunning() const;
+    unsigned long getLastRequestTime() const;
 
-        ESP8266WebServer server;
+    template <typename T, typename E = void>
+    void registerRoutes(const char * uri, HTTPMethod httpMethod, std::function<E(T &)> handler);
+    
+    template <typename T = void, typename E = void>
+    void registerRoutes(const char * uri, HTTPMethod httpMethod, std::function<E()> handler);
 
-        bool serverRunning;
-        unsigned long lastRequestTime;
+    static WebServer &init(Logger &logger, int port);
 
-        void handleEnd();
-        void handleRoot();
-        void handleNotFound();
-        void handleScanStarted();
-        void handleScanStatus();
-        void handleScanResult();
-        void handleConnect();
-        void handleWifiStatus();
-    };
+private:
+    Logger &logger;
+    ESP8266WebServer server;
 
-}
+    bool serverRunning;
+    unsigned long lastRequestTime;
+
+    WebServer() = delete;
+    WebServer(Logger &logger, int port);
+
+    void handleRoot();
+    void handleNotFound();
+
+    
+
+    struct StrCompare {bool operator()(const char* a, const char* b) const { return strcmp(a, b) < 0; }};
+    std::map<const char*, uint8_t, StrCompare> routeMasks;
+
+    void handleCorsOptions(const char* uri);
+
+};
+
+#include "WebServer.tpp"
 #endif // WEBSERVER_H
