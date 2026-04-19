@@ -17,7 +17,7 @@
 ---
 
 <p align="center">
-  <video src="./docs/assets/demo/uiDemo.gif" width="320" autoplay loop muted playsinline></video>
+  <img src="./docs/assets/demo/uiDemo.gif" width="320" autoplay loop muted playsinline></img>
 </p>
 
 ### 💡 The Concept
