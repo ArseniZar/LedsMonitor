@@ -2,51 +2,52 @@
 #ifndef CONFIG_MANAGER_H
 #define CONFIG_MANAGER_H
 
-#include <type_traits>
 #include "Logger.h"
 #include "Storage.h"
-#include "ConfigModels.h"
-#include "ConfigDefault.h"
+#include "utils/helpers.h"
 
+template <typename Config, typename RuntimeConfig>
+struct ConfigPair
+{
+    Config config;
+    Storage<RuntimeConfig> storage;
+    ConfigPair();
+};
 
-
+template <typename... ConfigPairs>
 class ConfigManager
+    { static_assert(true, "(ConfigManager) Template parameters must be ConfigPair<Config, RuntimeConfig> (wrap your config types with ConfigPair)."); };
+
+template <typename... Configs, typename... RuntimeConfigs>
+class ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>
 {
 public:
     void begin();
     void save();
     void reset();
 
-    NetworkConfig &getNetworkConfig();
-    DeviceLedConfig &getDeviceLedConfig();
-    TelegramBotConfig &getTelegramBotConfig();
+    template <typename Config>
+    const Config &getConfig() const;
 
-    void saveNetworkConfig();
-    void saveDeviceLedConfig();
-    void saveTelegramBotConfig();
+    template <typename Config>
+    void updateConfig(const Config &config);
 
-    void resetNetworkConfig();
-    void resetDeviceLedConfig();
-    void resetTelegramBotConfig();
+    template <typename Config>
+    void saveConfig();
+
+    template <typename Config>
+    void resetConfig();
 
     static ConfigManager &init(Logger &logger);
 
 private:
-	ConfigManager(Logger &logger);
+    ConfigManager(Logger &logger);
 
-
-	Logger &logger;
-    
-    NetworkConfig networkConfig;
-    DeviceLedConfig deviceLedConfig;
-    TelegramBotConfig telegramBotConfig;
-
-	Storage<NetworkRuntimeConfig> wifiStorage;
-	Storage<DeviceLedRuntimeConfig> deviceStorage;
-	Storage<TelegramBotRuntimeConfig> telegramStorage;
+    Logger &logger;
+    std::tuple<ConfigPair<Configs, RuntimeConfigs>...> configs;
 
     void load();
 };
 
+#include "ConfigManager.tpp"
 #endif
-
