@@ -1,16 +1,19 @@
-FROM node:24-bookworm
+FROM nikolaik/python-nodejs:python3.12-nodejs24
 
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN apt-get update && \
+    apt-get install -y xxd && \
+    rm -rf /var/lib/apt/lists/*
+    
+ENV DOCKER_INPUT_DIR=/input
+ENV DOCKER_OUTPUT_DIR=/output
+ENV DOCKER_SCRIPTS_DIR=/scripts
 
-
-ENV DOCKER_DIR1=/src_app
-ENV DOCKER_DIR2=/include_out
-ENV DOCKER_DIR3=/automation
-
-RUN mkdir -p $DOCKER_DIR1 $DOCKER_DIR2 $DOCKER_DIR3 /app && \
-    chown -R 1000:1000 $DOCKER_DIR1 $DOCKER_DIR2 $DOCKER_DIR3 /app
+RUN mkdir -p $DOCKER_INPUT_DIR $DOCKER_OUTPUT_DIR $DOCKER_SCRIPTS_DIR /app /.npm && \
+    chmod -R 777 $DOCKER_INPUT_DIR $DOCKER_OUTPUT_DIR $DOCKER_SCRIPTS_DIR /app /.npm
 
 WORKDIR /app
-USER 1000:1000
 
-CMD ["sh", "-c", "cp -r $DOCKER_DIR1/. . && npm ci && npm run build && python3 $DOCKER_DIR3/generate_header.py dist/index.html $DOCKER_DIR2/index.h $FILE_NAME"]
+CMD ["sh", "-c", "cp -r $DOCKER_INPUT_DIR/. . && npm ci && npm run build && python3 $DOCKER_SCRIPTS_DIR/script.py dist/index.html $DOCKER_OUTPUT_DIR/ $OUTPUT_FILE_NAME"]
+
+# Copying is done to protect the original repository from changes, as temporary files and 
+# directories may be created during the build process and should not enter the original repository.

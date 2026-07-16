@@ -2,23 +2,26 @@
 NAME_DOCKER_IMAGE="lumvia-adminapp-build"
 NAME_FILE_OUTPUT="index.h"
 REPO_ROOT=$(git rev-parse --show-toplevel)
-FRONTEND_DIR="$REPO_ROOT/configApp/"
-BACKEND_DIR="$REPO_ROOT/include/webserver/"
-AUTOMATION_DIR="$REPO_ROOT/tools/web-compiler/"
+APP_DIR="$REPO_ROOT/configApp"
+OUTPUT_DIR="$REPO_ROOT/include/webserver"
+COMPILER_DIR="$REPO_ROOT/tools/web-compiler"
+SCRIPTS_DIR="$REPO_ROOT/tools/web-compiler/scripts"
 
-DOCKER_DIR1=/src_app
-DOCKER_DIR2=/include_out
-DOCKER_DIR3=/automation
-DOCKER_VAR=FILE_NAME
 
-docker build -t "$NAME_DOCKER_IMAGE" -f "$AUTOMATION_DIR/Dockerfile" "$FRONTEND_DIR"
+DOCKER_INPUT_DIR=/input
+DOCKER_OUTPUT_DIR=/output
+DOCKER_SCRIPTS_DIR=/scripts
+
+
+docker build -t "$NAME_DOCKER_IMAGE" -f "$COMPILER_DIR/Dockerfile" "$APP_DIR"
 
 docker run --rm \
-  -e "$DOCKER_VAR=$NAME_FILE_OUTPUT" \
-  -v "$FRONTEND_DIR:$DOCKER_DIR1" \
-  -v "$BACKEND_DIR:$DOCKER_DIR2" \
-  -v "$AUTOMATION_DIR:$DOCKER_DIR3" \
-  "$NAME_DOCKER_IMAGE"
-  
+-u "$(id -u):$(id -g)" \
+-v "$APP_DIR:$DOCKER_INPUT_DIR" \
+-v "$OUTPUT_DIR:$DOCKER_OUTPUT_DIR" \
+-v "$SCRIPTS_DIR/generate_header.py:$DOCKER_SCRIPTS_DIR/script.py" \
+-e "OUTPUT_FILE_NAME=$NAME_FILE_OUTPUT" \
+"$NAME_DOCKER_IMAGE"
+
 
 
