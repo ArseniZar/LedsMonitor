@@ -98,7 +98,7 @@ def step2_run_compiler(app_dir, output_dir, scripts_dir, script_path, image_name
             "-t", image_name, 
             "-f", f"{scripts_dir}/Dockerfile", 
             app_dir
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ], check=True)
     except subprocess.CalledProcessError as e:
         print(Color.paint("╭────────────────────────────────────────────────────────────╮", Color.RED))
         print(Color.paint("│                                                            │", Color.RED))
