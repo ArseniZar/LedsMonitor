@@ -8,27 +8,32 @@
 #include <ESP8266mDNS.h>
 #include "Logger.h"
 #include "index.h"
-#include "ApiConfigModels.h"
+#include "ApiModels.h"
 #include "ApiParse.h"
 #include "ApiSerialization.h"
+#include "utils/helpers.h"
+#include "WebServerConfigModels.h"
 
 class WebServer
 {
+
 public:
     void begin();  
+    void start();
+    void tick();
+    void stop();
 
     ~WebServer() = default;
 
-    void stop();
-    void handleClient();
     bool isRunning() const;
+    void applyConfig(const WebServerConfig &config);
     unsigned long getLastRequestTime() const;
 
     template <typename T, typename E = void>
-    void registerRoutes(const char * uri, HTTPMethod httpMethod, std::function<E(T &)> handler);
+    void registerRoute(const char * uri, HTTPMethod httpMethod, std::function<E(T &)> handler);
     
     template <typename T = void, typename E = void>
-    void registerRoutes(const char * uri, HTTPMethod httpMethod, std::function<E()> handler);
+    void registerRoute(const char * uri, HTTPMethod httpMethod, std::function<E()> handler);
 
     static WebServer &init(Logger &logger, int port);
 
@@ -49,8 +54,8 @@ private:
 
     struct StrCompare {bool operator()(const char* a, const char* b) const { return strcmp(a, b) < 0; }};
     std::map<const char*, uint8_t, StrCompare> routeMasks;
+    void handleOptions(const char* uri);
 
-    void handleCorsOptions(const char* uri);
 
 };
 
