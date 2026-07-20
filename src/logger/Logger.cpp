@@ -8,7 +8,7 @@ Logger &Logger::init(bool debugMode)
 
 Logger::Logger(bool debugMode) : debugMode(debugMode) {}
 
-void Logger::log(LogLevel level, std::function<String256()> messageGenerator)
+void Logger::log(LogLevel level, std::function<String256()> messageGenerator) const
 {
   if (!debugMode && level == LOG_DEBUG)
     return;
