@@ -1,4 +1,4 @@
-name: Build webApp
+name: Build MainApp
 
 on:
   push:
@@ -11,25 +11,25 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./webApp  
+        working-directory: ./mainApp
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build webApp
+      - name: Build MainApp
         run: npm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: webApp-build
-          path: webApp/dist
+          name: mainApp-build
+          path: mainApp/dist

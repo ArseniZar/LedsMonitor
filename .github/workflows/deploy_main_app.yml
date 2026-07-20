@@ -1,4 +1,4 @@
-name: Deploy webApp to GitHub Pages
+name: Deploy MainApp to GitHub Pages
 
 on:
   workflow_dispatch:
@@ -15,8 +15,8 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml      
-          name: webApp-build       
-          path: webApp/dist        
+          name: mainApp-build      
+          path: mainApp/dist        
           workflow_conclusion: success 
           search_artifacts: true    
 
