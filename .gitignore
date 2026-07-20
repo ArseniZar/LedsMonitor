@@ -1,4 +1,8 @@
 .pio
 .vscode/
-venv/
+.test/
+
+TODO.md
+
+include/webserver/index.h
 src/config/ConfigDefault.cpp
