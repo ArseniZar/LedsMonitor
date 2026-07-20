@@ -8,20 +8,19 @@
 #include <StringN.h>
 #include <vector>
 #include "Logger.h"
-#include "WebServer.h"
+#include "WifiStatus.h"
 #include "WifiNetwork.h"
-#include "WifiStates.h"
-#include "ConfigModels.h"
+#include "NetworkConfigModels.h"
 
-#ifndef WIFI_SSID
-#define WIFI_SSID ""
+#ifndef WIFI_ATTEMPT_SSID
+#define WIFI_ATTEMPT_SSID ""
 #endif
 
-#ifndef WIFI_PASS
-#define WIFI_PASS ""
+#ifndef WIFI_ATTEMPT_PASS
+#define WIFI_ATTEMPT_PASS ""
 #endif
 
-#ifndef AP_SSID 
+#ifndef AP_SSID
 #define AP_SSID "SmartHome"
 #endif
 
@@ -42,22 +41,31 @@ class NetworkManager
 public:
     bool begin();
     static NetworkManager &init(Logger &logger);
+
+    bool attemptConnection();
     bool attemptConnection(const char *ssid, const char *password);
+    bool attemptConnectionAsync();
     bool attemptConnectionAsync(const char *ssid, const char *password);
+
+    bool scanWifiNetworksAsync();
+    std::vector<WifiNetwork> scanWifiNetworks();
+    std::vector<WifiNetwork> getScanWifiNetworksAsyncResults();
+    
     bool startWebServerNetwork();
     bool stopWebServerNetwork();
+
+    void setAttemptWifiConfig(const char *ssid, const char *password);
     void setAPConfig(const char *apSsid, const char *apPassword);
-    void setWifiConfig(const char *ssid, const char *password);
     void setMdnsName(const char *mdnsName);
     void setWifiConnectionTimeout(unsigned long timeout);
     void applyConfig(const NetworkConfig &config);
-    NetworkConfig getConfig() const;
+
     unsigned long getWifiConnectionTimeout() const;
     StringN<18> getMacAddress() const;
     const char *getSsid() const;
     const char *getPass() const;
-    ConnState statusWifi();
-    ScanState statusScan();
+    ConnState getStatusWifi();
+    ScanState getStatusScan();
 
 private:
     NetworkManager(Logger &logger);
@@ -74,27 +82,24 @@ private:
     String32 attemptPassword;
 
     String32 mdnsName;
-    
+
     unsigned long wifiConnectionTimeout;
 
-    static constexpr uint8_t MAX_WIFI_HANDLER = 2;;
+    static constexpr uint8_t MAX_WIFI_HANDLER = 2;
     WiFiEventHandler onGotIpHandlers[MAX_WIFI_HANDLER];
     WiFiEventHandler onDisconnectedHandlers[MAX_WIFI_HANDLER];
 
     void configureWifiPerformance();
 
-    bool scanWifiNetworksAsync();
-    std::vector<WifiNetwork> scanWifiNetworks();
-    std::vector<WifiNetwork> getScanWifiNetworksAsyncResults();
-
     bool stopAP();
     bool stopMDNS();
+    bool startMDNS();
     bool startMDNS(const String32 &mdnsName);
+    bool startAP();
     bool startAP(const String32 &apSsid, const String32 &apPassword);
 
     bool tryConnectWifi(const String32 &ssid, const String32 &password);
     bool tryConnectWifiAsync(const String32 &ssid, const String32 &password);
-
 };
 
 #endif // NETWORK_MANAGER_H

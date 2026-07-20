@@ -10,10 +10,10 @@ NetworkManager::NetworkManager(Logger &logger)
     : logger(logger),
       apSsid(F(AP_SSID)),
       apPassword(F(AP_PASS)),
-      ssid(F(WIFI_SSID)),
-      password(F(WIFI_PASS)),
-      attemptSsid(F("")),
-      attemptPassword(F("")),
+      ssid(F("")),
+      password(F("")),
+      attemptSsid(F(WIFI_ATTEMPT_SSID)),
+      attemptPassword(F(WIFI_ATTEMPT_PASS)),
       mdnsName(F(MDNS_NAME)),
       wifiConnectionTimeout(WIFI_CONNECTION_TIMEOUT_MS),
       onGotIpHandlers{},
@@ -21,12 +21,12 @@ NetworkManager::NetworkManager(Logger &logger)
 {
 }
 
-ConnState NetworkManager::statusWifi()
+ConnState NetworkManager::getStatusWifi()
 {
     return static_cast<ConnState>(WiFi.status());
 }
 
-ScanState NetworkManager::statusScan()
+ScanState NetworkManager::getStatusScan()
 {
     int result = WiFi.scanComplete();
 
@@ -43,10 +43,10 @@ bool NetworkManager::begin()
     logger.log(LOG_INFO, [&]() -> String128
                { String128 buf; buf = F("(NetworkManager::begin) Starting Network Manager..."); return buf; });
 
-    if (attemptConnection(ssid, password))
+    if (attemptConnection())
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::begin) Network Manager finished successfully."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::begin) Starting Network Manager finished successfully."); return buf; });
         return true;
     }
 
@@ -57,27 +57,26 @@ bool NetworkManager::begin()
 }
 
 bool NetworkManager::startWebServerNetwork()
-{   
+{
     logger.log(LOG_DEBUG, [&]() -> String128
                { String128 buf; buf = F("(NetworkManager::startWebServerNetwork) Starting web server network (AP + mDNS)..."); return buf; });
 
-    if (!startAP(apSsid, apPassword))
+    if (!startAP())
     {
         logger.log(LOG_ERROR, [&]() -> String128
                    { String128 buf;  buf = F("(NetworkManager::startWebServerNetwork) Failed to start Wi-Fi Access Point for web server."); return buf; });
         return false;
     }
-    if(!startMDNS(mdnsName))
+    if (!startMDNS())
     {
         logger.log(LOG_ERROR, [&]() -> String128
                    { String128 buf;  buf = F("(NetworkManager::startWebServerNetwork) Failed to start mDNS responder for web server."); return buf; });
         return false;
     }
-    
+
     logger.log(LOG_INFO, [&]() -> String128
                { String128 buf; buf = F("(NetworkManager::startWebServerNetwork) Web server network started successfully (AP + mDNS)."); return buf; });
     return true;
-    
 }
 
 bool NetworkManager::stopWebServerNetwork()
@@ -101,7 +100,7 @@ bool NetworkManager::stopWebServerNetwork()
     if (!mdnsStopped)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                    { String128 buf; buf = F("(NetworkManager::stopWebServerNetwork) Failed to stop mDNS responder for web server."); return buf; });  
+                   { String128 buf; buf = F("(NetworkManager::stopWebServerNetwork) Failed to stop mDNS responder for web server."); return buf; });
     }
     return false;
 }
@@ -119,6 +118,11 @@ void NetworkManager::configureWifiPerformance()
     WiFi.setOutputPower(20.5f);
     logger.log(LOG_DEBUG, [&]() -> String128
                { String128 buf; buf.add(F("(NetworkManager::configureWifiPerformance) Wi-Fi output power set to 20.5 dBm")); return buf; });
+}
+
+bool NetworkManager::attemptConnection()
+{
+    return attemptConnection(attemptSsid.c_str(), attemptPassword.c_str());
 }
 
 bool NetworkManager::attemptConnection(const char *ssid, const char *password)
@@ -144,6 +148,11 @@ bool NetworkManager::attemptConnection(const char *ssid, const char *password)
     this->attemptSsid = F("");
     this->attemptPassword = F("");
     return true;
+}
+
+bool NetworkManager::attemptConnectionAsync()
+{
+    return attemptConnectionAsync(attemptSsid.c_str(), attemptPassword.c_str());
 }
 
 bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *password)
@@ -197,35 +206,65 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
 
 void NetworkManager::applyConfig(const NetworkConfig &config)
 {
-    logger.log(LOG_INFO, [&]() -> String128
-               {
-                String128 buf;
-                buf.add(F("(NetworkManager::applyConfig) Applying network configuration. SSID: '"));
-                buf.add(config.ssid);
-                buf.add(F("', AP SSID: '"));
-                buf.add(config.apSsid);
-                buf.add(F("', mDNS: '"));
-                buf.add(config.mdnsName);
-                buf.add(F("', Wi-Fi timeout (ms): "));
-                buf.add(config.wifiConnectionTimeout);
-                return buf; });
+    // logger.log(LOG_INFO, [&]() -> String128
+    //            {
+    //             String128 buf;
+    //             buf.add(F("(NetworkManager::applyConfig) Applying network configuration. SSID: '"));
+    //             buf.add(config.ssid);
+    //             buf.add(F("', AP SSID: '"));
+    //             buf.add(config.apSsid);
+    //             buf.add(F("', mDNS: '"));
+    //             buf.add(config.mdnsName);
+    //             buf.add(F("', Wi-Fi timeout (ms): "));
+    //             buf.add(config.wifiConnectionTimeout);
+    //             return buf; });
+    if (wifiConnectionTimeout != config.wifiConnectionTimeout)
+    {
+        setWifiConnectionTimeout(config.wifiConnectionTimeout);
+    }
 
-    setWifiConfig(config.ssid, config.password);
-    setAPConfig(config.apSsid, config.apPassword);
-    setMdnsName(config.mdnsName);
-    setWifiConnectionTimeout(config.wifiConnectionTimeout);
+    if ((ssid != config.ssid && attemptSsid != config.ssid) || (password != config.password && attemptPassword != config.password))
+    {
+        setAttemptWifiConfig(config.ssid, config.password);
+        if (WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_AP_STA)
+        {
+            attemptConnectionAsync();
+        }
+    }
+    if (apSsid != config.apSsid || apPassword != config.apPassword)
+    {
+        setAPConfig(config.apSsid, config.apPassword);
+
+        if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA)
+        {
+            startAP();
+        }
+    }
+    if (mdnsName != config.mdnsName)
+    {
+        setMdnsName(config.mdnsName);
+        if (MDNS.isRunning())
+        {
+            startMDNS();
+        }
+    }
 }
 
-void NetworkManager::setWifiConfig(const char *ssid, const char *password)
+void NetworkManager::setAttemptWifiConfig(const char *ssid, const char *password)
 {
-    this->ssid = ssid;
-    this->password = password;
+    this->attemptSsid = ssid;
+    this->attemptPassword = password;
 }
 
 void NetworkManager::setAPConfig(const char *apSsid, const char *apPassword)
 {
     this->apSsid = apSsid;
     this->apPassword = apPassword;
+}
+
+bool NetworkManager::startAP()
+{
+    return startAP(apSsid, apPassword);
 }
 
 bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
@@ -307,7 +346,7 @@ void NetworkManager::setWifiConnectionTimeout(unsigned long timeout)
 }
 
 bool NetworkManager::stopMDNS()
-{   
+{
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
@@ -322,17 +361,22 @@ bool NetworkManager::stopMDNS()
                    { String128 buf; buf.add(F("(NetworkManager::stopMDNS) mDNS responder stopped successfully.")); return buf; });
         return true;
     }
-    
+
     logger.log(LOG_WARN, [&]() -> String128
-                { String128 buf; buf.add(F("(NetworkManager::stopMDNS) Failed to stop mDNS responder.")); return buf; });
+               { String128 buf; buf.add(F("(NetworkManager::stopMDNS) Failed to stop mDNS responder.")); return buf; });
 
     return false;
 }
 
+bool NetworkManager::startMDNS()
+{
+    return startMDNS(mdnsName);
+}
+
 bool NetworkManager::startMDNS(const String32 &mdnsName)
-{   
+{
     logger.log(LOG_DEBUG, [&]() -> String128
-            {
+               {
                 String128 buf;
                 buf.add(F("(NetworkManager::startMDNS) Attempting to start mDNS responder with name: '"));
                 buf.add(mdnsName);
@@ -364,7 +408,7 @@ bool NetworkManager::startMDNS(const String32 &mdnsName)
 }
 
 bool NetworkManager::stopAP()
-{   
+{
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
@@ -372,7 +416,7 @@ bool NetworkManager::stopAP()
                 return buf; });
 
     bool status = WiFi.softAPdisconnect(true);
-    
+
     if (status)
     {
         logger.log(LOG_INFO, [&]() -> String128
@@ -558,18 +602,6 @@ unsigned long NetworkManager::getWifiConnectionTimeout() const
     return wifiConnectionTimeout;
 }
 
-NetworkConfig NetworkManager::getConfig() const
-{
-    NetworkConfig config = NetworkConfig::fromDefault();
-    config.ssid = ssid;
-    config.password = password;
-    config.apSsid = apSsid;
-    config.apPassword = apPassword;
-    config.mdnsName = mdnsName;
-    config.wifiConnectionTimeout = wifiConnectionTimeout;
-    return config;
-}
-
 bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &password)
 {
     logger.log(LOG_INFO, [&]() -> String128
@@ -592,14 +624,14 @@ bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &passwo
     WiFi.begin(ssid, password);
     const unsigned long startTime = millis();
 
-    while (statusWifi() != ConnState::WL_CONNECTED && millis() - startTime < WIFI_CONNECTION_TIMEOUT_MS)
+    while (getStatusWifi() != ConnState::WL_CONNECTED && millis() - startTime < WIFI_CONNECTION_TIMEOUT_MS)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Connecting to Wi-Fi...")); return buf; });
         delay(500);
     }
 
-    if (statusWifi() == ConnState::WL_CONNECTED)
+    if (getStatusWifi() == ConnState::WL_CONNECTED)
     {
         logger.log(LOG_INFO, [&]() -> String128
                    {
@@ -690,7 +722,7 @@ bool NetworkManager::tryConnectWifiAsync(const String32 &ssid, const String32 &p
                     buf.add(event.reason);
                     return buf; });
 
-                                                                   WiFi.disconnect(true,true);
+                                                                   WiFi.disconnect(true, true);
                                                                    this->onGotIpHandlers[0] = nullptr;
                                                                    this->onDisconnectedHandlers[0] = nullptr;
 
