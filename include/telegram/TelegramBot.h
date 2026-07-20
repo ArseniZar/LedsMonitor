@@ -2,6 +2,7 @@
 #ifndef TELEGRAM_BOT_H
 #define TELEGRAM_BOT_H
 
+#include <Arduino.h>
 #include <FastBot2.h>
 #include <map>
 #include "Logger.h"
@@ -10,7 +11,8 @@
 #include "TelegramParse.h"
 #include "TelegramSerialization.h"
 #include "MacAddress.h"
-#include "ConfigModels.h"
+#include "LedDeviceModels.h"
+#include "TelegramBotConfigModels.h"
 
 #ifndef TELEGRAM_BOT_TOKEN
 #define TELEGRAM_BOT_TOKEN ""
@@ -35,7 +37,6 @@ public:
     void setPeriodUpdate(uint16_t periodUpdate);
     void setToken(const char *token);
     void applyConfig(const TelegramBotConfig &config);
-    TelegramBotConfig getConfig() const;
     uint8_t getLimitMessage() const;
     uint16_t getPeriodUpdate() const; 
     const char * getToken() const; 
@@ -51,7 +52,7 @@ private:
 
     uint8_t limitMessage;
     uint16_t periodUpdate;
-
+    // TODO: подумать о смене String Sting32 или const char* для экономии памяти
     std::map<String, std::function<void(fb::Update &)>> handlers;
 
     TelegramBot() = delete;
