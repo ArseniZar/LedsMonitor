@@ -1,3 +1,4 @@
+#pragma once
 #include "JsonSerializationBase.h"
 
 namespace api::json

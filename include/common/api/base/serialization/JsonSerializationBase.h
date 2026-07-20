@@ -30,4 +30,6 @@ namespace api::json
     };
 }
 
+#include "JsonSerializationBase.tpp"
+
 #endif // JSON_SERIALIZATION_H
