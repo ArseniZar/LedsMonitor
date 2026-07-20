@@ -9,7 +9,7 @@
 #include "WifiStatus.h"
 
 
-namespace api
+namespace api::webserver
 {
     class ScanWifiNetworkStartedResponse final : public ModelBaseResponse
     {

@@ -6,4 +6,4 @@ enum AppMode {
     WORK_MODE     
 };
 
-#endif // APP_MODE_H
+#endif // APP_MODE

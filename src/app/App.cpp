@@ -1,12 +1,12 @@
 #include "App.h"
 
-App::App() : savedWifiData(),
-             storage(Storage<SavedWifiData>("/data.dat", 'W')),
-             logger(Logger::init(LOGGER_DEBUG_MODE)),
-             network(NetworkManager::init(logger, AP_SSID, AP_PASS, MDNS_NAME)),
+App::App() : logger(Logger::init(LOGGER_DEBUG_MODE)),
+             config(ConfigManager<DeviceLedConfigPair, NetworkConfigPair, TelegramBotConfigPair, WebServerConfigPair>::init(logger)),
+             network(NetworkManager::init(logger)),
+             server(WebServer::init(logger, config.getConfig<WebServerConfig>().port)),
              mac(MacAddress::init(network.getMacAddress())),
-             bot(TelegramBot::init(logger, BOT_TOKEN, mac)),
-             device(DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod>(logger, mac, DEVICE_NAME, LED_COUNT, DEVICE_PIN))
+             bot(TelegramBot::init(logger, mac)),
+             device(logger, mac, config.getConfig<DeviceLedConfig>().pin, config.getConfig<DeviceLedConfig>().countLed)
 {
 }
 
@@ -19,50 +19,66 @@ App &App::init()
 void App::begin()
 {
 
-#if ENABLE_STORAGE_MODULE
-    storage.begin();
-    savedWifiData = storage.readData();
+#if ENABLE_CONFIG_MODULE
+    config.begin();
 #endif
 
 #if ENABLE_DEVICE_MODULE
+#if ENABLE_CONFIG_MODULE
+    device.applyConfig(config.getConfig<DeviceLedConfig>());
+#endif
+
     device.begin();
+
 #endif
 
-#if ENABLE_WIFI_MODULE
-    network.setMdnsName(MDNS_NAME);
-    network.setAPConfig(AP_SSID, AP_PASS);
-    network.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
+#if ENABLE_WEBSERVER_MODULE
+#if ENABLE_CONFIG_MODULE
+    server.applyConfig(config.getConfig<WebServerConfig>());
+#endif
+
+#if ENABLE_NETWORK_MODULE && ENABLE_CONFIG_MODULE
+    bindWebServer();
+#endif
+
+    server.begin();
+
+#endif
+
+#if ENABLE_NETWORK_MODULE
+#if ENABLE_CONFIG_MODULE
+    network.applyConfig(config.getConfig<NetworkConfig>());
+#endif
+
     network.begin();
-#endif
 
-#if ENABLE_WIFI_MODULE
-    if (network.statusWifi() == ConnState::WL_CONNECTED)
-    {
-        commitWiFiIfChanged();
-    }
 #endif
 
 #if ENABLE_TELEGRAM_BOT_MODULE
-    bot.setLimitMessage(BOT_LIMIT);
-    bot.setPeriodUpdate(BOT_PERIOD);
+#if ENABLE_CONFIG_MODULE
+    bot.applyConfig(config.getConfig<TelegramBotConfig>());
+#endif
+
+#if ENABLE_DEVICE_MODULE
+    bindTelegramBot();
+#endif
+
     bot.begin();
 
-#if ENABLE_DEVICE_MODULE 
-    bindDeviceToTelegramCommands();
-#endif
 #endif
 }
 
 void App::update()
 {
-#if ENABLE_WIFI_MODULE
-    if (network.statusWifi() != ConnState::WL_CONNECTED)
+#if ENABLE_NETWORK_MODULE
+    if (network.getStatusWifi() != ConnState::WL_CONNECTED)
     {
-        network.setWiFiConfig(savedWifiData.ssid, savedWifiData.password);
+        
+        // network.setWifiConfig(savedWifiData.ssid, savedWifiData.password);
         network.begin();
-        if (network.statusWifi() == ConnState::WL_CONNECTED)
+        if (network.getStatusWifi() == ConnState::WL_CONNECTED)
         {
-            commitWiFiIfChanged();
+            // commitWiFiIfChanged();
         }
     }
     else
@@ -73,43 +89,83 @@ void App::update()
         bot.tick();
 #endif
 
-#if ENABLE_WIFI_MODULE
+#if ENABLE_NETWORK_MODULE
     }
 #endif
 }
 
-void App::commitWiFiIfChanged()
-{
-    String32 currentSsid = network.getSsid();
-    String32 currentPass = network.getPass();
-
-    if (currentSsid != savedWifiData.ssid || currentPass != savedWifiData.password)
-    {
-        savedWifiData.ssid = currentSsid;
-        savedWifiData.password = currentPass;
-#if ENABLE_STORAGE_MODULE
-        storage.writeData(savedWifiData);
-#endif
-    }
-}
-
-void App::bindDeviceToTelegramCommands()
+void App::bindTelegramBot()
 {
     using namespace telegram;
 
     bot.registerCommand<ScanLedDeviceRequest, ScanLedDeviceResponse>(CMD_SCAN, [this](ScanLedDeviceRequest &request) -> ScanLedDeviceResponse
-        { 
-            return ScanLedDeviceResponse(device.getName(), std::move(ModelBaseResponse(request.command, device.getMacAddress().getMac()))); 
-        }
-    );
+                                                                     { return ScanLedDeviceResponse(device.getName(), std::move(ModelBaseResponse(request.command, device.getMacAddress().getMac()))); });
     bot.registerCommand<UpdateLedDeviceRequest, void>(CMD_UPDATE, [this](UpdateLedDeviceRequest &request) -> void
+                                                      {
+            device.setColor(request.color); device.setPower(request.status); });
+    bot.registerCommand<GetLedDeviceRequest, GetLedDeviceResponse>(CMD_GET, [this](GetLedDeviceRequest &request) -> GetLedDeviceResponse
+                                                                   { return GetLedDeviceResponse(device.getColor(), device.getStatus(), std::move(ModelBaseResponse(request.command, device.getMacAddress().getMac()))); });
+}
+
+void App::bindWebServer()
+{
+    using namespace api;
+    using namespace api::webserver;
+
+    server.registerRoute<void, SuccessResponse<ScanWifiNetworkStartedResponse>>("/network/scan", HTTPMethod::POST, [this]() -> SuccessResponse<ScanWifiNetworkStartedResponse>
+                                                                                 { return SuccessResponse<ScanWifiNetworkStartedResponse>(200, ScanWifiNetworkStartedResponse(network.scanWifiNetworksAsync(), std::move(ModelBaseResponse()))); });
+
+    server.registerRoute<void, std::variant<SuccessResponse<ScanWifiNetworkResponse>, SuccessResponse<GetScanStatusResponse>>>("/network/scan", HTTPMethod::GET, [this]() -> std::variant<SuccessResponse<ScanWifiNetworkResponse>, SuccessResponse<GetScanStatusResponse>>
+                                                                                                                                {   
+        ScanState scanStatus = network.getStatusScan(); 
+        if(scanStatus == ScanState::COMPLETED)
         {
-            device.setColor(request.color); device.setPower(request.status); 
+            return SuccessResponse<ScanWifiNetworkResponse>(200, ScanWifiNetworkResponse(std::move(network.getScanWifiNetworksAsyncResults()), std::move(ModelBaseResponse())));
+            
         }
-    );
-    bot.registerCommand<GetLedDeviceRequest, GetLedDeviceResponse>(CMD_GET,[this](GetLedDeviceRequest& request) -> GetLedDeviceResponse
+        else
         {
-            return GetLedDeviceResponse(device.getColor(),device.getStatus(),std::move(ModelBaseResponse(request.command,device.getMacAddress().getMac())));
-        }
-    );
+            return SuccessResponse<GetScanStatusResponse>(200, GetScanStatusResponse(network.getStatusScan(), std::move(ModelBaseResponse())));
+        } });
+
+    server.registerRoute<ConnectWifiNetworkRequest, SuccessResponse<ConnectWifiNetworkStartedResponse>>("/network/connect", HTTPMethod::POST, [this](ConnectWifiNetworkRequest &request) -> SuccessResponse<ConnectWifiNetworkStartedResponse>
+                                                                                                         { return SuccessResponse<ConnectWifiNetworkStartedResponse>(200, ConnectWifiNetworkStartedResponse(network.attemptConnectionAsync(request.ssid.c_str(), request.password.c_str()), std::move(ModelBaseResponse()))); });
+
+    server.registerRoute<void, SuccessResponse<GetWifiStatusResponse>>("/network/connect", HTTPMethod::GET, [this]() -> SuccessResponse<GetWifiStatusResponse>
+                                                                        { return SuccessResponse<GetWifiStatusResponse>(200, GetWifiStatusResponse(network.getStatusWifi(), std::move(ModelBaseResponse()))); });
+
+    server.registerRoute<UpdateConfigRequest, void>("/config", HTTPMethod::PATCH, [this](UpdateConfigRequest &request) -> void
+                                                     {
+                                                         NetworkConfig networkConfig = config.getConfig<NetworkConfig>();
+                                                         fromOptional(request.apSsid, networkConfig.apSsid);
+                                                         fromOptional(request.apPassword, networkConfig.apPassword);
+                                                         fromOptional(request.mdnsName, networkConfig.mdnsName);
+                                                         fromOptional(request.wifiConnectionTimeout, networkConfig.wifiConnectionTimeout);
+
+                                                         DeviceLedConfig deviceLedConfig = config.getConfig<DeviceLedConfig>();
+                                                         fromOptional(request.countLed, deviceLedConfig.countLed);
+                                                         fromOptional(request.deviceName, deviceLedConfig.deviceName);
+
+                                                         TelegramBotConfig telegramBotConfig = config.getConfig<TelegramBotConfig>();
+                                                         fromOptional(request.token, telegramBotConfig.token);
+                                                         fromOptional(request.limitMessage, telegramBotConfig.limitMessage);
+                                                         fromOptional(request.periodUpdate, telegramBotConfig.periodUpdate);
+
+                                                         config.updateConfig(networkConfig);
+                                                         config.updateConfig(deviceLedConfig);
+                                                         config.updateConfig(telegramBotConfig); });
+
+    server.registerRoute<void, SuccessResponse<GetConfigResponse>>("/config", HTTPMethod::GET, [this]() -> SuccessResponse<GetConfigResponse>
+                                                                    {
+        const auto &networkConfig = config.getConfig<NetworkConfig>();
+        const auto &deviceLedConfig = config.getConfig<DeviceLedConfig>();
+        const auto &telegramBotConfig = config.getConfig<TelegramBotConfig>();
+
+        return SuccessResponse<GetConfigResponse>(200, GetConfigResponse(networkConfig.apSsid, networkConfig.apPassword, networkConfig.mdnsName, networkConfig.wifiConnectionTimeout,
+                                     deviceLedConfig.countLed, deviceLedConfig.deviceName,
+                                     telegramBotConfig.token, telegramBotConfig.limitMessage, telegramBotConfig.periodUpdate,
+                                     ModelBaseResponse())); });
+
+    server.registerRoute<void, void>("/stop", HTTPMethod::GET, [this]()
+                                      { server.stop(); });
 }

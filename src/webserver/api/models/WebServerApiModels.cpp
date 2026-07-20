@@ -1,6 +1,6 @@
 #include "WebServerApiModels.h"
 
-namespace api
+namespace api::webserver
 {
     namespace ScanWifiNetworkStartedResponceKey
     {

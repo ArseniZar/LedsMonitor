@@ -9,7 +9,7 @@
 #include <ESP8266WiFi.h>
 #include "Logger.h"
 #include "index.h"
-#include "ApiModels.h"
+#include "WebServerApiModels.h"
 #include "ApiParse.h"
 #include "ApiSerialization.h"
 #include "utils/helpers.h"

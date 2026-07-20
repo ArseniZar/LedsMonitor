@@ -3,22 +3,25 @@
 #define APP_H
 
 #include <Arduino.h>
-#include "config.h"
 #include "Logger.h"
-#include "Storage.h"
+#include "ConfigManager.h"
 #include "MacAddress.h"
 #include "DeviceLed.h"
 #include "NetworkManager.h"
 #include "TelegramBot.h"
 #include "TelegramCommands.h"
-#include "LedDeviceModels.h"
+#include "WebServer.h"
 
 #ifndef LOGGER_DEBUG_MODE
 #define LOGGER_DEBUG_MODE 1
 #endif
 
-#ifndef ENABLE_WIFI_MODULE
-#define ENABLE_WIFI_MODULE 1
+#ifndef ENABLE_NETWORK_MODULE
+#define ENABLE_NETWORK_MODULE 1
+#endif
+
+#ifndef ENABLE_WEBSERVER_MODULE
+#define ENABLE_WEBSERVER_MODULE 1
 #endif
 
 #ifndef ENABLE_TELEGRAM_BOT_MODULE
@@ -29,9 +32,10 @@
 #define ENABLE_DEVICE_MODULE 1
 #endif
 
-#if ENABLE_STORAGE_MODULE
-#define ENABLE_STORAGE_MODULE 1
+#if ENABLE_CONFIG_MODULE
+#define ENABLE_CONFIG_MODULE 1
 #endif
+
 class App
 {
 public:
@@ -40,17 +44,21 @@ public:
     void update();
 
 private:
-    SavedWifiData savedWifiData;
-    Storage<SavedWifiData> storage;
+    using DeviceLedConfigPair = ConfigPair<DeviceLedConfig, DeviceLedRuntimeConfig>;
+    using NetworkConfigPair = ConfigPair<NetworkConfig, NetworkRuntimeConfig>;
+    using TelegramBotConfigPair = ConfigPair<TelegramBotConfig, TelegramBotRuntimeConfig>;
+    using WebServerConfigPair = ConfigPair<WebServerConfig, WebServerRuntimeConfig>;
 
     Logger &logger;
+    ConfigManager<DeviceLedConfigPair, NetworkConfigPair, TelegramBotConfigPair, WebServerConfigPair> &config;
     NetworkManager &network;
+    WebServer &server;
     MacAddress &mac;
     TelegramBot &bot;
     DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod> device;
 
     App();
-    void commitWiFiIfChanged();
-    void bindDeviceToTelegramCommands();
+    void bindTelegramBot();
+    void bindWebServer();
 };
 #endif // APP_H
