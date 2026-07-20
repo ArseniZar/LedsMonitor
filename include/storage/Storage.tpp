@@ -32,6 +32,11 @@ void Storage<T>::writeData(const T &data)
 }
 
 template <typename T>
+const T& Storage<T>::getData() const {
+    return savedData;
+}
+
+template <typename T>
 bool Storage<T>::isLoaded() const {
     return loaded;
 }

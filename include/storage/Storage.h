@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <FileData.h>
 #include <LittleFS.h>
-#include "StorageModel.h"
 
 template <typename T>
 class Storage
@@ -15,6 +14,7 @@ public:
     void begin();
     T readData();
     void writeData(const T &data);
+    const T& getData() const;
     bool isLoaded() const;
 
     Storage() = delete;
