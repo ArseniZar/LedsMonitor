@@ -6,14 +6,12 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
 {
     static_assert(std::is_base_of<api::ModelBaseRequest, Request>::value, "Request must be void or inherit from api::ModelBaseRequest");
     static_assert(std::is_void<Response>::value || std::is_base_of<api::Response, Response>::value, "Response must be void or inherit from api::ModelBaseResponse");
-
-    server.on(uri, httpMethod, [handler, this]()
-              {
-        lastRequestTime = millis();
+    handlers[{uri, httpMethod}] = [handler, this](ghttp::ServerBase::Request request)
+    {
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf.add(F("(WebServer::registerRoute) Received request with body.")); return buf; });
 
-        const String &body = server.arg(F("plain"));
+        String body = request.body().readString();
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf.add(F("(WebServer::registerRoute) Raw request body: ")); buf.add(body.c_str()); return buf; });
 
@@ -25,8 +23,8 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             String payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String128
                        { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (error empty body): ")); buf.add(payload.c_str()); return buf; });
-            server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-            server.send(response.getCode(), F("application/json"), payload);
+
+            server.send(payload, response.getCode(), F("application/json"));
             return;
         }
 
@@ -37,15 +35,15 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             if constexpr (!std::is_void<Response>::value)
             {
                 if constexpr (is_variant<Response>::value)
-                {   
-                    std::visit([&](auto &&response) // TODO: может заменить & на this
-                    {
-                        String payload = api::serializeResponse(response);
-                        logger.log(LOG_DEBUG, [&]() -> String128
-                                { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
-                        server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                        server.send(response.getCode(), F("application/json"), payload);
-                    },handler(successApiRequstPtr->data));
+                {
+                    std::visit([&](auto &&response)
+                               {
+                                   String payload = api::serializeResponse(response);
+                                   logger.log(LOG_DEBUG, [&]() -> String128
+                                              { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                                   
+                                   server.send(payload, response.getCode(), F("application/json")); },
+                               handler(successApiRequstPtr->data));
                 }
                 else
                 {
@@ -53,75 +51,74 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                     String payload = api::serializeResponse(response);
                     logger.log(LOG_DEBUG, [&]() -> String128
                                { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
-                    server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                    server.send(response.getCode(), F("application/json"), payload);
+                    server.send(payload, response.getCode(), F("application/json"));
+                    // server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+                    // server.send(response.getCode(), F("application/json"), payload);
                 }
-            }    
+            }
             else
             {
                 handler(successApiRequstPtr->data);
                 logger.log(LOG_INFO, [&]() -> String128
-                            { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
-                server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                server.send(204);
+                           { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
+                server.handle();
             }
-        }    
+        }
         else
         {
             auto *errorApiRequstPtr = static_cast<api::ErrorRequest *>(apiRequstPtr.get());
             const auto response = api::ErrorResponse(400, errorApiRequstPtr->message);
             String payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String128
-                        { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (parse error): ")); buf.add(payload.c_str()); return buf; });
-            server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-            server.send(response.getCode(), F("application/json"), payload);
-        } });
-
-    routeMasks[uri] |= (128 | (1 << static_cast<uint8_t>(httpMethod)));
-    server.on(uri, HTTP_OPTIONS, [uri, this]()
-              {  handleOptions(uri); }); 
-        
+                       { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (parse error): ")); buf.add(payload.c_str()); return buf; });
+            server.send(payload, response.getCode(), F("application/json"));
+        }
+    };
+    // routeMasks[uri] |= (128 | (1 << static_cast<uint8_t>(httpMethod)));
+    // handlers[{uri, Method::HTTP_OPTIONS}] = [this, uri](ghttp::ServerBase::Request request)
+    // {
+    //     handleOptions(uri);
+    // };
 }
 
 template <typename Request = void, typename Response = void>
 void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::function<Response()> handler)
 {
-    server.on(uri, httpMethod, [handler, this]()
-              {
-        lastRequestTime=millis();
+    handlers[{uri, httpMethod}] = [handler, this](ghttp::ServerBase::Request request)
+    {
         if constexpr (!std::is_void<Response>::value)
         {
             if constexpr (is_variant<Response>::value)
-            {   
+            {
                 std::visit([&](auto &&response)
-                {
-                    String payload = api::serializeResponse(response);
-                    logger.log(LOG_DEBUG, [&]() -> String128
-                                { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
-                    server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                    server.send(response.getCode(), F("application/json"), payload);
-                },handler());
+                           {
+                               String payload = api::serializeResponse(response);
+                               logger.log(LOG_DEBUG, [&]() -> String128
+                                          { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                               server.send(payload, response.getCode(), F("application/json")); },
+                           handler());
             }
             else
             {
                 const auto &response = handler();
                 String payload = api::serializeResponse(response);
                 logger.log(LOG_DEBUG, [&]() -> String128
-                            { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
-                server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                server.send(response.getCode(), F("application/json"), payload);
+                           { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                server.send(payload, response.getCode(), F("application/json"));
             }
         }
         else
         {
             handler();
             logger.log(LOG_INFO, [&]() -> String128
-                    { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
-            server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-            server.send(204);
-        } });
+                       { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
+            server.handle();
+        }
+    };
 
-    routeMasks[uri] |= (128 | (1 << static_cast<uint8_t>(httpMethod)));
-    server.on(uri, HTTP_OPTIONS, [uri, this]()
-              {  handleOptions(uri); }); 
+    // routeMasks[uri] |= (128 | (1 << static_cast<uint8_t>(httpMethod)));
+    // handlers[{uri, Method::HTTP_OPTIONS}] = [this, uri](ghttp::ServerBase::Request request)
+    // {
+    //     handleOptions(uri);
+    // };
 }

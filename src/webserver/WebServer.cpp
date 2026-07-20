@@ -6,26 +6,36 @@ WebServer &WebServer::init(Logger &logger, int port)
     return instance;
 }
 
-WebServer::WebServer(Logger &logger, int port) : logger(logger), server(port), serverRunning(false), lastRequestTime(millis()), routeMasks()
+WebServer::WebServer(Logger &logger, int port) : logger(logger), server(port), serverRunning(false), lastRequestTime(millis()), handlers()
 {
     MDNS.addService(F("http"), F("tcp"), port);
 }
 
 void WebServer::begin()
 {
-    server.on(F("/"), HTTP_GET, [this]()
-              { lastRequestTime=millis(); this->handleRoot(); });
+    handlers[{"/", HTTPMethod::GET}] = [this](ghttp::ServerBase::Request request)
+    {
+        {
+            this->handleRoot();
+        };
+    };
 
-    server.on(F("/"), HTTP_OPTIONS, [this]()
-              {    
-                       server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                       server.sendHeader(F("Access-Control-Allow-Methods"), F("GET, OPTIONS"));
-                       server.sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
-                       server.send(204); });
+    server.onRequest([this](ghttp::ServerBase::Request request)
+                     {
+                         lastRequestTime = millis();
+                         Route route(request.path().c_str(), (parseMethod(request.method())));
+                         auto it = handlers.find(route);
+                         if (it != handlers.end())
+                         {
+                             it->second(request);
+                         }
+                         else
+                         {
+                             this->handleNotFound();
+                         } });
 
-    server.onNotFound([this]()
-                      { lastRequestTime=millis(); this->handleNotFound(); });
-} //TODO: может быть доавить коментарий 
+    server.useCors(true);
+}
 
 void WebServer::start()
 {
@@ -42,9 +52,7 @@ void WebServer::handleRoot()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleRoot) Handling root page request.")); return buf; });
-    server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-    // server.send_P(200, "text/html", INDEX);
-    server.send(200, "text/html", index_html, index_html_len);
+    server.sendFile_P(index_html, "text/html", true);
 }
 
 void WebServer::handleNotFound()
@@ -52,70 +60,70 @@ void WebServer::handleNotFound()
     logger.log(LOG_WARN, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleNotFound) Resource not found.")); return buf; });
     const auto responce = api::ErrorResponse(404, String32(F("Resource not found")));
-    server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
     String payload = api::serializeResponse(responce);
     logger.log(LOG_DEBUG, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleNotFound) Response payload: ")); buf.add(payload.c_str()); return buf; });
-    server.send(responce.getCode(), F("application/json"), payload);
+    server.send(payload, responce.getCode(), F("application/json"));
 }
 
-void WebServer::handleOptions(const char *uri)
-{
-    String64 buf;
-    const uint8_t masks = routeMasks[uri];
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        if (masks & (1 << i))
-        {
-            if (buf.length() > 0)
-            {
-                buf.add(F(", "));
-            }
+// void WebServer::handleOptions(const char *uri)
+// {
+//     String64 buf;
+//     const uint8_t masks = routeMasks[uri];
+//     for (uint8_t i = 0; i < 8; i++)
+//     {
+//         if (masks & (1 << i))
+//         {
+//             if (buf.length() > 0)
+//             {
+//                 buf.add(F(", "));
+//             }
 
-            switch (i)
-            {
-            case HTTP_GET:
-                buf.add(F("GET"));
-                break;
-            case HTTP_POST:
-                buf.add(F("POST"));
-                break;
-            case HTTP_PUT:
-                buf.add(F("PUT"));
-                break;
-            case HTTP_PATCH:
-                buf.add(F("PATCH"));
-                break;
-            case HTTP_DELETE:
-                buf.add(F("DELETE"));
-                break;
-            case HTTP_HEAD:
-                buf.add(F("HEAD"));
-                break;
-            case HTTP_OPTIONS:
-                buf.add(F("OPTIONS"));
-                break;
-            default:
-                buf.add(F("ANY"));
-                break;
-            }
-        }
-    }
+//             switch (i)
+//             {
+//             case static_cast<uint8_t>(HTTPMethod::GET):
+//                 buf.add(F("GET"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::POST):
+//                 buf.add(F("POST"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::PUT):
+//                 buf.add(F("PUT"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::PATCH):
+//                 buf.add(F("PATCH"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::DELETE):
+//                 buf.add(F("DELETE"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::HEAD):
+//                 buf.add(F("HEAD"));
+//                 break;
+//             case static_cast<uint8_t>(HTTPMethod::OPTIONAL):
+//                 buf.add(F("OPTIONS"));
+//                 break;
+//             default:
+//                 buf.add(F("ANY"));
+//                 break;
+//             }
+//         }
+//     }
 
-    server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-    server.sendHeader(F("Access-Control-Allow-Methods"), buf.c_str());
-    server.sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
-    server.send(204);
-}
+//     ghttp::ServerBase::Headers headers(204);
+//     headers.add(F("Access-Control-Allow-Origin"), F("*"));
+//     headers.add(F("Access-Control-Allow-Methods"), buf.c_str());
+//     headers.add(F("Access-Control-Allow-Headers"), F("Content-Type"));
+//     server.handle();
+// }
 
 void WebServer::tick()
 {
-    server.handleClient();
+    server.tick();
 }
 
 void WebServer::stop()
 {
-    server.stop();
+    server.server.stop();
     serverRunning = false;
     logger.log(LOG_INFO, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::stop) Stop server.")); return buf; });
@@ -128,7 +136,6 @@ bool WebServer::isRunning() const
 
 void WebServer::applyConfig(const WebServerConfig &config)
 {
-    
 }
 
 unsigned long WebServer::getLastRequestTime() const
