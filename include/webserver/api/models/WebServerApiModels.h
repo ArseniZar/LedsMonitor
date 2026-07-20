@@ -1,6 +1,6 @@
 #pragma once
-#ifndef API_MODELS_H
-#define API_MODELS_H
+#ifndef WEBSERVER_API_MODELS_H
+#define WEBSERVER_API_MODELS_H
 
 #include <Arduino.h>
 #include <optional>
@@ -142,4 +142,4 @@ namespace api
 
     /*===================================== other =======================================================*/
 }
-#endif // API_MODELS_H
+#endif // WEBSERVER_API_MODELS_H
