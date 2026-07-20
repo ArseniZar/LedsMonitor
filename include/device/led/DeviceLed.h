@@ -6,11 +6,7 @@
 #include <memory>
 #include "Logger.h"
 #include "DeviceBase.h"
-#include "ConfigModels.h"
-
-#ifndef DEVICE_LED_COUNT
-#define DEVICE_LED_COUNT 40
-#endif
+#include "DeviceLedConfigModels.h"
 
 #ifndef DEVICE_LED_NAME
 #define DEVICE_LED_NAME "Led"
@@ -40,23 +36,22 @@ template <typename T, typename E>
 class DeviceLed final : public DeviceBase
 {
 public:
-    DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin);
+    DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, uint16_t countLed);
     void begin();
     void setCountLed(uint16_t countLed);
     void setPower(bool status);
     void setBrightness(int  brightness);
     void setColor(const char *color);
     void applyConfig(const DeviceLedConfig &config);
-    DeviceLedConfig getConfig() const;
     const char *getColor();
     bool getStatus();
 
 private:
     Logger &logger;
-    std::unique_ptr<NeoPixelBus<T, E>> device;
-
+    NeoPixelBus<T, E> device;
+    //TODO make gamma correction configurable https://github.com/Makuna/NeoPixelBus/wiki/T_GAMMA
     const uint8_t pin;
-    uint16_t countLed;
+    const uint16_t countLed;
 
     int brightness;
     RgbColor color;
