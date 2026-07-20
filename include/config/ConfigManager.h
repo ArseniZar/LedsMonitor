@@ -2,6 +2,7 @@
 #ifndef CONFIG_MANAGER_H
 #define CONFIG_MANAGER_H
 
+#include <Arduino.h>
 #include "Logger.h"
 #include "Storage.h"
 #include "utils/helpers.h"
