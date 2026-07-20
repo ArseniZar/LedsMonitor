@@ -125,11 +125,8 @@ def step2_run_compiler(app_dir, output_dir, scripts_dir, script_path, image_name
         "-v", f"{app_dir}:/input",
         "-v", f"{output_dir}:/output",
         "-v", f"{script_path}:/scripts/script.py",
-        image_name,
-        "python", "/scripts/script.py", 
-        "/input/index.html", 
-        "/output", 
-        output_file
+        "-e", f"OUTPUT_FILE_NAME={output_file}",
+        image_name
     ])
 
     try:
