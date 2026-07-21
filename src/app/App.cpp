@@ -73,7 +73,7 @@ void App::update()
 #if ENABLE_NETWORK_MODULE
     if (network.getStatusWifi() != ConnState::WL_CONNECTED)
     {
-        
+
         // network.setWifiConfig(savedWifiData.ssid, savedWifiData.password);
         network.begin();
         if (network.getStatusWifi() == ConnState::WL_CONNECTED)
@@ -96,46 +96,45 @@ void App::update()
 
 void App::bindTelegramBot()
 {
-    using namespace telegram;
+    using namespace api::telegram;
 
-    bot.registerCommand<ScanLedDeviceRequest, ScanLedDeviceResponse>(CMD_SCAN, [this](ScanLedDeviceRequest &request) -> ScanLedDeviceResponse
-                                                                     { return ScanLedDeviceResponse(device.getName(), std::move(ModelBaseResponse(request.command, device.getMacAddress().getMac()))); });
-    bot.registerCommand<UpdateLedDeviceRequest, void>(CMD_UPDATE, [this](UpdateLedDeviceRequest &request) -> void
-                                                      {
-            device.setColor(request.color); device.setPower(request.status); });
-    bot.registerCommand<GetLedDeviceRequest, GetLedDeviceResponse>(CMD_GET, [this](GetLedDeviceRequest &request) -> GetLedDeviceResponse
-                                                                   { return GetLedDeviceResponse(device.getColor(), device.getStatus(), std::move(ModelBaseResponse(request.command, device.getMacAddress().getMac()))); });
+    bot.registerCommand<void, api::SuccessResponse<GetInfoLedDeviceResponse>>("scan", [this]() -> api::SuccessResponse<GetInfoLedDeviceResponse>
+                                                                              { return api::SuccessResponse<GetInfoLedDeviceResponse>(200, GetInfoLedDeviceResponse(device.getName(), std::move(ModelBaseResponse("scan", device.getMacAddress().getMac())))); });
+
+    bot.registerCommand<UpdateLedDeviceRequest, void>("update", [this](UpdateLedDeviceRequest &request) -> void
+                                                      { device.setColor(request.color); device.setPower(request.status); });
+
+    bot.registerCommand<void, api::SuccessResponse<GetStateLedDeviceResponse>>("state", [this]() -> api::SuccessResponse<GetStateLedDeviceResponse>
+                                                                               { return api::SuccessResponse<GetStateLedDeviceResponse>(200, GetStateLedDeviceResponse(device.getColor(), device.getStatus(), std::move(ModelBaseResponse("state", device.getMacAddress().getMac())))); });
 }
 
 void App::bindWebServer()
 {
-    using namespace api;
     using namespace api::webserver;
 
-    server.registerRoute<void, SuccessResponse<ScanWifiNetworkStartedResponse>>("/network/scan", HTTPMethod::POST, [this]() -> SuccessResponse<ScanWifiNetworkStartedResponse>
-                                                                                 { return SuccessResponse<ScanWifiNetworkStartedResponse>(200, ScanWifiNetworkStartedResponse(network.scanWifiNetworksAsync(), std::move(ModelBaseResponse()))); });
+    server.registerRoute<void, api::SuccessResponse<ScanWifiNetworkStartedResponse>>("/network/scan", HTTPMethod::POST, [this]() -> api::SuccessResponse<ScanWifiNetworkStartedResponse>
+                                                                                     { return api::SuccessResponse<ScanWifiNetworkStartedResponse>(200, ScanWifiNetworkStartedResponse(network.scanWifiNetworksAsync(), std::move(ModelBaseResponse()))); });
 
-    server.registerRoute<void, std::variant<SuccessResponse<ScanWifiNetworkResponse>, SuccessResponse<GetScanStatusResponse>>>("/network/scan", HTTPMethod::GET, [this]() -> std::variant<SuccessResponse<ScanWifiNetworkResponse>, SuccessResponse<GetScanStatusResponse>>
-                                                                                                                                {   
+    server.registerRoute<void, std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>>("/network/scan", HTTPMethod::GET, [this]() -> std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>
+                                                                                                                                         {   
         ScanState scanStatus = network.getStatusScan(); 
         if(scanStatus == ScanState::COMPLETED)
         {
-            return SuccessResponse<ScanWifiNetworkResponse>(200, ScanWifiNetworkResponse(std::move(network.getScanWifiNetworksAsyncResults()), std::move(ModelBaseResponse())));
-            
+            return api::SuccessResponse<ScanWifiNetworkResponse>(200, ScanWifiNetworkResponse(std::move(network.getScanWifiNetworksAsyncResults()), std::move(ModelBaseResponse())));
         }
         else
         {
-            return SuccessResponse<GetScanStatusResponse>(200, GetScanStatusResponse(network.getStatusScan(), std::move(ModelBaseResponse())));
+            return api::SuccessResponse<GetScanStatusResponse>(200, GetScanStatusResponse(network.getStatusScan(), std::move(ModelBaseResponse())));
         } });
 
-    server.registerRoute<ConnectWifiNetworkRequest, SuccessResponse<ConnectWifiNetworkStartedResponse>>("/network/connect", HTTPMethod::POST, [this](ConnectWifiNetworkRequest &request) -> SuccessResponse<ConnectWifiNetworkStartedResponse>
-                                                                                                         { return SuccessResponse<ConnectWifiNetworkStartedResponse>(200, ConnectWifiNetworkStartedResponse(network.attemptConnectionAsync(request.ssid.c_str(), request.password.c_str()), std::move(ModelBaseResponse()))); });
+    server.registerRoute<ConnectWifiNetworkRequest, api::SuccessResponse<ConnectWifiNetworkStartedResponse>>("/network/connect", HTTPMethod::POST, [this](ConnectWifiNetworkRequest &request) -> api::SuccessResponse<ConnectWifiNetworkStartedResponse>
+                                                                                                             { return api::SuccessResponse<ConnectWifiNetworkStartedResponse>(200, ConnectWifiNetworkStartedResponse(network.attemptConnectionAsync(request.ssid.c_str(), request.password.c_str()), std::move(ModelBaseResponse()))); });
 
-    server.registerRoute<void, SuccessResponse<GetWifiStatusResponse>>("/network/connect", HTTPMethod::GET, [this]() -> SuccessResponse<GetWifiStatusResponse>
-                                                                        { return SuccessResponse<GetWifiStatusResponse>(200, GetWifiStatusResponse(network.getStatusWifi(), std::move(ModelBaseResponse()))); });
+    server.registerRoute<void, api::SuccessResponse<GetWifiStatusResponse>>("/network/connect", HTTPMethod::GET, [this]() -> api::SuccessResponse<GetWifiStatusResponse>
+                                                                            { return api::SuccessResponse<GetWifiStatusResponse>(200, GetWifiStatusResponse(network.getStatusWifi(), std::move(ModelBaseResponse()))); });
 
     server.registerRoute<UpdateConfigRequest, void>("/config", HTTPMethod::PATCH, [this](UpdateConfigRequest &request) -> void
-                                                     {
+                                                    {
                                                          NetworkConfig networkConfig = config.getConfig<NetworkConfig>();
                                                          fromOptional(request.apSsid, networkConfig.apSsid);
                                                          fromOptional(request.apPassword, networkConfig.apPassword);
@@ -155,17 +154,17 @@ void App::bindWebServer()
                                                          config.updateConfig(deviceLedConfig);
                                                          config.updateConfig(telegramBotConfig); });
 
-    server.registerRoute<void, SuccessResponse<GetConfigResponse>>("/config", HTTPMethod::GET, [this]() -> SuccessResponse<GetConfigResponse>
-                                                                    {
+    server.registerRoute<void, api::SuccessResponse<GetConfigResponse>>("/config", HTTPMethod::GET, [this]() -> api::SuccessResponse<GetConfigResponse>
+                                                                        {
         const auto &networkConfig = config.getConfig<NetworkConfig>();
         const auto &deviceLedConfig = config.getConfig<DeviceLedConfig>();
         const auto &telegramBotConfig = config.getConfig<TelegramBotConfig>();
 
-        return SuccessResponse<GetConfigResponse>(200, GetConfigResponse(networkConfig.apSsid, networkConfig.apPassword, networkConfig.mdnsName, networkConfig.wifiConnectionTimeout,
+        return api::SuccessResponse<GetConfigResponse>(200, GetConfigResponse(networkConfig.apSsid, networkConfig.apPassword, networkConfig.mdnsName, networkConfig.wifiConnectionTimeout,
                                      deviceLedConfig.countLed, deviceLedConfig.deviceName,
                                      telegramBotConfig.token, telegramBotConfig.limitMessage, telegramBotConfig.periodUpdate,
                                      ModelBaseResponse())); });
 
     server.registerRoute<void, void>("/stop", HTTPMethod::GET, [this]()
-                                      { server.stop(); });
+                                     { server.stop(); });
 }
