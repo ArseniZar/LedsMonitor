@@ -4,14 +4,12 @@
 
 #include <Arduino.h>
 #include <FastBot2.h>
-#include <map>
 #include "Logger.h"
-#include "MessageModelsBase.h"
-#include "TelegramTypesBase.h"
-#include "TelegramParse.h"
-#include "TelegramSerialization.h"
+#include "TelegramApiModels.h"
+#include "ApiParse.h"
+#include "ApiSerialization.h"
+#include "utils/helpers.h"
 #include "MacAddress.h"
-#include "LedDeviceModels.h"
 #include "TelegramBotConfigModels.h"
 
 #ifndef TELEGRAM_BOT_TOKEN
@@ -31,19 +29,24 @@ class TelegramBot
 public:
     void begin();
     bool tick();
+    static TelegramBot &init(Logger &logger, const MacAddress &mac);
 
     ~TelegramBot() = default;
+
     void setLimitMessage(uint8_t limitMessage);
     void setPeriodUpdate(uint16_t periodUpdate);
     void setToken(const char *token);
     void applyConfig(const TelegramBotConfig &config);
+
     uint8_t getLimitMessage() const;
     uint16_t getPeriodUpdate() const; 
     const char * getToken() const; 
     
-    template <typename T, typename E = void>
-    void registerCommand(const String &command, std::function<E(T &)> handler);
-    static TelegramBot &init(Logger &logger, const MacAddress &mac);
+    template <typename Request, typename Response = void>
+    void registerCommand(const char *command, std::function<Response(Request &)> handler);
+
+    template <typename Request = void, typename Response = void>
+    void registerCommand(const char *command, std::function<Response()> handler);
 
 private:
     Logger &logger;
@@ -52,12 +55,13 @@ private:
 
     uint8_t limitMessage;
     uint16_t periodUpdate;
-    // TODO: подумать о смене String Sting32 или const char* для экономии памяти
-    std::map<String, std::function<void(fb::Update &)>> handlers;
+
+    std::map<const char *, std::function<void(fb::Update &)>, StrCompare> handlers;
 
     TelegramBot() = delete;
     TelegramBot(Logger &logger, const MacAddress &mac);
-    void handleUpdateMsg(fb::Update &u);
+
+    void handleUpdateMsg(fb::Update &request);
 };
 
 #include "TelegramBot.tpp"

@@ -19,11 +19,13 @@ namespace api::json
         U_Long,
         U_Int8,
         U_Int16,
+        String8,
+        String18,
         String32,
         String64,
     };
 
-    using Value = std::variant<std::monostate, bool, int, float, unsigned long, uint8_t, uint16_t, String32, String64>;
+    using Value = std::variant<std::monostate, bool, int, float, unsigned long, uint8_t, uint16_t, String8, StringN<18>, String32, String64>;
     
     const __FlashStringHelper* readType(ValueType t);
 }

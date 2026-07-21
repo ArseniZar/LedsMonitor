@@ -14,25 +14,25 @@ void TelegramBot::begin()
     bot.setPollMode(fb::Poll::Sync, periodUpdate);
     bot.updates.set(fb::Updates::Type::Message | fb::Updates::Type::ChannelPost);
     bot.skipUpdates();
-    bot.onUpdate([this](fb::Update &u)
-                 { this->handleUpdateMsg(u); });
+    bot.onUpdate([this](fb::Update &request)
+                 { this->handleUpdateMsg(request); });
 }
 
-void TelegramBot::handleUpdateMsg(fb::Update &u)
+void TelegramBot::handleUpdateMsg(fb::Update &request)
 {
     logger.log(LOG_DEBUG, [&]() -> String256
                { String256 buf;
                                 buf.add(F("[TelegramBot::handleUpdateMsg] Raw update text: '"));
-                                buf.add(u.message().text().c_str());
+                                buf.add(request.message().text().c_str());
                                 buf.add('\'');
                                 return buf; });
 
-    auto parseBasePtr = telegram::parseTelegramRequest<telegram::ModelBaseRequest>(u.message().text().c_str());
-    if (parseBasePtr->isOk())
+    auto apiRequestBasePtr = api::parseRequest<api::telegram::ModelBaseRequest>(request.message().text().c_str());
+    if (apiRequestBasePtr->isOk())
     {
-        auto *successParseBasePtr = static_cast<telegram::TelegramSuccessRequest<telegram::ModelBaseRequest> *>(parseBasePtr.get());
-        String parseCommand = std::move(successParseBasePtr->data.command);
-        StringN<18> parseId = successParseBasePtr->data.id;
+        auto *successApiRequestBasePtr = static_cast<api::SuccessRequest<api::telegram::ModelBaseRequest> *>(apiRequestBasePtr.get());
+        String32 parseCommand = std::move(successApiRequestBasePtr->data.command);
+        StringN<18> parseId = std::move(successApiRequestBasePtr->data.id);
         logger.log(LOG_INFO, [&]() -> String256
                    { String256 buf;
                                     buf.add(F("[TelegramBot::handleUpdateMsg] Parsed base request: command="));
@@ -60,7 +60,7 @@ void TelegramBot::handleUpdateMsg(fb::Update &u)
                                                  buf.add(F(")"));
                                                  return buf; });
 
-            auto it = handlers.find(parseCommand);
+            auto it = handlers.find(parseCommand.c_str());
             if (it != handlers.end())
             {
                 logger.log(LOG_INFO, [&]() -> String256
@@ -76,7 +76,7 @@ void TelegramBot::handleUpdateMsg(fb::Update &u)
                                             buf.add(F("[TelegramBot::handleUpdateMsg] Handler found in map for command="));
                                             buf.add(parseCommand.c_str());
                                             return buf; });
-                it->second(u);
+                it->second(request);
             }
             else
             {
@@ -106,18 +106,18 @@ void TelegramBot::handleUpdateMsg(fb::Update &u)
     }
     else
     {
-        auto *errorParseBasePtr = static_cast<telegram::TelegramErrorRequest *>(parseBasePtr.get());
+        auto *errorApiRequestBasePtr = static_cast<api::ErrorRequest *>(apiRequestBasePtr.get());
 
         logger.log(LOG_WARN, [&]() -> String256
                    { String256 buf;
                                     buf.add(F("[TelegramBot::handleUpdateMsg] Failed to parse ModelBaseRequest, error="));
-                                    buf.add(errorParseBasePtr->message);
+                                    buf.add(errorApiRequestBasePtr->message);
                                     return buf; });
 
         logger.log(LOG_DEBUG, [&]() -> String256
                    { String256 buf;
                                     buf.add(F("[TelegramBot::handleUpdateMsg] Parse error. Raw text='"));
-                                    buf.add(u.message().text().c_str());
+                                    buf.add(request.message().text().c_str());
                                     buf.add('\'');
                                     return buf; });
     }

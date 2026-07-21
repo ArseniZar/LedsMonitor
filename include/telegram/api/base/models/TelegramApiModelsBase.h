@@ -1,26 +1,25 @@
 #pragma once
-#ifndef API_MODELS_BASE_H
-#define API_MODELS_BASE_H
+#ifndef TELEGRAM_API_MODELS_BASE_H
+#define TELEGRAM_API_MODELS_BASE_H
 
 #include <Arduino.h>
 #include "JsonParseBase.h"
 #include "JsonSerializationBase.h"
 
-namespace api
+namespace api::telegram
 {
     /*==========================================================ModelRequest===============================================*/
 
     class ModelBaseRequest : public json::Parse
     {
     public:
-        ModelBaseRequest();
+        String32 command;
+        StringN<18> id; 
+        ModelBaseRequest() = delete;
         ModelBaseRequest(ModelBaseRequest &&base);
         ModelBaseRequest(const ModelBaseRequest &base);
+        ModelBaseRequest(const char *command, const char *id);
         static std::unique_ptr<json::Convertible> fromJson(const gson::Entry &json);
-
-        // const String32 meta;
-        // ModelBaseRequest() = delete;
-        // ModelBaseRequest(const char *meta);
     };
 
     /*==========================================================ModelResponse==============================================*/
@@ -28,17 +27,16 @@ namespace api
     class ModelBaseResponse : public json::Serialization
     {
     public:
-        ModelBaseResponse();
+        String32 command;
+        StringN<18> id;
+        ModelBaseResponse() = delete;
         ModelBaseResponse(ModelBaseResponse &&base);
         ModelBaseResponse(ModelBaseRequest &&base);
         ModelBaseResponse(const ModelBaseResponse &base);
         ModelBaseResponse(const ModelBaseRequest &base);
+        ModelBaseResponse(const char *command, const char *id);
         gson::Str toJson() const override;
-
-        // const String32 meta;
-        // ModelBaseResponse() = delete;
-        // ModelBaseResponse(const char *meta);
     };
 }
 
-#endif // API_MODELS_BASE_H
+#endif // MESSAGE_MODELS_BASE_H

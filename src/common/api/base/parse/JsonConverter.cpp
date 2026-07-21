@@ -17,6 +17,8 @@ namespace api::json
             return actualType == JsonType::Float;
         case ValueType::Bool:
             return actualType == JsonType::Bool;
+        case ValueType::String8:
+        case ValueType::String18:
         case ValueType::String32:
         case ValueType::String64:
             return actualType == JsonType::String;
@@ -72,6 +74,10 @@ namespace api::json
                 return false;
             }
             return std::monostate{};
+        case ValueType::String8:
+            return String8(data.c_str());
+        case ValueType::String18:
+            return StringN<18>(data.c_str());
         case ValueType::String32:
             return String32(data.c_str());
         case ValueType::String64:
