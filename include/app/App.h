@@ -9,7 +9,6 @@
 #include "DeviceLed.h"
 #include "NetworkManager.h"
 #include "TelegramBot.h"
-#include "TelegramCommands.h"
 #include "WebServer.h"
 
 #ifndef LOGGER_DEBUG_MODE
