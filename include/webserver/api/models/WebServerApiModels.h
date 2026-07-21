@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <optional>
-#include "ApiModelsBase.h"
+#include "WebServerApiModelsBase.h"
 #include "WifiNetwork.h"
 #include "WifiStatus.h"
 

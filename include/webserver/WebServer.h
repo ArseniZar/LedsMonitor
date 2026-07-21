@@ -84,8 +84,8 @@ private:
     void handleRoot();
     void handleNotFound();
 
-    void handleOptions(const char* uri);
-
+    // void handleOptions(const char* uri);
+    //XXX по удаления коментарии
 
 };
 

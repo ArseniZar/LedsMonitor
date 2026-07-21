@@ -4,8 +4,9 @@
 template <typename Request, typename Response = void>
 void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::function<Response(Request &)> handler)
 {
-    static_assert(std::is_base_of<api::ModelBaseRequest, Request>::value, "Request must be void or inherit from api::ModelBaseRequest");
-    static_assert(std::is_void<Response>::value || std::is_base_of<api::Response, Response>::value, "Response must be void or inherit from api::ModelBaseResponse");
+    static_assert(std::is_base_of<api::webserver::ModelBaseRequest, Request>::value, "Request must be void or inherit from api::webserver::ModelBaseRequest");
+    static_assert(std::is_void<Response>::value || std::is_base_of<api::Response, Response>::value, "Response must be void or inherit from api::webserver::ModelBaseResponse");
+    
     handlers[{uri, httpMethod}] = [handler, this](ghttp::ServerBase::Request request)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -28,10 +29,10 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             return;
         }
 
-        auto apiRequstPtr = api::parseRequest<Request>(body.c_str());
-        if (apiRequstPtr->isOk())
+        auto apiRequestPtr = api::parseRequest<Request>(body.c_str());
+        if (apiRequestPtr->isOk())
         {
-            auto *successApiRequstPtr = static_cast<api::SuccessRequest<Request> *>(apiRequstPtr.get());
+            auto *successApiRequestPtr = static_cast<api::SuccessRequest<Request> *>(apiRequestPtr.get());
             if constexpr (!std::is_void<Response>::value)
             {
                 if constexpr (is_variant<Response>::value)
@@ -43,11 +44,11 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                                               { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
                                    
                                    server.send(payload, response.getCode(), F("application/json")); },
-                               handler(successApiRequstPtr->data));
+                               handler(successApiRequestPtr->data));
                 }
                 else
                 {
-                    const auto &response = handler(successApiRequstPtr->data);
+                    const auto &response = handler(successApiRequestPtr->data);
                     String payload = api::serializeResponse(response);
                     logger.log(LOG_DEBUG, [&]() -> String128
                                { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
@@ -58,7 +59,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             }
             else
             {
-                handler(successApiRequstPtr->data);
+                handler(successApiRequestPtr->data);
                 logger.log(LOG_INFO, [&]() -> String128
                            { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
                 server.handle();
@@ -66,7 +67,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
         }
         else
         {
-            auto *errorApiRequstPtr = static_cast<api::ErrorRequest *>(apiRequstPtr.get());
+            auto *errorApiRequstPtr = static_cast<api::ErrorRequest *>(apiRequestPtr.get());
             const auto response = api::ErrorResponse(400, errorApiRequstPtr->message);
             String payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String128

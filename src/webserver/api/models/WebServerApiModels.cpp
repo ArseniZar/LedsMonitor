@@ -2,6 +2,8 @@
 
 namespace api::webserver
 {
+    /*===================================== ScanWifiNetworkStarted ==========================================================*/
+
     namespace ScanWifiNetworkStartedResponceKey
     {
         constexpr const char *SCAN = "scan";
@@ -44,7 +46,7 @@ namespace api::webserver
         return j;
     }
 
-    /*===================================== ScanWifiNetwork ==========================================================*/
+    /*===================================== ScanNetworks ==========================================================*/
 
     namespace ScanNetworksResponceKey
     {
@@ -84,7 +86,7 @@ namespace api::webserver
         return j;
     }
 
-    /*===================================== ConnectWifiNetworkStarted ==========================================================*/
+    /*===================================== ConnectWifiNetwork ==========================================================*/
 
     namespace ConnectWifiNetworkRequestKey
     {
