@@ -38,7 +38,7 @@ void App::begin()
 #endif
 
 #if ENABLE_NETWORK_MODULE && ENABLE_CONFIG_MODULE
-    bindWebServer();
+    registerRoutes();
 #endif
 
     server.begin();
@@ -60,7 +60,7 @@ void App::begin()
 #endif
 
 #if ENABLE_DEVICE_MODULE
-    bindTelegramBot();
+    registerCommands();
 #endif
 
     bot.begin();
@@ -94,7 +94,7 @@ void App::update()
 #endif
 }
 
-void App::bindTelegramBot()
+void App::registerCommands()
 {
     using namespace api::telegram;
 
@@ -108,7 +108,7 @@ void App::bindTelegramBot()
                                                                                { return api::SuccessResponse<GetStateLedDeviceResponse>(200, GetStateLedDeviceResponse(device.getColor(), device.getStatus(), std::move(ModelBaseResponse("state", device.getMacAddress().getMac())))); });
 }
 
-void App::bindWebServer()
+void App::registerRoutes()
 {
     using namespace api::webserver;
 

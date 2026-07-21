@@ -57,7 +57,7 @@ private:
     DeviceLed<NeoBrgFeature, NeoEsp8266Dma800KbpsMethod> device;
 
     App();
-    void bindTelegramBot();
-    void bindWebServer();
+    void registerCommands();
+    void registerRoutes();
 };
 #endif // APP_H
