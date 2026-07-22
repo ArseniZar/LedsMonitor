@@ -13,8 +13,8 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                    { String128 buf; buf.add(F("(WebServer::registerRoute) Received request with body.")); return buf; });
 
         String body = request.body().readString();
-        logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf.add(F("(WebServer::registerRoute) Raw request body: ")); buf.add(body.c_str()); return buf; });
+        logger.log(LOG_DEBUG, [&]() -> String256
+                   { String256 buf; buf.add(F("(WebServer::registerRoute) Raw request body: ")); buf.add(body.c_str()); return buf; });
 
         if (body.isEmpty())
         {
@@ -22,10 +22,10 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                        { String128 buf; buf.add(F("(WebServer::registerRoute) Empty request body.")); return buf; });
             const auto response = api::ErrorResponse(400, String32(F("Empty request body")));
             gson::Str payload = api::serializeResponse(response);
-            logger.log(LOG_DEBUG, [&]() -> String128
-                       { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (error empty body): ")); buf.add(Text(payload).c_str()); return buf; });
+            logger.log(LOG_DEBUG, [&]() -> String256
+                       { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (error empty body): ")); buf.add(Text(payload).c_str()); return buf; });
 
-            server.send(payload, response.getCode(), F("application/json"));
+            server.sendSingle(payload, response.getCode(), F("application/json"));
             return;
         }
 
@@ -40,21 +40,19 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                     std::visit([&](auto &&response)
                                {
                                    gson::Str payload = api::serializeResponse(response);
-                                   logger.log(LOG_DEBUG, [&]() -> String128
-                                              { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                                   logger.log(LOG_DEBUG, [&]() -> String256
+                                              { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                                    
-                                   server.send(payload, response.getCode(), F("application/json")); },
+                                   server.sendSingle(payload, response.getCode(), F("application/json")); },
                                handler(successApiRequestPtr->data));
                 }
                 else
                 {
                     const auto &response = handler(successApiRequestPtr->data);
                     gson::Str payload = api::serializeResponse(response);
-                    logger.log(LOG_DEBUG, [&]() -> String128
-                               { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
-                    server.send(payload, response.getCode(), F("application/json"));
-                    // server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-                    // server.send(response.getCode(), F("application/json"), payload);
+                    logger.log(LOG_DEBUG, [&]() -> String256
+                               { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                    server.sendSingle(payload, response.getCode(), F("application/json"));
                 }
             }
             else
@@ -62,7 +60,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                 handler(successApiRequestPtr->data);
                 logger.log(LOG_INFO, [&]() -> String128
                            { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
-                server.handle();
+                server.send(204);
             }
         }
         else
@@ -70,9 +68,9 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             auto *errorApiRequstPtr = static_cast<api::ErrorRequest *>(apiRequestPtr.get());
             const auto response = api::ErrorResponse(400, errorApiRequstPtr->message);
             gson::Str payload = api::serializeResponse(response);
-            logger.log(LOG_DEBUG, [&]() -> String128
-                       { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
-            server.send(payload, response.getCode(), F("application/json"));
+            logger.log(LOG_DEBUG, [&]() -> String256
+                       { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
+            server.sendSingle(payload, response.getCode(), F("application/json"));
         }
     };
     // routeMasks[uri] |= (128 | (1 << static_cast<uint8_t>(httpMethod)));
@@ -94,22 +92,18 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                 std::visit([&](auto &&response)
                            {
                                gson::Str payload = api::serializeResponse(response);
-                               logger.log(LOG_DEBUG, [&]() -> String128
-                                          { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
-                               server.send(payload, response.getCode(), F("application/json")); },
+                               logger.log(LOG_DEBUG, [&]() -> String256
+                                          { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                               server.sendSingle(payload, response.getCode(), F("application/json")); },
                            handler());
             }
             else
             {
-                logger.log(LOG_DEBUG, [&]() -> String128
-                           { String128 buf; buf.add(F("(WebServer::registerRoute) 1 "));  return buf; });
                 const auto &response = handler();
-                      logger.log(LOG_DEBUG, [&]() -> String128
-                           { String128 buf; buf.add(F("(WebServer::registerRoute) 2 "));  return buf; });
                 gson::Str payload = api::serializeResponse(response);
-                logger.log(LOG_DEBUG, [&]() -> String128
-                           { String128 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
-                server.send(payload, response.getCode(), F("application/json"));
+                logger.log(LOG_DEBUG, [&]() -> String256
+                           { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                server.sendSingle(payload, response.getCode(), F("application/json"));
             }
         }
         else
@@ -117,7 +111,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             handler();
             logger.log(LOG_INFO, [&]() -> String128
                        { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
-            server.handle();
+            server.send(204);
         }
     };
 

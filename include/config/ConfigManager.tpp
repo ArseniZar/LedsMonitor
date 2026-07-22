@@ -41,11 +41,11 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::load()
                         {
                             configPair.config = decltype(configPair.config)::fromDefault();
                             configPair.storage.writeData(configPair.config);
-                            logger.log(LOG_WARN, [&]() -> String128
-                                        { String128 buf; buf = F("(ConfigManager::load) No stored "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" found; using defaults and saving."); return buf; });
+                            logger.log(LOG_WARN, [&]() -> String256
+                                        { String256 buf; buf = F("(ConfigManager::load) No stored "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" found; using defaults and saving."); return buf; });
                         }
-                        logger.log(LOG_INFO, [&]() -> String128
-                                    { String128 buf; buf = F("(ConfigManager::load) Loaded "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" NetworkConfig from storage."); return buf; }); }(configs)),
+                        logger.log(LOG_INFO, [&]() -> String256
+                                    { String256 buf; buf = F("(ConfigManager::load) Loaded "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" NetworkConfig from storage."); return buf; }); }(configs)),
                   ...); }, configs);
 }
 
@@ -60,13 +60,13 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::save()
                    { if(!(configPair.config == configPair.storage.getData())) 
                     {
                         configPair.storage.writeData(configPair.config);
-                        logger.log(LOG_INFO, [&]() -> String128
-                                            { String128 buf; buf = F("(ConfigManager::saveConfig) Saving"); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage..."); return buf; });
+                        logger.log(LOG_INFO, [&]() -> String256
+                                            { String256 buf; buf = F("(ConfigManager::saveConfig) Saving"); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage..."); return buf; });
                     }
                     else
                     {
-                        logger.log(LOG_DEBUG, [&]() -> String128
-                                    { String128 buf; buf = F("(ConfigManager::save) No changes in "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add("; skipping save."); return buf; }); 
+                        logger.log(LOG_DEBUG, [&]() -> String256
+                                    { String256 buf; buf = F("(ConfigManager::save) No changes in "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add("; skipping save."); return buf; }); 
                     } }(configs)),
                   ...); }, configs);
 
@@ -120,8 +120,8 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::updateConfig(const C
                         if constexpr (std::is_same_v<decltype(configPair.config), Config>)
                         {
                             configPair.config = config;
-                            logger.log(LOG_DEBUG, [&]() -> String128
-                                        { String128 buf; buf = F("(ConfigManager::updateConfig) Updated "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" from argument."); return buf; });
+                            logger.log(LOG_DEBUG, [&]() -> String256
+                                        { String256 buf; buf = F("(ConfigManager::updateConfig) Updated "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" from argument."); return buf; });
                         } }(configs)),
                   ...); }, configs);
 }
@@ -139,13 +139,13 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::saveConfig()
                             if(!(configPair.config == configPair.storage.getData())) 
                             {
                                 configPair.storage.writeData(configPair.config);
-                                logger.log(LOG_INFO, [&]() -> String128
-                                            { String128 buf; buf = F("(ConfigManager::saveConfig) Saving "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage..."); return buf; });
+                                logger.log(LOG_INFO, [&]() -> String256
+                                            { String256 buf; buf = F("(ConfigManager::saveConfig) Saving "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage..."); return buf; });
                             }
                             else
                             {
-                                logger.log(LOG_DEBUG, [&]() -> String128
-                                            { String128 buf; buf = F("(ConfigManager::saveConfig) No changes in "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add("; skipping save."); return buf; }); 
+                                logger.log(LOG_DEBUG, [&]() -> String256
+                                            { String256 buf; buf = F("(ConfigManager::saveConfig) No changes in "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add("; skipping save."); return buf; }); 
                             }
                         } }(configs)),
                   ...); }, configs);
@@ -162,8 +162,8 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::resetConfig()
                            if constexpr (std::is_same_v<decltype(configPair.config), Config>)
                            {
                                configPair.config = decltype(configPair.config)::fromDefault();
-                               logger.log(LOG_WARN, [&]() -> String128
-                                          { String128 buf; buf = F("(ConfigManager::resetConfig) Resetting "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to defaults"); return buf; });
+                               logger.log(LOG_WARN, [&]() -> String256
+                                          { String256 buf; buf = F("(ConfigManager::resetConfig) Resetting "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to defaults"); return buf; });
                            } }(configs)),
                   ...); }, configs);
 }
