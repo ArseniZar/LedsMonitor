@@ -2,7 +2,7 @@
 
 namespace api
 {
-    String serializeResponse(const ErrorResponse &response)
+    gson::Str serializeResponse(const ErrorResponse &response)
     {
 
         gson::Str j;
@@ -11,7 +11,7 @@ namespace api
         j[F("error_code")] = response.getCode();
         j[F("message")] = response.message;
         j('}');
-        return String(su::Text(j));
+        return j;
     }
 
 }

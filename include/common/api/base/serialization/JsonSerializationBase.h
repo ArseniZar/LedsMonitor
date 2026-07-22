@@ -15,7 +15,7 @@ namespace api::json
     public:
         struct Field
         {
-            const Value &value;
+            Value value;
 
             Field() = delete;
             Field(const Value &value) : value(value) {}

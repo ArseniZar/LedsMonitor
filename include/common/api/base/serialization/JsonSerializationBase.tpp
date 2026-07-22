@@ -16,6 +16,9 @@ namespace api::json
                 if constexpr (std::is_same_v<T, std::monostate>) {
                      // ingnore monostate
                 }
+                else if constexpr (std::is_same_v<T, bool>) {
+                    j[key] = arg ? "true" : "false";
+                }
                 else 
                 {
                     j[key] = arg;

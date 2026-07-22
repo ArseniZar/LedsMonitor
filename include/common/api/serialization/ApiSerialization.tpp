@@ -4,7 +4,7 @@
 namespace api
 {
     template <typename T>
-    String serializeResponse(const SuccessResponse<T> &response)
+    gson::Str serializeResponse(const SuccessResponse<T> &response)
     {
         gson::Str j;
         j('{');
@@ -13,6 +13,6 @@ namespace api
         j += response.data.toJson();
         j('}');
         j('}');
-        return String(su::Text(j).c_str());
+        return j;
     }
 }

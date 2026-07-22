@@ -2,21 +2,21 @@
 
 namespace api::json
 {
-    std::unique_ptr<Convertible> Parse::parse(const gson::Entry &json, const std::map<const char *, Field> &expectedKeys)
+    std::unique_ptr<Convertible> Parse::parse(const gson::Entry &json, const std::map<const char *, Field, StrCompare> &expectedKeys)
     {
         if (expectedKeys.empty())
         {
-            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parseData] | [NoExpectedKeys] | expectedKeys map is empty")));
+            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parse] | [NoExpectedKeys] | expectedKeys map is empty")));
         }
 
         if (!json.is(JsonType::Object))
         {
-            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parseData] | [DataIsNotObject] | expected=object")));
+            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parse] | [DataIsNotObject] | expected=object")));
         }
 
         if (json.length() == 0)
         {
-            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parseData] | [EmptyData] | data object is empty")));
+            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parse] | [EmptyData] | data object is empty")));
         }
 
         struct Key
@@ -46,7 +46,7 @@ namespace api::json
             if (jsonPair.isContainer())
             {
                 String256 buf;
-                buf.add(F("[ERROR] | [JsonParse::parseData] | [InvalidKeyValuePair] | key='"));
+                buf.add(F("[ERROR] | [JsonParse::parse] | [InvalidKeyValuePair] | key='"));
                 buf.add(jsonPair.key().c_str());
                 buf.add(F("'; jsonType='"));
                 buf.add(gson::readType(jsonPair.type()));
@@ -54,8 +54,11 @@ namespace api::json
                 return std::make_unique<Error>(buf);
             }
 
-            Key jsonKey(jsonPair.key().c_str());
-            String jsonValue(jsonPair.value().c_str());
+            Text::Cstr jsonKeyText = jsonPair.key().c_str();
+            Text::Cstr jsonValText = jsonPair.value().c_str();
+
+            Key jsonKey(jsonKeyText);
+            const char *jsonValue = jsonValText;
 
             auto it = map.find(jsonKey);
             if (it == map.end())
@@ -66,10 +69,10 @@ namespace api::json
             if (!std::holds_alternative<std::monostate>(it->second))
             {
                 String256 buf;
-                buf.add(F("[ERROR] | [JsonParse::parseData] | [DuplicateKey] | key="));
+                buf.add(F("[ERROR] | [JsonParse::parse] | [DuplicateKey] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("'; newValue='"));
-                buf.add(jsonValue.c_str());
+                buf.add(jsonValue);
                 buf.add(F("'"));
                 return std::make_unique<Error>(buf);
             }
@@ -79,10 +82,10 @@ namespace api::json
             if (!Converter::isCompatible(jsonPair.type(), field.expectedType))
             {
                 String256 buf;
-                buf.add(F("[ERROR] | [JsonParse::parseData] | [TypeMismatch] | key="));
+                buf.add(F("[ERROR] | [JsonParse::parse] | [TypeMismatch] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("; value='"));
-                buf.add(jsonValue.c_str());
+                buf.add(jsonValue);
                 buf.add(F("'; jsonType='"));
                 buf.add(gson::readType(jsonPair.type()));
                 buf.add(F("'; expected='"));
@@ -91,14 +94,14 @@ namespace api::json
                 return std::make_unique<Error>(buf);
             }
 
-            const Value value = Converter::convert(jsonValue.c_str(), field.expectedType);
+            const Value value = Converter::convert(jsonValue, field.expectedType);
             if (std::holds_alternative<std::monostate>(value))
             {
                 String256 buf;
-                buf.add(F("[ERROR] | [JsonParse::parseData] | [InvalidValue] | key="));
+                buf.add(F("[ERROR] | [JsonParse::parse] | [InvalidValue] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("; value='"));
-                buf.add(jsonValue.c_str());
+                buf.add(jsonValue);
                 buf.add(F("'; expected='"));
                 buf.add(readType(field.expectedType));
                 buf.add(F("'; reason=conversion failed or out-of-range"));
@@ -108,7 +111,7 @@ namespace api::json
             it->second = std::move(value);
         }
 
-        std::map<const char *, Value> outMap;
+        std::map<const char *, Value, StrCompare> outMap;
         String128 missingKeys;
         bool hasMissingRequiredKeys = false;
         bool hasProvidedKnownValue = false;
@@ -131,17 +134,17 @@ namespace api::json
 
         if (!hasProvidedKnownValue)
         {
-            return std::make_unique<Error>(String128(F("[ERROR] | [JsonParse::parseData] | [EmptyPayload] | at least one known field is required")));
+            return std::make_unique<Error>(String256(F("[ERROR] | [JsonParse::parse] | [EmptyPayload] | at least one known field is required")));
         }
 
         if (hasMissingRequiredKeys)
         {
-            String128 buf;
-            buf.add(F("[ERROR] | [JsonParse::parseData] | [MissingRequiredKeys] | keys="));
+            String256 buf;
+            buf.add(F("[ERROR] | [JsonParse::parse] | [MissingRequiredKeys] | keys="));
             buf.add(missingKeys.c_str());
             return std::make_unique<Error>(buf);
         }
 
-        return std::make_unique<ParseSuccess<std::map<const char *, Value>>>(std::move(outMap));
+        return std::make_unique<ParseSuccess<std::map<const char *, Value, StrCompare>>>(std::move(outMap));
     }
 }

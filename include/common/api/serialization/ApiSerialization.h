@@ -9,8 +9,8 @@
 namespace api
 {
     template <typename T>
-    String serializeResponse(const SuccessResponse<T> &response);
-    String serializeResponse(const ErrorResponse &response);
+    gson::Str serializeResponse(const SuccessResponse<T> &response);
+    gson::Str serializeResponse(const ErrorResponse &response);
 
 }
 #include "ApiSerialization.tpp"

@@ -13,7 +13,7 @@ namespace api
 
         if (parser.hasError())
         {
-            String128 buf;
+            String256 buf;
             buf.add(F("[ERROR] | [ApiParse::parseRequest] | [ParseError] | at index "));
             buf.add(parser.errorIndex());
             buf.add(F(": "));
@@ -24,7 +24,7 @@ namespace api
         const gson::Entry &json = parser.get(F("data"));
         if (!json.valid())
         {   
-            return std::make_unique<ErrorRequest>(String64(F("[ERROR] | [ApiParse::parseRequest] | [MissingData] | expected key 'data' not found")));
+            return std::make_unique<ErrorRequest>(String256(F("[ERROR] | [ApiParse::parseRequest] | [MissingData] | expected key 'data' not found")));
         }
 
         auto parsePtr = T::fromJson(json);

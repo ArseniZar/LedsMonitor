@@ -10,6 +10,7 @@
 #include "JsonResult.h"
 #include "JsonConverter.h"
 #include "JsonTypes.h"
+#include "utils/helpers.h"
 
 namespace api::json
 {
@@ -28,7 +29,7 @@ namespace api::json
         virtual ~Parse() = default;
 
     protected:
-        static std::unique_ptr<Convertible> parse(const gson::Entry &json, const std::map<const char *, Field> &expectedKeys);
+        static std::unique_ptr<Convertible> parse(const gson::Entry &json, const std::map<const char *, Field, StrCompare> &expectedKeys);
     };
 }
 
