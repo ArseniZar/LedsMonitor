@@ -18,24 +18,32 @@ void WebServer::begin()
         this->handleRoot();
     };
 
+    server.useCors(true);
     server.onRequest([this](ghttp::ServerBase::Request request)
-                     {  
+                    {  
                         lastRequestTime = millis();
 
                         logger.log(LOG_INFO, [&]() -> String128
                                    { String128 buf; buf.add(F("(WebServer::onRequest) HTTP Request: ")); buf.add(request.method().c_str()); buf.add(' '); buf.add(request.path().c_str()); return buf; });
-                                   
-                        auto it = handlers.find({request.path().c_str(), parseMethod(request.method())});
-                        if (it != handlers.end())
-                        {
-                        it->second(request);
-                        }
-                        else
-                        {
-                        this->handleNotFound(request);
-                        } });
 
-    server.useCors(true);
+                        if(parseMethod(request.method()) == HTTPMethod::OPTIONS)
+                        {
+                            ghttp::ServerBase::Headers headers(200);
+                            headers.add(F("Access-Control-Allow-Headers"), F("Content-Type"));
+                            server.beginResponse(headers);
+                            server.send(204);
+                            return;
+                        }
+
+                        auto it = handlers.find({request.path().c_str(), parseMethod(request.method())});
+                        if (it != handlers.end()) 
+                        {
+                            it->second(request);
+                        } else 
+                        {
+                            this->handleNotFound(request);
+                        }
+                    });
 }
 
 void WebServer::start()
