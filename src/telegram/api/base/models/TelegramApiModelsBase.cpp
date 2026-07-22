@@ -17,7 +17,7 @@ namespace api::telegram
     std::unique_ptr<json::Convertible> ModelBaseRequest::fromJson(const gson::Entry &json)
     {
         using namespace ModelsBaseRequestResponceKey;
-        static const std::map<const char *, Field> keys = {
+        static const std::map<const char *, Field, StrCompare> keys = {
             {COMMAND, {json::ValueType::String32}},
             {ID, {json::ValueType::String18}}};
 
@@ -26,8 +26,8 @@ namespace api::telegram
         {
             return parseBasePtr;
         }
-        auto *successParseBasePtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value>> *>(parseBasePtr.get());
-        std::map<const char *, json::Value> parseMap = std::move(successParseBasePtr->result);
+        auto *successParseBasePtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value, StrCompare>> *>(parseBasePtr.get());
+        std::map<const char *, json::Value, StrCompare> parseMap = std::move(successParseBasePtr->result);
 
         const String32 &command = std::get<String32>(parseMap[COMMAND]);
         const StringN<18> &id = std::get<StringN<18>>(parseMap[ID]);
@@ -51,4 +51,4 @@ namespace api::telegram
             {ID,{id}}}};
         return Serialization::serialization(pairs);
     }
-}
+} 

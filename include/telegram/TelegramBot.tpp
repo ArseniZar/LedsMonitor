@@ -22,9 +22,9 @@ void TelegramBot::registerCommand(const char *command, std::function<Response(Re
             logger.log(LOG_WARN, [&]() -> String128
                        { String128 buf; buf.add(F("(TelegramBot::registerCommand) Empty request body.")); return buf; });
             const auto response = api::ErrorResponse(400, String32(F("Empty request body")));
-            String payload = api::serializeResponse(response);
+            gson::Str payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String128
-                       { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (error empty body): ")); buf.add(payload.c_str()); return buf; });
+                       { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (error empty body): ")); buf.add(Text(payload).c_str()); return buf; });
             bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
             return;
         }
@@ -41,15 +41,15 @@ void TelegramBot::registerCommand(const char *command, std::function<Response(Re
                                {
                                    String payload = api::serializeResponse(response);
                                    logger.log(LOG_DEBUG, [&]() -> String128
-                                              { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                                              { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                                    bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id())); }, handler(successApiRequestPtr->data));
                 }
                 else
                 {
                     const auto &response = handler(successApiRequestPtr->data);
-                    String payload = api::serializeResponse(response);
+                    gson::Str payload = api::serializeResponse(response);
                     logger.log(LOG_DEBUG, [&]() -> String128
-                               { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                               { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                     bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
                 }
             }
@@ -64,9 +64,9 @@ void TelegramBot::registerCommand(const char *command, std::function<Response(Re
         {
             auto *errorApiRequstPtr = static_cast<api::ErrorRequest *>(apiRequestPtr.get());
             const auto response = api::ErrorResponse(400, errorApiRequstPtr->message);
-            String payload = api::serializeResponse(response);
+            gson::Str payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String128
-                       { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (parse error): ")); buf.add(payload.c_str()); return buf; });
+                       { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
             bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
         }
     };
@@ -85,16 +85,16 @@ void TelegramBot::registerCommand(const char *command, std::function<Response()>
                            {
                                String payload = api::serializeResponse(response);
                                logger.log(LOG_DEBUG, [&]() -> String128
-                                          { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                                          { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                                bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id())); },
                            handler());
             }
             else
             {
                 const auto &response = handler();
-                String payload = api::serializeResponse(response);
+                gson::Str payload = api::serializeResponse(response);
                 logger.log(LOG_DEBUG, [&]() -> String128
-                           { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(payload.c_str()); return buf; });
+                           { String128 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                 bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
             }
         }

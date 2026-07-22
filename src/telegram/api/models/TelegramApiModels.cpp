@@ -16,7 +16,7 @@ namespace api::telegram
     std::unique_ptr<json::Convertible> UpdateLedDeviceRequest::fromJson(const gson::Entry &json)
     {
         using namespace UpdateLedDeviceRequestKey;
-        static const std::map<const char *, Field> keys = {
+        static const std::map<const char *, Field, StrCompare> keys = {
             {COLOR, {json::ValueType::String8}},
             {STATUS, {json::ValueType::Bool}}};
 
@@ -32,8 +32,8 @@ namespace api::telegram
         {
             return parseUpdateLedDevicePtr;
         }
-        auto *successParseUpdateLedDevicePtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value>> *>(parseUpdateLedDevicePtr.get());
-        std::map<const char *, json::Value> map = std::move(successParseUpdateLedDevicePtr->result);
+        auto *successParseUpdateLedDevicePtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value, StrCompare>> *>(parseUpdateLedDevicePtr.get());
+        std::map<const char *, json::Value, StrCompare> map = std::move(successParseUpdateLedDevicePtr->result);
 
         const String8 &color = std::get<String8>(map[COLOR]);
         const bool status = std::get<bool>(map[STATUS]);
