@@ -14,34 +14,19 @@
 #include "ApiSerialization.h"
 #include "utils/helpers.h"
 #include "WebServerConfigModels.h"
-
-enum class HTTPMethod: uint8_t { ANY, GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS };
-
-inline HTTPMethod parseMethod(const Text& str) {
-    switch (str.hash()) {
-        case su::SH("GET"):     return HTTPMethod::GET;
-        case su::SH("POST"):    return HTTPMethod::POST;
-        case su::SH("PUT"):     return HTTPMethod::PUT;
-        case su::SH("DELETE"):  return HTTPMethod::DELETE;
-        case su::SH("OPTIONS"): return HTTPMethod::OPTIONS;
-        case su::SH("HEAD"):    return HTTPMethod::HEAD;
-        case su::SH("PATCH"):   return HTTPMethod::PATCH;
-        
-        default:                return HTTPMethod::ANY;
-    }
-}
+#include "webserver/HTTPMethod.h"
 
 struct Route {
-    const char * url;
+    const char *url;
     HTTPMethod method;
     
     Route() = delete;
-    Route(const char * url, HTTPMethod method) : url(url), method(method) {}
+    Route(const char *url, HTTPMethod method) : url(url), method(method) {}
     bool operator<(const Route &other) const {
         if (method != other.method) {
             return method < other.method;
         }
-        return strcmp(url, other.url) < 0;
+       return strcmp(url, other.url) < 0;
     }
 };
 
@@ -82,7 +67,7 @@ private:
     WebServer(Logger &logger, int port);
 
     void handleRoot();
-    void handleNotFound();
+    void handleNotFound(ghttp::ServerBase::Request request);
 
     // void handleOptions(const char* uri);
     //XXX по удаления коментарии

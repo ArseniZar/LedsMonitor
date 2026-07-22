@@ -15,24 +15,25 @@ void WebServer::begin()
 {
     handlers[{"/", HTTPMethod::GET}] = [this](ghttp::ServerBase::Request request)
     {
-        {
-            this->handleRoot();
-        };
+        this->handleRoot();
     };
 
     server.onRequest([this](ghttp::ServerBase::Request request)
-                     {
-                         lastRequestTime = millis();
-                         Route route(request.path().c_str(), (parseMethod(request.method())));
-                         auto it = handlers.find(route);
-                         if (it != handlers.end())
-                         {
-                             it->second(request);
-                         }
-                         else
-                         {
-                             this->handleNotFound();
-                         } });
+                     {  
+                        lastRequestTime = millis();
+
+                        logger.log(LOG_INFO, [&]() -> String128
+                                   { String128 buf; buf.add(F("(WebServer::onRequest) HTTP Request: ")); buf.add(request.method().c_str()); buf.add(' '); buf.add(request.path().c_str()); return buf; });
+                                   
+                        auto it = handlers.find({request.path().c_str(), parseMethod(request.method())});
+                        if (it != handlers.end())
+                        {
+                        it->second(request);
+                        }
+                        else
+                        {
+                        this->handleNotFound(request);
+                        } });
 
     server.useCors(true);
 }
@@ -55,14 +56,14 @@ void WebServer::handleRoot()
     server.sendFile_P(index_html, "text/html", true);
 }
 
-void WebServer::handleNotFound()
+void WebServer::handleNotFound(ghttp::ServerBase::Request request)
 {
     logger.log(LOG_WARN, [&]() -> String128
-               {String128 buf; buf.add(F("(WebServer::handleNotFound) Resource not found.")); return buf; });
+               {String128 buf; buf.add(F("(WebServer::handleNotFound) ")); buf.add(request.path().c_str()); buf.add(" "); buf.add(request.method().c_str()); buf.add(F(" Resource not found.")); return buf; });
     const auto responce = api::ErrorResponse(404, String32(F("Resource not found")));
-    String payload = api::serializeResponse(responce);
+    const gson::Str payload = api::serializeResponse(responce);
     logger.log(LOG_DEBUG, [&]() -> String128
-               {String128 buf; buf.add(F("(WebServer::handleNotFound) Response payload: ")); buf.add(payload.c_str()); return buf; });
+               {String128 buf; buf.add(F("(WebServer::handleNotFound) Response payload: ")); buf.add(Text(payload).c_str()); return buf; });
     server.send(payload, responce.getCode(), F("application/json"));
 }
 

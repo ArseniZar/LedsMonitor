@@ -100,7 +100,7 @@ namespace api::webserver
     std::unique_ptr<json::Convertible> ConnectWifiNetworkRequest::fromJson(const gson::Entry &json)
     {
         using namespace ConnectWifiNetworkRequestKey;
-        static const std::map<const char *, Field> keys = {
+        static const std::map<const char *, Field, StrCompare> keys = {
             {SSID, {json::ValueType::String32}},
             {PASSWORD, {json::ValueType::String32}}};
 
@@ -116,8 +116,8 @@ namespace api::webserver
         {
             return parseConnectNetworkPtr;
         }
-        auto *successParseConnectNetworkPtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value>> *>(parseConnectNetworkPtr.get());
-        std::map<const char *, json::Value> parseMap = std::move(successParseConnectNetworkPtr->result);
+        auto *successParseConnectNetworkPtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value, StrCompare>> *>(parseConnectNetworkPtr.get());
+        std::map<const char *, json::Value, StrCompare> parseMap = std::move(successParseConnectNetworkPtr->result);
 
         const String32 &ssid = std::get<String32>(parseMap[SSID]);
         const String32 &password = std::get<String32>(parseMap[PASSWORD]);
@@ -210,7 +210,7 @@ namespace api::webserver
     std::unique_ptr<json::Convertible> UpdateConfigRequest::fromJson(const gson::Entry &json)
     {
         using namespace UpdateConfigRequestKey;
-        static const std::map<const char *, Field> keys = {
+        static const std::map<const char *, Field, StrCompare> keys = {
             {AP_SSID, {json::ValueType::String32, false}},
             {AP_PASSWORD, {json::ValueType::String32, false}},
             {MDNS_NAME, {json::ValueType::String32, false}},
@@ -233,8 +233,8 @@ namespace api::webserver
         {
             return parseConfigPtr;
         }
-        auto *successParseConfigPtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value>> *>(parseConfigPtr.get());
-        std::map<const char *, json::Value> parseMap = std::move(successParseConfigPtr->result);
+        auto *successParseConfigPtr = static_cast<json::ParseSuccess<std::map<const char *, json::Value, StrCompare>> *>(parseConfigPtr.get());
+        std::map<const char *, json::Value, StrCompare> parseMap = std::move(successParseConfigPtr->result);
 
         std::optional<String32> apSsid = json::Converter::toOptional<String32>(parseMap[AP_SSID]);
         std::optional<String32> apPassword = json::Converter::toOptional<String32>(parseMap[AP_PASSWORD]);

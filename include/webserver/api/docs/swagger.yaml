@@ -23,16 +23,11 @@ paths:
             text/html:
               schema:
                 type: string
-    options:
-      summary: CORS preflight for root
-      responses:
-        "200":
-          description: CORS preflight accepted
 
-  "/scan/start":
-    get:
-      summary: Start Wi‑Fi scan
-      description: Starts scanning for available Wi‑Fi networks.
+  "/network/scan":
+    post:
+      summary: Start Wi-Fi scan
+      description: Starts scanning for available Wi-Fi networks.
       responses:
         "200":
           description: Scan started
@@ -46,96 +41,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    options:
-      summary: CORS preflight for /scan/start
-      responses:
-        "200":
-          description: CORS preflight accepted
-
-  "/scan/status":
     get:
-      summary: Get Wi‑Fi scan status
-      description: Returns the current status of the Wi‑Fi scanning operation.
+      summary: Get Wi-Fi scan state or results
+      description: Returns the current scan state, or the discovered networks once the scan is completed.
       responses:
         "200":
-          description: Scan status
+          description: Scan status or results
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScanStatusResponseEnvelope"
+                oneOf:
+                  - $ref: "#/components/schemas/ScanStatusResponseEnvelope"
+                  - $ref: "#/components/schemas/ScanNetworksResponseEnvelope"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    options:
-      summary: CORS preflight for /scan/status
-      responses:
-        "200":
-          description: CORS preflight accepted
 
-  "/scan/result":
-    get:
-      summary: Get Wi‑Fi scan results
-      description: Returns the list of discovered Wi‑Fi networks and their parameters.
-      responses:
-        "200":
-          description: Scan results
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScanNetworksResponseEnvelope"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    options:
-      summary: CORS preflight for /scan/result
-      responses:
-        "200":
-          description: CORS preflight accepted
-
-  "/connect/start":
+  "/network/connect":
     post:
-      summary: Start connection to Wi‑Fi network
-      description: |
-        Accepts a Wi‑Fi network description and initiates a connection attempt.
-        The request body must contain a `data` object with network fields.
+      summary: Start connection to Wi-Fi network
+      description: Accepts the target SSID and password and initiates a connection attempt.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectNetworkRequestEnvelope"
+              $ref: "#/components/schemas/ConnectWifiNetworkRequest"
       responses:
         "200":
           description: Connection attempt started
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectNetworkResponseEnvelope"
+                $ref: "#/components/schemas/ConnectWifiNetworkResponseEnvelope"
         "400":
           description: Bad request (empty body, invalid JSON, etc.)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    options:
-      summary: CORS preflight for /connect/start
-      responses:
-        "200":
-          description: CORS preflight accepted
-
-  "/connect/status":
     get:
-      summary: Get Wi‑Fi connection status
-      description: Returns the current Wi‑Fi connection state.
+      summary: Get Wi-Fi connection status
+      description: Returns the current Wi-Fi connection state.
       responses:
         "200":
-          description: Wi‑Fi connection status
+          description: Wi-Fi connection status
           content:
             application/json:
               schema:
@@ -146,24 +99,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    options:
-      summary: CORS preflight for /connect/status
+
+  "/config":
+    get:
+      summary: Get device configuration
+      description: Returns the current device, network, and Telegram configuration.
       responses:
         "200":
-          description: CORS preflight accepted
+          description: Configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetConfigResponseEnvelope"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update device configuration
+      description: Updates one or more configuration fields. Omitted fields remain unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConfigRequest"
+      responses:
+        "200":
+          description: Configuration updated
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  "/end":
+  "/stop":
     get:
       summary: Stop web server
       description: Stops the WebServer and returns HTTP 200 with an empty body.
       responses:
         "200":
           description: Server stopped successfully
-    options:
-      summary: CORS preflight for /end
-      responses:
-        "200":
-          description: CORS preflight accepted
+    
 
 components:
   schemas:
@@ -185,9 +165,9 @@ components:
           example: "Bad request"
       required: [ok, error_code, message]
 
-    Network:
+    WifiNetwork:
       type: object
-      description: Wi‑Fi network model (api::Network).
+      description: Wi-Fi network model used by the scan and connect APIs.
       properties:
         ssid:
           type: string
@@ -214,9 +194,62 @@ components:
           example: false
       required: [ssid, password, rssi, encryptionType, channel, bssid, hidden]
 
+    ConnectWifiNetworkRequest:
+      type: object
+      description: Request body for POST /network/connect.
+      properties:
+        data:
+          type: object
+          description: Payload containing WiFi credentials.
+          properties:
+            ssid:
+              type: string
+              example: "HomeWiFi"
+            password:
+              type: string
+              example: "12345678"
+          required: [ssid, password]
+      required: [data]
+
+    UpdateConfigRequest:
+      type: object
+      description: Request body for PATCH /config.
+      properties:
+        apSsid:
+          type: string
+          example: "MyAccessPoint"
+        apPassword:
+          type: string
+          example: "ap-password"
+        mdnsName:
+          type: string
+          example: "lumvia"
+        wifiConnectionTimeout:
+          type: integer
+          format: int64
+          example: 60000
+        countLed:
+          type: integer
+          format: int32
+          example: 8
+        deviceName:
+          type: string
+          example: "Lumvia"
+        token:
+          type: string
+          example: "1234567890:ABCDEF"
+        limitMessage:
+          type: integer
+          format: int32
+          example: 20
+        periodUpdate:
+          type: integer
+          format: int32
+          example: 60
+
     ScanNetworkStartedResult:
       type: object
-      description: result field for the /scan/start response.
+      description: result field for POST /network/scan.
       properties:
         scan:
           type: object
@@ -230,7 +263,7 @@ components:
 
     ScanStatusResult:
       type: object
-      description: result field for the /scan/status response.
+      description: result field for GET /network/scan while the scan is running.
       properties:
         status:
           type: object
@@ -239,9 +272,9 @@ components:
               type: integer
               description: |
                 Scan status code (enum ScanState):
-                  * -2 — FAILED
-                  * -1 — RUNNING
-                  * 0  — COMPLETED
+                  * -2 = FAILED
+                  * -1 = RUNNING
+                  * 0 = COMPLETED
               enum: [-2, -1, 0]
               example: 0
           required: [code]
@@ -249,25 +282,17 @@ components:
 
     ScanNetworksResult:
       type: object
-      description: result field for the /scan/result response.
+      description: result field for GET /network/scan when the scan is complete.
       properties:
         networks:
           type: array
           items:
-            $ref: "#/components/schemas/Network"
+            $ref: "#/components/schemas/WifiNetwork"
       required: [networks]
 
-    ConnectNetworkRequestEnvelope:
+    ConnectWifiNetworkStartedResult:
       type: object
-      description: Request body for /connect/start.
-      properties:
-        data:
-          $ref: "#/components/schemas/Network"
-      required: [data]
-
-    ConnectNetworkResult:
-      type: object
-      description: result field for the /connect/start response.
+      description: result field for POST /network/connect.
       properties:
         connect:
           type: object
@@ -281,7 +306,7 @@ components:
 
     WifiStatusResult:
       type: object
-      description: result field for the /connect/status response.
+      description: result field for GET /network/connect.
       properties:
         status:
           type: object
@@ -290,23 +315,88 @@ components:
               type: integer
               description: |
                 Connection state code (enum ConnState):
-                  * 255 — WL_NO_SHIELD
-                  * 0   — WL_IDLE_STATUS
-                  * 1   — WL_NO_SSID_AVAIL
-                  * 2   — WL_SCAN_COMPLETED
-                  * 3   — WL_CONNECTED
-                  * 4   — WL_CONNECT_FAILED
-                  * 5   — WL_CONNECTION_LOST
-                  * 6   — WL_WRONG_PASSWORD
-                  * 7   — WL_DISCONNECTED
+                  * 255 = WL_NO_SHIELD
+                  * 0 = WL_IDLE_STATUS
+                  * 1 = WL_NO_SSID_AVAIL
+                  * 2 = WL_SCAN_COMPLETED
+                  * 3 = WL_CONNECTED
+                  * 4 = WL_CONNECT_FAILED
+                  * 5 = WL_CONNECTION_LOST
+                  * 6 = WL_WRONG_PASSWORD
+                  * 7 = WL_DISCONNECTED
               enum: [255, 0, 1, 2, 3, 4, 5, 6, 7]
               example: 3
           required: [code]
       required: [status]
 
+    GetConfigResult:
+      type: object
+      description: result field for GET /config.
+      properties:
+        config:
+          type: object
+          properties:
+            apSsid:
+              type: string
+              example: "MyAccessPoint"
+            apPassword:
+              type: string
+              example: "ap-password"
+            mdnsName:
+              type: string
+              example: "lumvia"
+            wifiConnectionTimeout:
+              type: integer
+              format: int64
+              example: 60000
+            countLed:
+              type: integer
+              format: int32
+              example: 8
+            deviceName:
+              type: string
+              example: "Lumvia"
+            token:
+              type: string
+              example: "1234567890:ABCDEF"
+            limitMessage:
+              type: integer
+              format: int32
+              example: 20
+            periodUpdate:
+              type: integer
+              format: int32
+              example: 60
+          required: [apSsid, apPassword, mdnsName, wifiConnectionTimeout, countLed, deviceName, token, limitMessage, periodUpdate]
+      required: [config]
+
+    ConnectWifiNetworkResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<ConnectWifiNetworkStartedResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/ConnectWifiNetworkStartedResult"
+      required: [ok, result]
+
+    GetConfigResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetConfigResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/GetConfigResult"
+      required: [ok, result]
+
     ScanNetworkStartedResponseEnvelope:
       type: object
-      description: Successful response ApiSuccessResponse<ScanNetworkStartedResponce>.
+      description: Successful response ApiSuccessResponse<ScanWifiNetworkStartedResponse>.
       properties:
         ok:
           type: boolean
@@ -318,7 +408,7 @@ components:
 
     ScanStatusResponseEnvelope:
       type: object
-      description: Successful response ApiSuccessResponse<ScanStatusResponce>.
+      description: Successful response ApiSuccessResponse<GetScanStatusResponse>.
       properties:
         ok:
           type: boolean
@@ -330,7 +420,7 @@ components:
 
     ScanNetworksResponseEnvelope:
       type: object
-      description: Successful response ApiSuccessResponse<ScanNetworkResponce>.
+      description: Successful response ApiSuccessResponse<ScanWifiNetworkResponse>.
       properties:
         ok:
           type: boolean
@@ -340,21 +430,9 @@ components:
           $ref: "#/components/schemas/ScanNetworksResult"
       required: [ok, result]
 
-    ConnectNetworkResponseEnvelope:
-      type: object
-      description: Successful response ApiSuccessResponse<ConnectNetworkStartedResponce>.
-      properties:
-        ok:
-          type: boolean
-          enum: [true]
-          example: true
-        result:
-          $ref: "#/components/schemas/ConnectNetworkResult"
-      required: [ok, result]
-
     WifiStatusResponseEnvelope:
       type: object
-      description: Successful response ApiSuccessResponse<WifiStatusResponce>.
+      description: Successful response ApiSuccessResponse<GetWifiStatusResponse>.
       properties:
         ok:
           type: boolean
