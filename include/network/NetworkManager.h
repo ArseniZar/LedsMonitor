@@ -40,6 +40,7 @@ class NetworkManager
 {
 public:
     bool begin();
+    void tick();
     static NetworkManager &init(Logger &logger);
 
     bool attemptConnection();
@@ -64,6 +65,7 @@ public:
     StringN<18> getMacAddress() const;
     const char *getSsid() const;
     const char *getPass() const;
+    const char *getMdnsName() const;
     ConnState getStatusWifi();
     ScanState getStatusScan();
 

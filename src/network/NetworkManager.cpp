@@ -56,6 +56,14 @@ bool NetworkManager::begin()
     return false;
 }
 
+void NetworkManager::tick()
+{
+    if(MDNS.isRunning())
+    {
+        MDNS.update();
+    }
+}
+
 bool NetworkManager::startWebServerNetwork()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
@@ -397,9 +405,8 @@ bool NetworkManager::startMDNS(const String32 &mdnsName)
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(NetworkManager::startMDNS) Attempting to start mDNS responder with name: '"));
+                buf.add(F("(NetworkManager::startMDNS) Attempting to start mDNS responder with name: "));
                 buf.add(mdnsName);
-                buf.add(F("'"));
                 return buf; });
 
     if (mdnsName.length() == 0)
@@ -614,6 +621,11 @@ const char *NetworkManager::getSsid() const
 const char *NetworkManager::getPass() const
 {
     return password;
+}
+
+const char *NetworkManager::getMdnsName() const
+{
+    return mdnsName;
 }
 
 unsigned long NetworkManager::getWifiConnectionTimeout() const

@@ -26,9 +26,10 @@ namespace api::telegram
     {
     public:
         String32 name;
+        String32 mdnsName;
         GetInfoLedDeviceResponse() = delete;
-        GetInfoLedDeviceResponse(const char *name, const ModelBaseResponse &base);
-        GetInfoLedDeviceResponse(const char *name,  ModelBaseResponse &&base);
+        GetInfoLedDeviceResponse(const char *name, const char *mdnsName, const ModelBaseResponse &base);
+        GetInfoLedDeviceResponse(const char *name, const char *mdnsName,  ModelBaseResponse &&base);
         gson::Str toJson() const override;
     };
 

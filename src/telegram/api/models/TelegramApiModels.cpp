@@ -46,17 +46,19 @@ namespace api::telegram
     namespace GetInfoLedDeviceResponseKey
     {
         constexpr const char *NAME = "name";
+        constexpr const char *MDNSNAME = "mdnsName";
         constexpr const char *INFO = "info";
     }
 
-    GetInfoLedDeviceResponse::GetInfoLedDeviceResponse(const char *name, const ModelBaseResponse &base) : ModelBaseResponse(base), name(name) {}
-    GetInfoLedDeviceResponse::GetInfoLedDeviceResponse(const char *name, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), name(name) {}
+    GetInfoLedDeviceResponse::GetInfoLedDeviceResponse(const char *name, const char *mdnsName, const ModelBaseResponse &base) : ModelBaseResponse(base), name(name), mdnsName(mdnsName) {}
+    GetInfoLedDeviceResponse::GetInfoLedDeviceResponse(const char *name, const char *mdnsName, ModelBaseResponse &&base) : ModelBaseResponse(std::move(base)), name(name), mdnsName(mdnsName) {}
 
     gson::Str GetInfoLedDeviceResponse::toJson() const
     {
         using namespace GetInfoLedDeviceResponseKey;
-        std::array<std::pair<const char *, Field>, 1> pairs = {{
-            {NAME, {name}}}};
+        std::array<std::pair<const char *, Field>, 2> pairs = {{
+            {NAME, {name}},
+            {MDNSNAME, {mdnsName}}}};
         gson::Str j;
         j += ModelBaseResponse::toJson();
         j[INFO] = json::Serialization::serialization(pairs);
@@ -64,7 +66,6 @@ namespace api::telegram
     }
 
     /*===================================== GetStateLedDevice ==========================================================*/
-
 
     namespace GetStateLedDeviceResponseKey
     {
