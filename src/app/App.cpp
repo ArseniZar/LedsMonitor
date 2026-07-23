@@ -70,28 +70,42 @@ void App::begin()
 
 void App::update()
 {
-#if ENABLE_NETWORK_MODULE
-    if (network.getStatusWifi() != ConnState::WL_CONNECTED)
+    if (!server.isRunning())
     {
-
-        // network.setWifiConfig(savedWifiData.ssid, savedWifiData.password);
-        network.begin();
-        if (network.getStatusWifi() == ConnState::WL_CONNECTED)
-        {
-            // commitWiFiIfChanged();
-        }
+        network.startWebServerNetwork();
+        server.start();
     }
-    else
+
+    if (server.isRunning())
     {
-#endif
-
-#if ENABLE_TELEGRAM_BOT_MODULE
-        bot.tick();
-#endif
-
-#if ENABLE_NETWORK_MODULE
+        server.tick();
     }
-#endif
+
+// #if ENABLE_NETWORK_MODULE
+//     if (network.getStatusWifi() != ConnState::WL_CONNECTED)
+//     {
+//         if(!server.isRunning()){
+//             network.startWebServerNetwork();
+//             server.start();
+//         }
+//         // // network.setWifiConfig(savedWifiData.ssid, savedWifiData.password);
+//         // // network.begin();
+//         // if (network.getStatusWifi() == ConnState::WL_CONNECTED)
+//         // {
+//         //     // commitWiFiIfChanged();
+//         // }
+//     }
+//     else
+//     {
+// #endif
+
+// #if ENABLE_TELEGRAM_BOT_MODULE
+//         bot.tick();
+// #endif
+
+// #if ENABLE_NETWORK_MODULE
+//     }
+// #endif
 }
 
 void App::registerCommands()
