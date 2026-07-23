@@ -1,14 +1,14 @@
-#include "Arduino.h"
+#include <Arduino.h>
 #include "App.h"
 
-App &app = App::init();
-void setup()
-{
-  Serial.begin(115200);
-  app.begin();
+void setup() {
+    Serial.begin(115200);
+    delay(1000); 
+    
+    App& app = App::init(); 
+    app.begin();
 }
 
-void loop()
-{
-  app.update();
+void loop() {
+    App::init().update();
 }
