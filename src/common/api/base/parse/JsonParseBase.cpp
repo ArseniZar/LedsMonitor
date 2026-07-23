@@ -54,11 +54,10 @@ namespace api::json
                 return std::make_unique<Error>(buf);
             }
 
-            Text::Cstr jsonKeyText = jsonPair.key().c_str();
-            Text::Cstr jsonValText = jsonPair.value().c_str();
+            Text::Cstr jsonKeyCstr = jsonPair.key().c_str();
+            Text::Cstr jsonValCstr = jsonPair.value().c_str();
 
-            Key jsonKey(jsonKeyText);
-            const char *jsonValue = jsonValText;
+            Key jsonKey(jsonKeyCstr);
 
             auto it = map.find(jsonKey);
             if (it == map.end())
@@ -72,7 +71,7 @@ namespace api::json
                 buf.add(F("[ERROR] | [JsonParse::parse] | [DuplicateKey] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("'; newValue='"));
-                buf.add(jsonValue);
+                buf.add(jsonValCstr);
                 buf.add(F("'"));
                 return std::make_unique<Error>(buf);
             }
@@ -85,7 +84,7 @@ namespace api::json
                 buf.add(F("[ERROR] | [JsonParse::parse] | [TypeMismatch] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("; value='"));
-                buf.add(jsonValue);
+                buf.add(jsonValCstr);
                 buf.add(F("'; jsonType='"));
                 buf.add(gson::readType(jsonPair.type()));
                 buf.add(F("'; expected='"));
@@ -94,14 +93,14 @@ namespace api::json
                 return std::make_unique<Error>(buf);
             }
 
-            const Value value = Converter::convert(jsonValue, field.expectedType);
+            const Value value = Converter::convert(jsonValCstr, field.expectedType);
             if (std::holds_alternative<std::monostate>(value))
             {
                 String256 buf;
                 buf.add(F("[ERROR] | [JsonParse::parse] | [InvalidValue] | key="));
                 buf.add(jsonKey.c_str());
                 buf.add(F("; value='"));
-                buf.add(jsonValue);
+                buf.add(jsonValCstr);
                 buf.add(F("'; expected='"));
                 buf.add(readType(field.expectedType));
                 buf.add(F("'; reason=conversion failed or out-of-range"));

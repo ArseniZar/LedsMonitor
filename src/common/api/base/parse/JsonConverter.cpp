@@ -1,6 +1,5 @@
 #include "JsonConverter.h"
 #include <Arduino.h>
-#include <limits>
 
 namespace api::json
 {
@@ -26,54 +25,68 @@ namespace api::json
             return false;
         }
     }
-    
+
     Value Converter::convert(const char *rawValue, ValueType expectedType)
     {
-        const String data(rawValue);
+        const Text data(rawValue);
+
+        if (!data.valid())
+        {
+            return std::monostate{};
+        }
 
         switch (expectedType)
         {
         case ValueType::Int:
-            return static_cast<int>(data.toInt());
-        case ValueType::U_Long:
         {
-            const long parsed = data.toInt();
-            if (parsed < 0)
-            {
-                return std::monostate{};
-            }
-            return static_cast<unsigned long>(parsed);
+            return static_cast<int>(data.toInt());
         }
+
         case ValueType::U_Int8:
         {
-            const long parsed = data.toInt();
+            const int parsed = data.toInt();
             if (parsed < 0 || parsed > std::numeric_limits<uint8_t>::max())
             {
                 return std::monostate{};
             }
             return static_cast<uint8_t>(parsed);
         }
+
         case ValueType::U_Int16:
         {
-            const long parsed = data.toInt();
+            const int parsed = data.toInt();
             if (parsed < 0 || parsed > std::numeric_limits<uint16_t>::max())
             {
                 return std::monostate{};
             }
             return static_cast<uint16_t>(parsed);
         }
+
+        case ValueType::U_Long:
+        {
+            const int64_t parsed = data.toInt64();
+            if (parsed < 0 || static_cast<uint64_t>(parsed) > std::numeric_limits<unsigned long>::max())
+            {
+                return std::monostate{};
+            }
+            return static_cast<unsigned long>(parsed);
+        }
+
         case ValueType::Float:
-            return static_cast<float>(data.toFloat());
+        {
+            const float parsed = data.toFloat();
+            if (std::isnan(parsed))
+            {
+                return std::monostate{};
+            }
+            return parsed;
+        }
+
         case ValueType::Bool:
-            if (data.equalsIgnoreCase("true"))
-            {
-                return true;
-            }
-            if (data.equalsIgnoreCase("false"))
-            {
-                return false;
-            }
-            return std::monostate{};
+        {
+            return data.toBool();
+        }
+
         case ValueType::String8:
             return String8(data.c_str());
         case ValueType::String18:
@@ -82,6 +95,7 @@ namespace api::json
             return String32(data.c_str());
         case ValueType::String64:
             return String64(data.c_str());
+
         default:
             return std::monostate{};
         }
