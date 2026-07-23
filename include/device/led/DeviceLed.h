@@ -43,7 +43,7 @@ public:
     void setBrightness(int  brightness);
     void setColor(const char *color);
     void applyConfig(const DeviceLedConfig &config);
-    const char *getColor();
+    StringN<8> getColor();
     bool getStatus();
 
 private:

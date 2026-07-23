@@ -60,7 +60,7 @@ void DeviceLed<T, E>::setColor(const char *color)
 }
 
 template <typename T, typename E>
-const char *DeviceLed<T, E>::getColor()
+StringN<8> DeviceLed<T, E>::getColor()
 {
     return rgbColorToStringHex(color);
 }
