@@ -79,6 +79,11 @@ void TelegramBot::handleUpdateMsg(fb::Update &request)
                         buf.add(F("[TelegramBot::handleUpdateMsg] Failed to parse ModelBaseRequest, error="));
                         buf.add(errorApiRequestBasePtr->message);
                         return buf; });
+        const auto response = api::ErrorResponse(400, errorApiRequestBasePtr->message);
+        gson::Str payload = api::serializeResponse(response);
+        logger.log(LOG_DEBUG, [&]() -> String256
+                   { String256 buf; buf.add(F("(TelegramBot::registerCommand) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
+        bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
     }
 }
 
