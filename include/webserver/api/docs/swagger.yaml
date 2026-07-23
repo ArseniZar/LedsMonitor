@@ -215,37 +215,42 @@ components:
       type: object
       description: Request body for PATCH /config.
       properties:
-        apSsid:
-          type: string
-          example: "MyAccessPoint"
-        apPassword:
-          type: string
-          example: "ap-password"
-        mdnsName:
-          type: string
-          example: "lumvia"
-        wifiConnectionTimeout:
-          type: integer
-          format: int64
-          example: 60000
-        countLed:
-          type: integer
-          format: int32
-          example: 8
-        deviceName:
-          type: string
-          example: "Lumvia"
-        token:
-          type: string
-          example: "1234567890:ABCDEF"
-        limitMessage:
-          type: integer
-          format: int32
-          example: 20
-        periodUpdate:
-          type: integer
-          format: int32
-          example: 60
+        data:
+          type: object
+          description: Payload containing the fields to update.
+          properties:
+            apSsid:
+              type: string
+              example: "MyAccessPoint"
+            apPassword:
+              type: string
+              example: "ap-password"
+            mdnsName:
+              type: string
+              example: "lumvia"
+            wifiConnectionTimeout:
+              type: integer
+              format: int64
+              example: 60000
+            countLed:
+              type: integer
+              format: int32
+              example: 8
+            deviceName:
+              type: string
+              example: "Lumvia"
+            token:
+              type: string
+              example: "1234567890:ABCDEF"
+            limitMessage:
+              type: integer
+              format: int32
+              example: 20
+            periodUpdate:
+              type: integer
+              format: int32
+              example: 60
+      required: [data]
 
     ScanNetworkStartedResult:
       type: object
