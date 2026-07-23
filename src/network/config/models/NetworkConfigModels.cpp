@@ -61,13 +61,13 @@ void NetworkConfig::operator=(const NetworkConfig &config)
 }
 
 bool NetworkConfig::operator==(const NetworkRuntimeConfig &config) const
-{
-    return (ssid == config.ssid) &&
-           (password == config.password) &&
-           (apSsid == config.apSsid) &&
-           (apPassword == config.apPassword) &&
-           (mdnsName == config.mdnsName) &&
-           (wifiConnectionTimeout == config.wifiConnectionTimeout);
+{//FIXME: Временный костыль из-за отсутствия operator== в StringN.
+    return (wifiConnectionTimeout == config.wifiConnectionTimeout) &&
+           (strcmp(ssid.c_str(), config.ssid.c_str()) == 0) &&
+           (strcmp(password.c_str(), config.password.c_str()) == 0) &&
+           (strcmp(apSsid.c_str(), config.apSsid.c_str()) == 0) &&
+           (strcmp(apPassword.c_str(), config.apPassword.c_str()) == 0) &&
+           (strcmp(mdnsName.c_str(), config.mdnsName.c_str()) == 0);
 }
 
 NetworkRuntimeConfig::NetworkRuntimeConfig(const NetworkConfig &config)

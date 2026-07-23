@@ -43,8 +43,8 @@ void TelegramBotConfig::operator=(const TelegramBotConfig &config)
 }
 
 bool TelegramBotConfig::operator==(const TelegramBotRuntimeConfig &config) const
-{
-    return (token == config.token) &&
+{//FIXME: Временный костыль из-за отсутствия operator== в StringN.
+    return (strcmp(token.c_str(), config.token.c_str()) == 0) &&
            (limitMessage == config.limitMessage) &&
            (periodUpdate == config.periodUpdate);
 }

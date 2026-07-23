@@ -218,7 +218,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout no changed"); return buf; });
     }
 
-    if ((ssid != config.ssid && attemptSsid != config.ssid) || (password != config.password && attemptPassword != config.password))
+    if ((!(strcmp(ssid, config.ssid) == 0) && !(strcmp(attemptSsid, config.ssid) == 0)) || (!(strcmp(password, config.password) == 0) && !(strcmp(attemptPassword, config.password) == 0))) //FIXME: Временный костыль из-за отсутствия operator== в StringN.
     {
         setAttemptWifiConfig(config.ssid, config.password);
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -234,8 +234,8 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
     }
-
-    if (apSsid != config.apSsid || apPassword != config.apPassword)
+    
+    if ((!(strcmp(apSsid, config.apSsid) == 0)) || (!(strcmp(apPassword, config.apPassword)) == 0))
     {
         setAPConfig(config.apSsid, config.apPassword);
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -252,7 +252,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) apSsid apPassword no changed"); return buf; });
     }
     
-    if (mdnsName != config.mdnsName)
+    if (!(strcmp(mdnsName, config.mdnsName) == 0))
     {
         setMdnsName(config.mdnsName);
         logger.log(LOG_DEBUG, [&]() -> String128

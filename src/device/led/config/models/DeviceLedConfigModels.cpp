@@ -41,7 +41,7 @@ void DeviceLedConfig::operator=(const DeviceLedConfig &config)
 bool DeviceLedConfig::operator==(const DeviceLedRuntimeConfig &config) const
 {
     return (countLed == config.countLed) &&
-           (deviceName == config.deviceName);
+           (strcmp(deviceName.c_str(), config.deviceName.c_str()) == 0); //FIXME: Временный костыль из-за отсутствия operator== в StringN.
 }
 
 DeviceLedRuntimeConfig::DeviceLedRuntimeConfig(const DeviceLedConfig &config)
