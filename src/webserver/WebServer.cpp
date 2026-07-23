@@ -75,56 +75,6 @@ void WebServer::handleNotFound(ghttp::ServerBase::Request request)
     server.send(payload, responce.getCode(), F("application/json"));
 }
 
-// void WebServer::handleOptions(const char *uri)
-// {
-//     String64 buf;
-//     const uint8_t masks = routeMasks[uri];
-//     for (uint8_t i = 0; i < 8; i++)
-//     {
-//         if (masks & (1 << i))
-//         {
-//             if (buf.length() > 0)
-//             {
-//                 buf.add(F(", "));
-//             }
-
-//             switch (i)
-//             {
-//             case static_cast<uint8_t>(HTTPMethod::GET):
-//                 buf.add(F("GET"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::POST):
-//                 buf.add(F("POST"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::PUT):
-//                 buf.add(F("PUT"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::PATCH):
-//                 buf.add(F("PATCH"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::DELETE):
-//                 buf.add(F("DELETE"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::HEAD):
-//                 buf.add(F("HEAD"));
-//                 break;
-//             case static_cast<uint8_t>(HTTPMethod::OPTIONAL):
-//                 buf.add(F("OPTIONS"));
-//                 break;
-//             default:
-//                 buf.add(F("ANY"));
-//                 break;
-//             }
-//         }
-//     }
-
-//     ghttp::ServerBase::Headers headers(204);
-//     headers.add(F("Access-Control-Allow-Origin"), F("*"));
-//     headers.add(F("Access-Control-Allow-Methods"), buf.c_str());
-//     headers.add(F("Access-Control-Allow-Headers"), F("Content-Type"));
-//     server.handle();
-// }
-
 void WebServer::tick()
 {
     server.tick();

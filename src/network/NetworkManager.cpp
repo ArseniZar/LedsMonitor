@@ -206,47 +206,66 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
 
 void NetworkManager::applyConfig(const NetworkConfig &config)
 {
-    // logger.log(LOG_INFO, [&]() -> String128
-    //            {
-    //             String128 buf;
-    //             buf.add(F("(NetworkManager::applyConfig) Applying network configuration. SSID: '"));
-    //             buf.add(config.ssid);
-    //             buf.add(F("', AP SSID: '"));
-    //             buf.add(config.apSsid);
-    //             buf.add(F("', mDNS: '"));
-    //             buf.add(config.mdnsName);
-    //             buf.add(F("', Wi-Fi timeout (ms): "));
-    //             buf.add(config.wifiConnectionTimeout);
-    //             return buf; });
     if (wifiConnectionTimeout != config.wifiConnectionTimeout)
     {
         setWifiConnectionTimeout(config.wifiConnectionTimeout);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout no changed"); return buf; });
     }
 
     if ((ssid != config.ssid && attemptSsid != config.ssid) || (password != config.password && attemptPassword != config.password))
     {
         setAttemptWifiConfig(config.ssid, config.password);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
+
         if (WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_AP_STA)
         {
             attemptConnectionAsync();
         }
     }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
+    }
+
     if (apSsid != config.apSsid || apPassword != config.apPassword)
     {
         setAPConfig(config.apSsid, config.apPassword);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) apSsid apPassword changed"); return buf; });
 
         if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA)
         {
             startAP();
         }
     }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) apSsid apPassword no changed"); return buf; });
+    }
+    
     if (mdnsName != config.mdnsName)
     {
         setMdnsName(config.mdnsName);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) MdnsName changed"); return buf; });
         if (MDNS.isRunning())
         {
             startMDNS();
         }
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) MdnsName no changed"); return buf; });
     }
 }
 

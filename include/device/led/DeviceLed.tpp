@@ -3,13 +3,13 @@
 
 template <typename T, typename E>
 DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, uint16_t countLed) : DeviceBase(mac, DEVICE_LED_NAME),
-                                                                                 logger(logger),
-                                                                                 device(countLed, pin),
-                                                                                 pin(pin),
-                                                                                 countLed(countLed),
-                                                                                 brightness(DEVICE_LED_BRIGHTNESS),
-                                                                                 color(Colors::WHITE),
-                                                                                 status(true) {}
+                                                                                                    logger(logger),
+                                                                                                    device(countLed, pin),
+                                                                                                    pin(pin),
+                                                                                                    countLed(countLed),
+                                                                                                    brightness(DEVICE_LED_BRIGHTNESS),
+                                                                                                    color(Colors::WHITE),
+                                                                                                    status(true) {}
 template <typename T, typename E>
 void DeviceLed<T, E>::begin()
 {
@@ -74,23 +74,21 @@ bool DeviceLed<T, E>::getStatus()
 template <typename T, typename E>
 void DeviceLed<T, E>::applyConfig(const DeviceLedConfig &config)
 {
-    // logger.log(LOG_INFO, [&]() -> String128
-    //            {
-    //             String128 buf;
-    //             buf.add(F("(DeviceLed::applyConfig) Applying LED device configuration. CountLed: "));
-    //             buf.add(config.countLed);
-    //             buf.add(F(", Name: '"));
-    //             buf.add(config.deviceName);
-    //             buf.add(F("'"));
-    //             return buf; });
     if (name != config.deviceName)
     {
         setName(config.deviceName);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) Name changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) Name no changed"); return buf; });
     }
 
     if (countLed != config.countLed)
     {
-        //TODO: надо как то метод котоырй будет говрит системе в ближайщее время сделай restart board
+        // TODO: надо как то метод котоырй будет говрит системе в ближайщее время сделай restart board
     }
 }
 

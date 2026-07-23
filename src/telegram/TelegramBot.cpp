@@ -20,73 +20,39 @@ void TelegramBot::begin()
 
 void TelegramBot::handleUpdateMsg(fb::Update &request)
 {
-    logger.log(LOG_DEBUG, [&]() -> String256
-               { String256 buf;
-                                buf.add(F("[TelegramBot::handleUpdateMsg] Raw update text: '"));
-                                buf.add(request.message().text().c_str());
-                                buf.add('\'');
-                                return buf; });
-
     auto apiRequestBasePtr = api::parseRequest<api::telegram::ModelBaseRequest>(request.message().text().c_str());
     if (apiRequestBasePtr->isOk())
     {
         auto *successApiRequestBasePtr = static_cast<api::SuccessRequest<api::telegram::ModelBaseRequest> *>(apiRequestBasePtr.get());
         String32 parseCommand = std::move(successApiRequestBasePtr->data.command);
         StringN<18> parseId = std::move(successApiRequestBasePtr->data.id);
+
         logger.log(LOG_INFO, [&]() -> String256
                    { String256 buf;
-                                    buf.add(F("[TelegramBot::handleUpdateMsg] Parsed base request: command="));
-                                    buf.add(parseCommand.c_str());
-                                    buf.add(F(", id="));
-                                    buf.add(parseId);
-                                    return buf; });
+                        buf.add(F("[TelegramBot::handleUpdateMsg] Telegram Request parse base: command="));
+                        buf.add(parseCommand.c_str());
+                        buf.add(F(", id="));
+                        buf.add(parseId);
+                        return buf; });
 
         logger.log(LOG_DEBUG, [&]() -> String256
                    { String256 buf;
-                                    buf.add(F("[TelegramBot::handleUpdateMsg] Device MAC="));
-                                    buf.add(mac.getMac());
-                                    buf.add(F(", target ID="));
-                                    buf.add(parseId);
-                                    return buf; });
+                        buf.add(F("[TelegramBot::handleUpdateMsg] Device MAC="));
+                        buf.add(mac.getMac());
+                        buf.add(F(", target ID="));
+                        buf.add(parseId);
+                        return buf; });
 
         if (mac.equals(parseId) || mac.isBroadcast(parseId))
         {
-            logger.log(LOG_INFO, [&]() -> String256
-                       { String256 buf;
-                                                 buf.add(F("[TelegramBot::handleUpdateMsg] Command is for this device or broadcast (MAC="));
-                                                 buf.add(mac.getMac());
-                                                 buf.add(F(", target ID="));
-                                                 buf.add(parseId);
-                                                 buf.add(F(")"));
-                                                 return buf; });
-
             auto it = handlers.find(parseCommand.c_str());
             if (it != handlers.end())
             {
-                logger.log(LOG_INFO, [&]() -> String256
-                           { String256 buf;
-                                            buf.add(F("[TelegramBot::handleUpdateMsg] Executing handler for command="));
-                                            buf.add(parseCommand.c_str());
-                                            buf.add(F(", id="));
-                                            buf.add(parseId);
-                                            return buf; });
-
-                logger.log(LOG_DEBUG, [&]() -> String256
-                           { String256 buf;
-                                            buf.add(F("[TelegramBot::handleUpdateMsg] Handler found in map for command="));
-                                            buf.add(parseCommand.c_str());
-                                            return buf; });
                 it->second(request);
             }
             else
             {
-                logger.log(LOG_WARN, [&]() -> String256
-                           { String256 buf;
-                                            buf.add(F("[TelegramBot::handleUpdateMsg] Command not implemented: "));
-                                            buf.add(parseCommand.c_str());
-                                            buf.add(F(", id="));
-                                            buf.add(parseId);
-                                            return buf; });
+                this->handleNotFound(parseCommand, parseId, request);
             }
         }
         else
@@ -94,14 +60,14 @@ void TelegramBot::handleUpdateMsg(fb::Update &request)
 
             logger.log(LOG_INFO, [&]() -> String256
                        { String256 buf;
-                                        buf.add(F("[TelegramBot::handleUpdateMsg] Command '"));
-                                        buf.add(parseCommand.c_str());
-                                        buf.add(F("' not intended for this device (MAC="));
-                                        buf.add(mac.getMac());
-                                        buf.add(F(", target ID="));
-                                        buf.add(parseId);
-                                        buf.add(F(")"));
-                                        return buf; });
+                            buf.add(F("[TelegramBot::handleUpdateMsg] Command '"));
+                            buf.add(parseCommand.c_str());
+                            buf.add(F("' not intended for this device (MAC="));
+                            buf.add(mac.getMac());
+                            buf.add(F(", target ID="));
+                            buf.add(parseId);
+                            buf.add(F(")"));
+                            return buf; });
         }
     }
     else
@@ -110,17 +76,21 @@ void TelegramBot::handleUpdateMsg(fb::Update &request)
 
         logger.log(LOG_WARN, [&]() -> String256
                    { String256 buf;
-                                    buf.add(F("[TelegramBot::handleUpdateMsg] Failed to parse ModelBaseRequest, error="));
-                                    buf.add(errorApiRequestBasePtr->message);
-                                    return buf; });
-
-        logger.log(LOG_DEBUG, [&]() -> String256
-                   { String256 buf;
-                                    buf.add(F("[TelegramBot::handleUpdateMsg] Parse error. Raw text='"));
-                                    buf.add(request.message().text().c_str());
-                                    buf.add('\'');
-                                    return buf; });
+                        buf.add(F("[TelegramBot::handleUpdateMsg] Failed to parse ModelBaseRequest, error="));
+                        buf.add(errorApiRequestBasePtr->message);
+                        return buf; });
     }
+}
+
+void TelegramBot::handleNotFound(String32 parseCommand, StringN<18> parseId, fb::Update &request)
+{
+    logger.log(LOG_WARN, [&]() -> String128
+               {String128 buf; buf.add(F("(TelegramBot::handleUpdateMsg) ")); buf.add(parseCommand.c_str()); buf.add(" "); buf.add(parseId); buf.add(F(" Resource not found.")); return buf; });
+    const auto responce = api::ErrorResponse(404, String32(F("Resource not found")));
+    const gson::Str payload = api::serializeResponse(responce);
+    logger.log(LOG_DEBUG, [&]() -> String128
+               {String128 buf; buf.add(F("(TelegramBot::handleUpdateMsg) Response payload: ")); buf.add(Text(payload).c_str()); return buf; });
+    bot.sendMessage(fb::Message(std::move(payload), request.message().chat().id()));
 }
 
 void TelegramBot::setLimitMessage(uint8_t limitMessage)
@@ -145,14 +115,37 @@ void TelegramBot::applyConfig(const TelegramBotConfig &config)
     if (bot.getToken() != config.token.c_str())
     {
         setToken(config.token.c_str());
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) Token changed"); return buf; });
     }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) Token No changed"); return buf; });
+    }
+
     if (limitMessage != config.limitMessage)
     {
         setLimitMessage(config.limitMessage);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) LimitMessage changed"); return buf; });
     }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) LimitMessage no changed"); return buf; });
+    }
+
     if (periodUpdate != config.periodUpdate)
     {
         setPeriodUpdate(config.periodUpdate);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) PeriodUpdate changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(TelegramBot::applyConfig) PeriodUpdate no changed"); return buf; });
     }
 }
 

@@ -61,17 +61,12 @@ private:
     unsigned long lastRequestTime;
 
     std::map<Route, std::function<void(ghttp::ServerBase::Request)>> handlers;
-    // std::map<const char*, uint8_t, StrCompare> routeMasks;
 
     WebServer() = delete;
     WebServer(Logger &logger, int port);
 
     void handleRoot();
     void handleNotFound(ghttp::ServerBase::Request request);
-
-    // void handleOptions(const char* uri);
-    //XXX по удаления коментарии
-
 };
 
 #include "WebServer.tpp"

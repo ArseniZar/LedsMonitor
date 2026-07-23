@@ -24,7 +24,7 @@
 #define TELEGRAM_PERIOD_UPDATE 1000
 #endif
 
-class TelegramBot 
+class TelegramBot
 {
 public:
     void begin();
@@ -39,9 +39,9 @@ public:
     void applyConfig(const TelegramBotConfig &config);
 
     uint8_t getLimitMessage() const;
-    uint16_t getPeriodUpdate() const; 
-    const char * getToken() const; 
-    
+    uint16_t getPeriodUpdate() const;
+    const char *getToken() const;
+
     template <typename Request, typename Response = void>
     void registerCommand(const char *command, std::function<Response(Request &)> handler);
 
@@ -62,6 +62,7 @@ private:
     TelegramBot(Logger &logger, const MacAddress &mac);
 
     void handleUpdateMsg(fb::Update &request);
+    void handleNotFound(String32 parseCommand, StringN<18> parseId, fb::Update &request);
 };
 
 #include "TelegramBot.tpp"
