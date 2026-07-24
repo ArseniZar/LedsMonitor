@@ -4,6 +4,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <DNSServer.h>
 #include <Arduino.h>
 #include <StringN.h>
 #include <vector>
@@ -52,8 +53,8 @@ public:
     std::vector<WifiNetwork> scanWifiNetworks();
     std::vector<WifiNetwork> getScanWifiNetworksAsyncResults();
     
-    bool startWebServerNetwork();
-    bool stopWebServerNetwork();
+    bool startCaptivePortal();
+    bool stopCaptivePortal();
 
     void setAttemptWifiConfig(const char *ssid, const char *password);
     void setAPConfig(const char *apSsid, const char *apPassword);
@@ -63,16 +64,18 @@ public:
 
     unsigned long getWifiConnectionTimeout() const;
     StringN<18> getMacAddress() const;
+    IPAddress getAPIpAddress() const;
     const char *getSsid() const;
     const char *getPass() const;
     const char *getMdnsName() const;
-    ConnState getStatusWifi();
-    ScanState getStatusScan();
+    ConnState getStatusWifi() const;
+    ScanState getStatusScan() const;
 
 private:
     NetworkManager(Logger &logger);
 
     Logger &logger;
+    DNSServer dnsServer;
 
     String32 apSsid;
     String32 apPassword;
@@ -93,12 +96,14 @@ private:
 
     void configureWifiPerformance();
 
-    bool stopAP();
     bool stopMDNS();
     bool startMDNS();
     bool startMDNS(const String32 &mdnsName);
+    bool stopAP();
     bool startAP();
     bool startAP(const String32 &apSsid, const String32 &apPassword);
+    bool stopDNS();
+    bool startDNS();
 
     bool tryConnectWifi(const String32 &ssid, const String32 &password);
     bool tryConnectWifiAsync(const String32 &ssid, const String32 &password);

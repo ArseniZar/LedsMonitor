@@ -8,6 +8,7 @@ NetworkManager &NetworkManager::init(Logger &logger)
 
 NetworkManager::NetworkManager(Logger &logger)
     : logger(logger),
+      dnsServer(),
       apSsid(F(AP_SSID)),
       apPassword(F(AP_PASS)),
       ssid(F("")),
@@ -21,12 +22,12 @@ NetworkManager::NetworkManager(Logger &logger)
 {
 }
 
-ConnState NetworkManager::getStatusWifi()
+ConnState NetworkManager::getStatusWifi() const
 {
     return static_cast<ConnState>(WiFi.status());
 }
 
-ScanState NetworkManager::getStatusScan()
+ScanState NetworkManager::getStatusScan() const
 {
     int result = WiFi.scanComplete();
 
@@ -58,57 +59,64 @@ bool NetworkManager::begin()
 
 void NetworkManager::tick()
 {
-    if(MDNS.isRunning())
+    if (MDNS.isRunning())
     {
         MDNS.update();
     }
+
+    if (dnsServer.isForwarding())
+    {
+        dnsServer.processNextRequest();
+    }
 }
 
-bool NetworkManager::startWebServerNetwork()
+bool NetworkManager::startCaptivePortal()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startWebServerNetwork) Starting web server network (AP + mDNS)..."); return buf; });
+               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Starting web server network (AP + DNS)..."); return buf; });
 
     if (!startAP())
     {
         logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(NetworkManager::startWebServerNetwork) Failed to start Wi-Fi Access Point for web server."); return buf; });
+                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start Wi-Fi Access Point for web server."); return buf; });
         return false;
     }
-    if (!startMDNS())
+
+    if (!startDNS())
     {
         logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(NetworkManager::startWebServerNetwork) Failed to start mDNS responder for web server."); return buf; });
+                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start DNS server for web server."); return buf; });
         return false;
     }
 
     logger.log(LOG_INFO, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startWebServerNetwork) Web server network started successfully (AP + mDNS)."); return buf; });
+               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Web server network started successfully (AP + DNS)."); return buf; });
+
     return true;
 }
 
-bool NetworkManager::stopWebServerNetwork()
+bool NetworkManager::stopCaptivePortal()
 {
+    bool dnsStopped = stopDNS();
     bool apStopped = stopAP();
-    bool mdnsStopped = stopMDNS();
 
-    if (apStopped && mdnsStopped)
+    if (apStopped && dnsStopped)
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopWebServerNetwork) Web server network stopped successfully (AP + mDNS)."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Web server network stopped successfully (AP + DNS)."); return buf; });
         return true;
     }
 
     if (!apStopped)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopWebServerNetwork) Failed to stop Wi-Fi Access Point for web server."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop Wi-Fi Access Point for web server."); return buf; });
     }
 
-    if (!mdnsStopped)
+    if (!dnsStopped)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopWebServerNetwork) Failed to stop mDNS responder for web server."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop DNS server for web server."); return buf; });
     }
     return false;
 }
@@ -226,7 +234,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout no changed"); return buf; });
     }
 
-    if ((!(strcmp(ssid, config.ssid) == 0) && !(strcmp(attemptSsid, config.ssid) == 0)) || (!(strcmp(password, config.password) == 0) && !(strcmp(attemptPassword, config.password) == 0))) //FIXME: Временный костыль из-за отсутствия operator== в StringN.
+    if ((!(strcmp(ssid, config.ssid) == 0) && !(strcmp(attemptSsid, config.ssid) == 0)) || (!(strcmp(password, config.password) == 0) && !(strcmp(attemptPassword, config.password) == 0))) // FIXME: Временный костыль из-за отсутствия operator== в StringN.
     {
         setAttemptWifiConfig(config.ssid, config.password);
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -242,7 +250,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
     }
-    
+
     if ((!(strcmp(apSsid, config.apSsid) == 0)) || (!(strcmp(apPassword, config.apPassword)) == 0))
     {
         setAPConfig(config.apSsid, config.apPassword);
@@ -259,7 +267,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf = F("(NetworkManager::applyConfig) apSsid apPassword no changed"); return buf; });
     }
-    
+
     if (!(strcmp(mdnsName, config.mdnsName) == 0))
     {
         setMdnsName(config.mdnsName);
@@ -456,6 +464,45 @@ bool NetworkManager::stopAP()
     return false;
 }
 
+bool NetworkManager::startDNS()
+{
+    logger.log(LOG_DEBUG, [&]() -> String128
+               {
+                String128 buf;
+                buf.add(F("(NetworkManager::startDNS) Attempting to start DNS responder"));
+                return buf; });
+
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+    dnsServer.setTTL(0);
+
+    bool status = dnsServer.start(53, "*", WiFi.softAPIP(), WiFi.softAPIP());
+    if (status)
+    {
+        logger.log(LOG_INFO, [&]() -> String128
+                   { String128 buf; buf =  F("(NetworkManager::startDNS) DNS responder started successfully."); return buf; });
+        return true;
+    }
+
+    logger.log(LOG_WARN, [&]() -> String128
+               { String128 buf; buf =  F("(NetworkManager::startDNS) Failed to start DNS responder"); return buf; });
+
+    return false;
+}
+
+bool NetworkManager::stopDNS()
+{
+    logger.log(LOG_DEBUG, [&]() -> String128
+               {
+                String128 buf;
+                buf.add(F("(NetworkManager::stopDNS) Attempting to stop DNS responder"));
+                return buf; });
+
+    dnsServer.stop();
+    logger.log(LOG_INFO, [&]() -> String128
+               { String128 buf; buf =  F("(NetworkManager::stopDNS) DNS responder stopped."); return buf; });
+    return true;
+}
+
 std::vector<WifiNetwork> NetworkManager::scanWifiNetworks()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
@@ -611,6 +658,11 @@ std::vector<WifiNetwork> NetworkManager::getScanWifiNetworksAsyncResults()
 StringN<18> NetworkManager::getMacAddress() const
 {
     return WiFi.macAddress().c_str();
+}
+
+IPAddress NetworkManager::getAPIpAddress() const
+{
+    return WiFi.softAPIP();
 }
 
 const char *NetworkManager::getSsid() const
