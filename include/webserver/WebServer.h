@@ -42,6 +42,8 @@ public:
     ~WebServer() = default;
 
     bool isRunning() const;
+    void startCaptivePortal(const char * apIpAddress);
+    void stopCaptivePortal();
     void applyConfig(const WebServerConfig &config);
     unsigned long getLastRequestTime() const;
 
@@ -59,6 +61,9 @@ private:
 
     bool serverRunning;
     unsigned long lastRequestTime;
+
+    bool captivePortal;
+    String32 redirectUri;
 
     std::map<Route, std::function<void(ghttp::ServerBase::Request)>> handlers;
 

@@ -6,7 +6,7 @@ WebServer &WebServer::init(Logger &logger, int port)
     return instance;
 }
 
-WebServer::WebServer(Logger &logger, int port) : logger(logger), server(port), serverRunning(false), lastRequestTime(millis()), handlers()
+WebServer::WebServer(Logger &logger, int port) : logger(logger), server(port), serverRunning(false), lastRequestTime(0), captivePortal(false), redirectUri(""), handlers()
 {
     MDNS.addService(F("http"), F("tcp"), port);
 }
@@ -42,7 +42,7 @@ void WebServer::begin()
                         } else 
                         {
                             this->handleNotFound(request);
-                        }
+                        } 
                     });
 }
 
@@ -52,6 +52,7 @@ void WebServer::start()
                { String128 buf; buf.add(F("(WebServer::begin) Starting Web Server...")); return buf; });
     server.begin();
     serverRunning = true;
+    lastRequestTime = millis();
 
     logger.log(LOG_INFO, [&]() -> String128
                { String128 buf; buf.add(F("(WebServer::begin) Starting Web Server finished successfully")); return buf; });
@@ -66,13 +67,43 @@ void WebServer::handleRoot()
 
 void WebServer::handleNotFound(ghttp::ServerBase::Request request)
 {
+    if (captivePortal)
+    {
+        Text path = request.path();
+
+        if (path.endsWith(F(".ico")) || path.endsWith(F(".png")) || path.endsWith(F(".map")))
+        {
+            logger.log(LOG_WARN, [&]() -> String128
+                       {String128 buf; buf.add(F("(WebServer::handleNotFound) ")); buf.add(request.path().c_str()); buf.add(" "); buf.add(request.method().c_str()); buf.add(F(" Resource not found.")); return buf; });
+
+            const auto responce = api::ErrorResponse(404, String32(F("Resource not found")));
+            const gson::Str payload = api::serializeResponse(responce);
+            logger.log(LOG_DEBUG, [&]() -> String128
+                       {String128 buf; buf.add(F("(WebServer::handleNotFound) Response payload: ")); buf.add(Text(payload).c_str()); return buf; });
+            server.sendSingle(payload, responce.getCode(), F("application/json"));
+            return;
+        }
+
+        logger.log(LOG_WARN, [&]() -> String128
+                   {String128 buf; buf.add(F("(WebServer::handleNotFound) Captive redirect: ")); buf.add(path.c_str()); return buf; });
+
+        ghttp::ServerBase::Headers headers(302);
+        headers.add(F("Location"), Text(redirectUri));
+        headers.add(F("Connection"), F("close"));
+        server.beginResponse(headers);
+        server.send(302);
+        Serial.println(Text(redirectUri));
+        return;
+    }
+
     logger.log(LOG_WARN, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleNotFound) ")); buf.add(request.path().c_str()); buf.add(" "); buf.add(request.method().c_str()); buf.add(F(" Resource not found.")); return buf; });
+
     const auto responce = api::ErrorResponse(404, String32(F("Resource not found")));
     const gson::Str payload = api::serializeResponse(responce);
     logger.log(LOG_DEBUG, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleNotFound) Response payload: ")); buf.add(Text(payload).c_str()); return buf; });
-    server.send(payload, responce.getCode(), F("application/json"));
+    server.sendSingle(payload, responce.getCode(), F("application/json"));
 }
 
 void WebServer::tick()
@@ -91,6 +122,20 @@ void WebServer::stop()
 bool WebServer::isRunning() const
 {
     return serverRunning;
+}
+
+void WebServer::startCaptivePortal(const char * apIpAddress)
+{
+    captivePortal = true;
+    redirectUri.clear();
+    redirectUri.add(F("http://"));
+    redirectUri.add(apIpAddress);
+    redirectUri.add(F("/"));
+}
+
+void WebServer::stopCaptivePortal()
+{
+    captivePortal = false;
 }
 
 void WebServer::applyConfig(const WebServerConfig &config)
