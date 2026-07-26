@@ -55,14 +55,18 @@ public:
     
     bool startCaptivePortal();
     bool stopCaptivePortal();
+    bool stopMDNS();
+    bool startMDNS();
+    bool stopAP();
+    bool startAP();
 
     void setAttemptWifiConfig(const char *ssid, const char *password);
     void setAPConfig(const char *apSsid, const char *apPassword);
     void setMdnsName(const char *mdnsName);
-    void setWifiConnectionTimeout(unsigned long timeout);
+    void setWifiConnectionTimeout(uint32_t timeout);
     void applyConfig(const NetworkConfig &config);
 
-    unsigned long getWifiConnectionTimeout() const;
+    uint32_t getWifiConnectionTimeout() const;
     StringN<18> getMacAddress() const;
     IPAddress getAPIpAddress() const;
     const char *getSsid() const;
@@ -88,7 +92,7 @@ private:
 
     String32 mdnsName;
 
-    unsigned long wifiConnectionTimeout;
+    uint32_t wifiConnectionTimeoutMs;
 
     static constexpr uint8_t MAX_WIFI_HANDLER = 2;
     WiFiEventHandler onGotIpHandlers[MAX_WIFI_HANDLER];
@@ -96,11 +100,7 @@ private:
 
     void configureWifiPerformance();
 
-    bool stopMDNS();
-    bool startMDNS();
     bool startMDNS(const String32 &mdnsName);
-    bool stopAP();
-    bool startAP();
     bool startAP(const String32 &apSsid, const String32 &apPassword);
     bool stopDNS();
     bool startDNS();

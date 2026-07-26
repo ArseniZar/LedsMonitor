@@ -16,7 +16,7 @@ NetworkManager::NetworkManager(Logger &logger)
       attemptSsid(F(WIFI_ATTEMPT_SSID)),
       attemptPassword(F(WIFI_ATTEMPT_PASS)),
       mdnsName(F(MDNS_NAME)),
-      wifiConnectionTimeout(WIFI_CONNECTION_TIMEOUT_MS),
+      wifiConnectionTimeoutMs(WIFI_CONNECTION_TIMEOUT_MS),
       onGotIpHandlers{},
       onDisconnectedHandlers{}
 {
@@ -41,6 +41,9 @@ ScanState NetworkManager::getStatusScan() const
 
 bool NetworkManager::begin()
 {
+    WiFi.setAutoReconnect(false);
+    WiFi.setAutoConnect(false);
+
     logger.log(LOG_INFO, [&]() -> String128
                { String128 buf; buf = F("(NetworkManager::begin) Starting Network Manager..."); return buf; });
 
@@ -73,50 +76,39 @@ void NetworkManager::tick()
 bool NetworkManager::startCaptivePortal()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Starting web server network (AP + DNS)..."); return buf; });
-
-    if (!startAP())
-    {
-        logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start Wi-Fi Access Point for web server."); return buf; });
-        return false;
-    }
+               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Starting Captive Portal network (DNS)..."); return buf; });
 
     if (!startDNS())
     {
         logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start DNS server for web server."); return buf; });
+                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start DNS server for Captive Portal."); return buf; });
         return false;
     }
 
     logger.log(LOG_INFO, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Web server network started successfully (AP + DNS)."); return buf; });
+               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Captive Portal network started successfully (DNS)."); return buf; });
 
     return true;
 }
 
 bool NetworkManager::stopCaptivePortal()
 {
-    bool dnsStopped = stopDNS();
-    bool apStopped = stopAP();
+    logger.log(LOG_DEBUG, [&]() -> String128
+               { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Stoping Captive Portal network (DNS)..."); return buf; });
 
-    if (apStopped && dnsStopped)
+    bool dnsStopped = stopDNS();
+
+    if (dnsStopped)
     {
         logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Web server network stopped successfully (AP + DNS)."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Captive Portal network stopped successfully (DNS)."); return buf; });
         return true;
-    }
-
-    if (!apStopped)
-    {
-        logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop Wi-Fi Access Point for web server."); return buf; });
     }
 
     if (!dnsStopped)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop DNS server for web server."); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop DNS server for Captive Portal."); return buf; });
     }
     return false;
 }
@@ -222,16 +214,16 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
 
 void NetworkManager::applyConfig(const NetworkConfig &config)
 {
-    if (wifiConnectionTimeout != config.wifiConnectionTimeout)
+    if (wifiConnectionTimeoutMs != config.wifiConnectionTimeoutMs)
     {
-        setWifiConnectionTimeout(config.wifiConnectionTimeout);
+        setWifiConnectionTimeout(config.wifiConnectionTimeoutMs);
         logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout changed"); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) wifiConnectionTimeoutMs changed"); return buf; });
     }
     else
     {
         logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::applyConfig) WifiConnectionTimeout no changed"); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) wifiConnectionTimeoutMs no changed"); return buf; });
     }
 
     if ((!(strcmp(ssid, config.ssid) == 0) && !(strcmp(attemptSsid, config.ssid) == 0)) || (!(strcmp(password, config.password) == 0) && !(strcmp(attemptPassword, config.password) == 0))) // FIXME: Временный костыль из-за отсутствия operator== в StringN.
@@ -332,7 +324,7 @@ bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
                 buf.add(phySet ? F("enabled successfully") : F("failed to enable"));
                 return buf; });
 
-    bool apStarted = WiFi.softAP(apSsid, apPassword);
+    bool apStarted = WiFi.softAP(apSsid, apPassword, 1);
     logger.log(apStarted ? LOG_INFO : LOG_ERROR, [&]() -> String128
                {
                 String128 buf;
@@ -375,9 +367,9 @@ void NetworkManager::setMdnsName(const char *mdnsName)
     this->mdnsName = mdnsName;
 }
 
-void NetworkManager::setWifiConnectionTimeout(unsigned long timeout)
+void NetworkManager::setWifiConnectionTimeout(uint32_t timeout)
 {
-    this->wifiConnectionTimeout = timeout;
+    this->wifiConnectionTimeoutMs = timeout;
 }
 
 bool NetworkManager::stopMDNS()
@@ -680,9 +672,9 @@ const char *NetworkManager::getMdnsName() const
     return mdnsName;
 }
 
-unsigned long NetworkManager::getWifiConnectionTimeout() const
+uint32_t NetworkManager::getWifiConnectionTimeout() const
 {
-    return wifiConnectionTimeout;
+    return wifiConnectionTimeoutMs;
 }
 
 bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &password)
@@ -705,9 +697,9 @@ bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &passwo
     }
 
     WiFi.begin(ssid, password);
-    const unsigned long startTime = millis();
+    const uint32_t startTime = millis();
 
-    while (getStatusWifi() != ConnState::WL_CONNECTED && millis() - startTime < WIFI_CONNECTION_TIMEOUT_MS)
+    while (getStatusWifi() != ConnState::WL_CONNECTED && millis() - startTime < wifiConnectionTimeoutMs)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Connecting to Wi-Fi...")); return buf; });
@@ -758,7 +750,7 @@ bool NetworkManager::tryConnectWifiAsync(const String32 &ssid, const String32 &p
     if (ssid.length() == 0)
     {
         logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf.add(F("(NetworkManager::tryConnectAsyncWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
+                   { String128 buf; buf.add(F("(NetworkManager::tryConnectWifiAsync) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
         return false;
     }
 
