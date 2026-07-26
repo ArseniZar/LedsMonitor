@@ -7,6 +7,7 @@ void setup() {
     
     App& app = App::init(); 
     app.begin();
+    app.start();
 }
 
 void loop() {
