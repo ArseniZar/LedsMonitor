@@ -7,7 +7,7 @@ namespace api::json
             case ValueType::Bool: return F("Bool");
             case ValueType::Int: return F("Int");
             case ValueType::Float: return F("Float");
-            case ValueType::U_Long: return F("Unsigned Long");
+            case ValueType::U_Int32: return F("Unsigned Int32");
             case ValueType::U_Int8: return F("Unsigned Int8");
             case ValueType::U_Int16: return F("Unsigned Int16");
             case ValueType::String18: return F("String18");

@@ -8,7 +8,7 @@ namespace api::json
         switch (expectedType)
         {
         case ValueType::Int:
-        case ValueType::U_Long:
+        case ValueType::U_Int32:
         case ValueType::U_Int8:
         case ValueType::U_Int16:
             return actualType == JsonType::Int;
@@ -62,14 +62,14 @@ namespace api::json
             return static_cast<uint16_t>(parsed);
         }
 
-        case ValueType::U_Long:
+        case ValueType::U_Int32:
         {
             const int64_t parsed = data.toInt64();
-            if (parsed < 0 || static_cast<uint64_t>(parsed) > std::numeric_limits<unsigned long>::max())
+            if (parsed < 0 || parsed > std::numeric_limits<uint32_t>::max())
             {
                 return std::monostate{};
             }
-            return static_cast<unsigned long>(parsed);
+            return static_cast<uint32_t>(parsed);
         }
 
         case ValueType::Float:
