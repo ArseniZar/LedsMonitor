@@ -1,9 +1,8 @@
 #pragma once
 #ifndef WEBSERVER_CONFIG_MODELS_H
-#define WEBSERVER_LED_CONFIG_MODELS_H
+#define WEBSERVER_CONFIG_MODELS_H
 
 #include <Arduino.h>
-#include <StringN.h>
 
 struct WebServerRuntimeConfig;
 
@@ -38,4 +37,4 @@ struct WebServerRuntimeConfig
     void operator=(const WebServerConfig &config);
 };
 
-#endif // WEBSERVER_LED_CONFIG_MODELS_H
+#endif // WEBSERVER_CONFIG_MODELS_H

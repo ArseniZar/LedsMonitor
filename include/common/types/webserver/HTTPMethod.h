@@ -1,6 +1,7 @@
 #pragma once
 #ifndef HTTP_METHOD_H
 #define HTTP_METHOD_H
+
 #include <Arduino.h>
 #include <cstdint>
 #include <StringUtils.h>
