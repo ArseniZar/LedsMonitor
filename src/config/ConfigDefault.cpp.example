@@ -7,39 +7,58 @@
 
 #include "ConfigDefault.h"
 
-// Basic network configuration (example):
-// ssid / password     - no saved default Wi‑Fi network (empty strings)
-// "SmartHome"        - SSID of the access point started in portal mode
-// "12345678"         - access point password (minimum 8 characters)
-// "smarthome"        - mDNS name: the device will be available as smarthome.local
+// Base network configuration:
+// ssid / password     - No saved Wi-Fi network by default (empty strings)
+// "SmartHome"        - Access Point SSID broadcasted in captive portal mode
+// "12345678"         - Access Point password (minimum 8 characters)
+// "smarthome"        - mDNS hostname: device will be accessible at smarthome.local
 const NetworkConfig& DEFAULT_NETWORK_CONFIG = NetworkConfig::defaultConfig(
-	"",          // ssid (not saved by default)
-	"",          // password
-	"SmartHome", // AP SSID
-	"12345678",  // AP password
-	"smarthome", // mDNS name
-	10000UL       // Wi-Fi connection timeout (ms)
+    "",          // Saved Wi-Fi SSID
+    "",          // Saved Wi-Fi Password
+    "SmartHome", // AP SSID
+    "12345678",  // AP Password
+    "smarthome", // mDNS Hostname
+    10000UL      // Wi-Fi connection timeout (ms)
 );
 
 
-// Basic LED device configuration for "out of the box" firmware (example).
-// 3  - hardware data pin (see DEVICE_PIN in config.h)
-// 40 - default number of LEDs in the strip
-// "Led" - device name shown in UI / Telegram
+// Base LED device configuration for out-of-the-box firmware.
+// 3     - Hardware data pin (GPIO number used for DMA transfer)
+// 40    - Default number of LEDs in the strip
+// "Led" - Device name displayed in UI / Telegram
 const DeviceLedConfig& DEFAULT_DEVICE_CONFIG = DeviceLedConfig::defaultConfig(
-	3,
-	40,
-	"Led"
+    3,      // Hardware Data Pin (GPIO)
+    40,     // LED Count
+    "Led"   // Device Name
 );
 
 
-// Basic Telegram bot configuration (example):
-// token         - empty by default until the user sets their token
-// limitMessage  - maximum number of messages per tick (anti‑spam)
-// periodUpdate  - Telegram polling period (ms)
+// Base Telegram bot configuration:
+// token         - Empty by default until user inputs their bot token
+// limitMessage  - Maximum number of messages processed per tick (anti-spam protection)
+// periodUpdate  - Telegram polling interval (ms); recommended >= 4000 ms for stability
 const TelegramBotConfig& DEFAULT_TELEGRAM_CONFIG = TelegramBotConfig::defaultConfig(
-	"",   // token
-	10,    // limitMessage
-	1000   // periodUpdate
+    "",     // Bot Token
+    10,     // Message Limit
+    1500    // Update Period (ms)
 );
 
+
+// Base Web Server configuration:
+// port - HTTP communication port (default: 80)
+const WebServerConfig& DEFAULT_WEBSERVER_CONFIG = WebServerConfig::defaultConfig(
+    80     // Web Server Port
+);
+
+
+// Base Application System configuration:
+// webServerInactivityPeriodMs - Portal inactivity timeout before shut down (ms)
+// wifiReconnectPeriodMs       - Delay between Wi-Fi reconnection attempts (ms)
+// applyConfigTimeoutMs        - Debounce delay before applying config changes (ms)
+// saveConfigTimeoutMs         - Debounce delay before saving config to non-volatile storage (ms)
+const AppConfig& DEFAULT_APP_CONFIG = AppConfig::defaultConfig(
+    180000UL, // Web Server Inactivity Period (ms)
+    120000UL, // Wi-Fi Reconnect Period (ms)
+    2000UL,   // Apply Config Timeout (ms)
+    2000UL    // Save Config Timeout (ms)
+);
