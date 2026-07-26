@@ -6,7 +6,14 @@ WebServer &WebServer::init(Logger &logger, int port)
     return instance;
 }
 
-WebServer::WebServer(Logger &logger, int port) : logger(logger), server(port), serverRunning(false), lastRequestTime(0), captivePortal(false), redirectUri(""), handlers()
+WebServer::WebServer(Logger &logger, int port)
+    : logger(logger),
+      server(port),
+      serverRunning(false),
+      lastUserRequestTime(0),
+      captivePortal(false),
+      redirectUri(F("")),
+      handlers()
 {
     MDNS.addService(F("http"), F("tcp"), port);
 }
@@ -19,31 +26,44 @@ void WebServer::begin()
     };
 
     server.useCors(true);
+
     server.onRequest([this](ghttp::ServerBase::Request request)
-                    {  
-                        lastRequestTime = millis();
+                     {  
+        logger.log(LOG_INFO, [&]() -> String128 { 
+            String128 buf; 
+            buf.add(F("(WebServer::onRequest) HTTP Request: ")); 
+            buf.add(request.method().c_str()); 
+            buf.add(' '); 
+            buf.add(request.path().c_str()); 
+            return buf; 
+        });
 
-                        logger.log(LOG_INFO, [&]() -> String128
-                                   { String128 buf; buf.add(F("(WebServer::onRequest) HTTP Request: ")); buf.add(request.method().c_str()); buf.add(' '); buf.add(request.path().c_str()); return buf; });
+        if (parseMethod(request.method()) == HTTPMethod::OPTIONS) {
+            ghttp::ServerBase::Headers headers(200);
+            headers.add(F("Access-Control-Allow-Headers"), F("Content-Type"));
+            server.beginResponse(headers);
+            server.send(204);
+            return;
+        }
 
-                        if(parseMethod(request.method()) == HTTPMethod::OPTIONS)
-                        {
-                            ghttp::ServerBase::Headers headers(200);
-                            headers.add(F("Access-Control-Allow-Headers"), F("Content-Type"));
-                            server.beginResponse(headers);
-                            server.send(204);
-                            return;
-                        }
+        auto it = handlers.find({request.path().c_str(), parseMethod(request.method())});
 
-                        auto it = handlers.find({request.path().c_str(), parseMethod(request.method())});
-                        if (it != handlers.end()) 
-                        {
-                            it->second(request);
-                        } else 
-                        {
-                            this->handleNotFound(request);
-                        } 
-                    });
+        if (it != handlers.end()) {
+            const auto type = it->first.getType();
+            
+            if (type == EndpointType::User) {
+                this->lastUserRequestTime = millis();
+            } else if (type == EndpointType::System) {
+                this->lastSystemRequestTime = millis();
+            }
+
+            it->second(request);
+        } 
+        else 
+        {   
+            this->lastCaptiveRequestTime = millis();
+            this->handleNotFound(request);
+        } });
 }
 
 void WebServer::start()
@@ -52,7 +72,7 @@ void WebServer::start()
                { String128 buf; buf.add(F("(WebServer::begin) Starting Web Server...")); return buf; });
     server.begin();
     serverRunning = true;
-    lastRequestTime = millis();
+    lastUserRequestTime = millis();
 
     logger.log(LOG_INFO, [&]() -> String128
                { String128 buf; buf.add(F("(WebServer::begin) Starting Web Server finished successfully")); return buf; });
@@ -124,25 +144,54 @@ bool WebServer::isRunning() const
     return serverRunning;
 }
 
-void WebServer::startCaptivePortal(const char * apIpAddress)
+void WebServer::startCaptivePortal(const char *apIpAddress)
 {
+    logger.log(LOG_DEBUG, [&]() -> String128
+               { String128 buf; buf = F("(WebServer::startCaptivePortal) Starting Captive Portal..."); return buf; });
+
     captivePortal = true;
     redirectUri.clear();
     redirectUri.add(F("http://"));
     redirectUri.add(apIpAddress);
     redirectUri.add(F("/"));
+
+    logger.log(LOG_INFO, [&]() -> String128
+               { String128 buf; buf = F("(WebServer::startCaptivePortal) Captive Portal started successfully "); buf.add(redirectUri); return buf; });
 }
 
 void WebServer::stopCaptivePortal()
 {
+    logger.log(LOG_DEBUG, [&]() -> String128
+               { String128 buf; buf = F("(WebServer::stopCaptivePortal) Stoping Captive Portal..."); return buf; });
+
     captivePortal = false;
+
+    logger.log(LOG_INFO, [&]() -> String128
+               { String128 buf; buf = F("(WebServer::stopCaptivePortal) Captive Portal stopped successfully."); return buf; });
+}
+
+bool WebServer::isCaptivePortalRunning() const
+{
+    return captivePortal;
 }
 
 void WebServer::applyConfig(const WebServerConfig &config)
 {
+    logger.log(LOG_DEBUG, [&]() -> String128
+               { String128 buf; buf = F("(WebServer::applyConfig) All no changed"); return buf; });
 }
 
-unsigned long WebServer::getLastRequestTime() const
+uint32_t WebServer::getLastUserRequestTime() const
 {
-    return lastRequestTime;
+    return lastUserRequestTime;
+}
+
+uint32_t WebServer::getLastSystemRequestTime() const
+{
+    return lastSystemRequestTime;
+}
+
+uint32_t WebServer::getLastCaptiveRequestTime() const
+{
+    return lastCaptiveRequestTime;
 }

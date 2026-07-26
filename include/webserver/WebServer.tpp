@@ -2,28 +2,31 @@
 #include "WebServer.h"
 
 template <typename Request, typename Response = void>
-void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::function<Response(Request &)> handler)
+void WebServer::registerEndpoint(const char *uri, HTTPMethod httpMethod, EndpointType type, std::function<Response(Request &)> handler)
 {
     static_assert(std::is_base_of<api::webserver::ModelBaseRequest, Request>::value, "Request must be void or inherit from api::webserver::ModelBaseRequest");
     static_assert(std::is_void<Response>::value || std::is_base_of<api::Response, Response>::value, "Response must be void or inherit from api::webserver::ModelBaseResponse");
-    
-    handlers[{uri, httpMethod}] = [handler, this](ghttp::ServerBase::Request request)
+
+    Endpoint endpoint(uri, httpMethod);
+    endpoint.setType(type);
+
+    handlers[endpoint] = [handler, this](ghttp::ServerBase::Request request)
     {
         logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf.add(F("(WebServer::registerRoute) Received request with body.")); return buf; });
+                   { String128 buf; buf.add(F("(WebServer::registerEndpoint) Received request with body.")); return buf; });
 
         String body = request.body().readString();
         logger.log(LOG_DEBUG, [&]() -> String256
-                   { String256 buf; buf.add(F("(WebServer::registerRoute) Raw request body: ")); buf.add(body.c_str()); return buf; });
+                   { String256 buf; buf.add(F("(WebServer::registerEndpoint) Raw request body: ")); buf.add(body.c_str()); return buf; });
 
         if (body.isEmpty())
         {
             logger.log(LOG_WARN, [&]() -> String128
-                       { String128 buf; buf.add(F("(WebServer::registerRoute) Empty request body.")); return buf; });
+                       { String128 buf; buf.add(F("(WebServer::registerEndpoint) Empty request body.")); return buf; });
             const auto response = api::ErrorResponse(400, String32(F("Empty request body")));
             gson::Str payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String256
-                       { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (error empty body): ")); buf.add(Text(payload).c_str()); return buf; });
+                       { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (error empty body): ")); buf.add(Text(payload).c_str()); return buf; });
 
             server.sendSingle(payload, response.getCode(), F("application/json"));
             return;
@@ -41,7 +44,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                                {
                                    gson::Str payload = api::serializeResponse(response);
                                    logger.log(LOG_DEBUG, [&]() -> String256
-                                              { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                                              { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                                    
                                    server.sendSingle(payload, response.getCode(), F("application/json")); },
                                handler(successApiRequestPtr->data));
@@ -51,7 +54,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                     const auto &response = handler(successApiRequestPtr->data);
                     gson::Str payload = api::serializeResponse(response);
                     logger.log(LOG_DEBUG, [&]() -> String256
-                               { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                               { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                     server.sendSingle(payload, response.getCode(), F("application/json"));
                 }
             }
@@ -59,7 +62,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             {
                 handler(successApiRequestPtr->data);
                 logger.log(LOG_INFO, [&]() -> String128
-                           { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
+                           { String128 buf; buf.add(F("(WebServer::registerEndpoint) Request handled successfully.")); return buf; });
                 server.send(204);
             }
         }
@@ -69,7 +72,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
             const auto response = api::ErrorResponse(400, errorApiRequstPtr->message);
             gson::Str payload = api::serializeResponse(response);
             logger.log(LOG_DEBUG, [&]() -> String256
-                       { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
+                       { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (parse error): ")); buf.add(Text(payload).c_str()); return buf; });
             server.sendSingle(payload, response.getCode(), F("application/json"));
         }
     };
@@ -81,19 +84,22 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
 }
 
 template <typename Request = void, typename Response = void>
-void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::function<Response()> handler)
+void WebServer::registerEndpoint(const char *uri, HTTPMethod httpMethod, EndpointType type, std::function<Response()> handler)
 {
-    handlers[{uri, httpMethod}] = [handler, this](ghttp::ServerBase::Request request)
+    Endpoint endpoint(uri, httpMethod);
+    endpoint.setType(type);
+
+    handlers[endpoint] = [handler, this](ghttp::ServerBase::Request request)
     {
         if constexpr (!std::is_void<Response>::value)
         {
             if constexpr (is_variant<Response>::value)
-            { 
+            {
                 std::visit([&](auto &&response)
                            {
                                gson::Str payload = api::serializeResponse(response);
                                logger.log(LOG_DEBUG, [&]() -> String256
-                                          { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                                          { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                                server.sendSingle(payload, response.getCode(), F("application/json")); },
                            handler());
             }
@@ -102,7 +108,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
                 const auto &response = handler();
                 gson::Str payload = api::serializeResponse(response);
                 logger.log(LOG_DEBUG, [&]() -> String256
-                           { String256 buf; buf.add(F("(WebServer::registerRoute) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
+                           { String256 buf; buf.add(F("(WebServer::registerEndpoint) Response payload (success): ")); buf.add(Text(payload).c_str()); return buf; });
                 server.sendSingle(payload, response.getCode(), F("application/json"));
             }
         }
@@ -110,7 +116,7 @@ void WebServer::registerRoute(const char *uri, HTTPMethod httpMethod, std::funct
         {
             handler();
             logger.log(LOG_INFO, [&]() -> String128
-                       { String128 buf; buf.add(F("(WebServer::registerRoute) Request handled successfully.")); return buf; });
+                       { String128 buf; buf.add(F("(WebServer::registerEndpoint) Request handled successfully.")); return buf; });
             server.send(204);
         }
     };
