@@ -15,14 +15,14 @@ public:
     String32 apSsid;
     String32 apPassword;
     String32 mdnsName;
-    unsigned long wifiConnectionTimeout;
+    uint32_t wifiConnectionTimeoutMs;
 
     static const NetworkConfig &defaultConfig(const char *ssid,
                                               const char *password,
                                               const char *apSsid,
                                               const char *apPassword,
                                               const char *mdnsName,
-                                              unsigned long wifiConnectionTimeout);
+                                              uint32_t wifiConnectionTimeoutMs);
 
     static const NetworkConfig &fromDefault();
     static constexpr const char *TYPE_NAME = "NetworkConfig";
@@ -37,7 +37,7 @@ private:
     NetworkConfig(const char *ssid, const char *password,
                   const char *apSsid, const char *apPassword,
                   const char *mdnsName,
-                  unsigned long wifiConnectionTimeout);
+                  uint32_t wifiConnectionTimeoutMs);
 
     static NetworkConfig *defaultInstance;
 };
@@ -52,7 +52,7 @@ struct NetworkRuntimeConfig
     String32 apSsid;
     String32 apPassword;
     String32 mdnsName;
-    unsigned long wifiConnectionTimeout;
+    uint32_t wifiConnectionTimeoutMs;
     NetworkRuntimeConfig() = default;
     NetworkRuntimeConfig(const NetworkConfig &config);
     void operator=(const NetworkConfig &config);

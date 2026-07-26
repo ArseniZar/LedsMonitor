@@ -177,7 +177,7 @@ namespace api::webserver
         constexpr const char *AP_SSID = "apSsid";
         constexpr const char *AP_PASSWORD = "apPassword";
         constexpr const char *MDNS_NAME = "mdnsName";
-        constexpr const char *WIFI_CONNECTION_TIMEOUT = "wifiConnectionTimeout";
+        constexpr const char *WIFI_CONNECTION_TIMEOUT_MS = "wifiConnectionTimeoutMs";
         constexpr const char *COUNT_LED = "countLed";
         constexpr const char *DEVICE_NAME = "deviceName";
         constexpr const char *TOKEN = "token";
@@ -186,24 +186,24 @@ namespace api::webserver
     }
 
     UpdateConfigRequest::UpdateConfigRequest(const std::optional<String32> apSsid, const std::optional<String32> apPassword,
-                                             const std::optional<String32> mdnsName, const std::optional<unsigned long> wifiConnectionTimeout,
+                                             const std::optional<String32> mdnsName, const std::optional<uint32_t> wifiConnectionTimeoutMs,
                                              const std::optional<uint16_t> countLed, const std::optional<String32> deviceName,
                                              const std::optional<String64> token, const std::optional<uint8_t> limitMessage,
                                              const std::optional<uint16_t> periodUpdate, const ModelBaseRequest &base)
         : ModelBaseRequest(base), apSsid(apSsid),
           apPassword(apPassword), mdnsName(mdnsName),
-          wifiConnectionTimeout(wifiConnectionTimeout), countLed(countLed),
+          wifiConnectionTimeoutMs(wifiConnectionTimeoutMs), countLed(countLed),
           deviceName(deviceName), token(token),
           limitMessage(limitMessage), periodUpdate(periodUpdate) {}
 
     UpdateConfigRequest::UpdateConfigRequest(std::optional<String32> &&apSsid, std::optional<String32> &&apPassword,
-                                             std::optional<String32> &&mdnsName, std::optional<unsigned long> &&wifiConnectionTimeout,
+                                             std::optional<String32> &&mdnsName, std::optional<uint32_t> &&wifiConnectionTimeoutMs,
                                              std::optional<uint16_t> &&countLed, std::optional<String32> &&deviceName,
                                              std::optional<String64> &&token, std::optional<uint8_t> &&limitMessage,
                                              std::optional<uint16_t> &&periodUpdate, ModelBaseRequest &&base)
         : ModelBaseRequest(std::move(base)), apSsid(std::move(apSsid)),
           apPassword(std::move(apPassword)), mdnsName(std::move(mdnsName)),
-          wifiConnectionTimeout(std::move(wifiConnectionTimeout)), countLed(std::move(countLed)),
+          wifiConnectionTimeoutMs(std::move(wifiConnectionTimeoutMs)), countLed(std::move(countLed)),
           deviceName(std::move(deviceName)), token(std::move(token)),
           limitMessage(std::move(limitMessage)), periodUpdate(std::move(periodUpdate)) {}
 
@@ -214,7 +214,7 @@ namespace api::webserver
             {AP_SSID, {json::ValueType::String32, false}},
             {AP_PASSWORD, {json::ValueType::String32, false}},
             {MDNS_NAME, {json::ValueType::String32, false}},
-            {WIFI_CONNECTION_TIMEOUT, {json::ValueType::U_Long, false}},
+            {WIFI_CONNECTION_TIMEOUT_MS, {json::ValueType::U_Int32, false}},
             {COUNT_LED, {json::ValueType::U_Int16, false}},
             {DEVICE_NAME, {json::ValueType::String32, false}},
             {TOKEN, {json::ValueType::String64, false}},
@@ -239,7 +239,7 @@ namespace api::webserver
         std::optional<String32> apSsid = json::Converter::toOptional<String32>(parseMap[AP_SSID]);
         std::optional<String32> apPassword = json::Converter::toOptional<String32>(parseMap[AP_PASSWORD]);
         std::optional<String32> mdnsName = json::Converter::toOptional<String32>(parseMap[MDNS_NAME]);
-        std::optional<unsigned long> wifiConnectionTimeout = json::Converter::toOptional<unsigned long>(parseMap[WIFI_CONNECTION_TIMEOUT]);
+        std::optional<uint32_t> wifiConnectionTimeoutMs = json::Converter::toOptional<uint32_t>(parseMap[WIFI_CONNECTION_TIMEOUT_MS]);
 
         std::optional<String32> deviceName = json::Converter::toOptional<String32>(parseMap[DEVICE_NAME]);
         std::optional<String64> token = json::Converter::toOptional<String64>(parseMap[TOKEN]);
@@ -251,7 +251,7 @@ namespace api::webserver
         return std::make_unique<json::ParseSuccess<UpdateConfigRequest>>(
             UpdateConfigRequest(
                 std::move(apSsid), std::move(apPassword),
-                std::move(mdnsName), std::move(wifiConnectionTimeout),
+                std::move(mdnsName), std::move(wifiConnectionTimeoutMs),
                 std::move(countLed), std::move(deviceName),
                 std::move(token), std::move(limitMessage),
                 std::move(periodUpdate), std::move(successParseBasePtr->result)));
@@ -265,7 +265,7 @@ namespace api::webserver
         constexpr const char *AP_SSID = "apSsid";
         constexpr const char *AP_PASSWORD = "apPassword";
         constexpr const char *MDNS_NAME = "mdnsName";
-        constexpr const char *WIFI_CONNECTION_TIMEOUT = "wifiConnectionTimeout";
+        constexpr const char *WIFI_CONNECTION_TIMEOUT_MS = "wifiConnectionTimeoutMs";
         constexpr const char *COUNT_LED = "countLed";
         constexpr const char *DEVICE_NAME = "deviceName";
         constexpr const char *TOKEN = "token";
@@ -274,24 +274,24 @@ namespace api::webserver
     }
 
     GetConfigResponse::GetConfigResponse(const String32 &apSsid, const String32 &apPassword,
-                                         const String32 &mdnsName, const unsigned long wifiConnectionTimeout,
+                                         const String32 &mdnsName, const uint32_t wifiConnectionTimeoutMs,
                                          const uint16_t countLed, const String32 &deviceName,
                                          const String64 &token, const uint8_t limitMessage,
                                          const uint16_t periodUpdate, const ModelBaseResponse &base)
         : ModelBaseResponse(base), apSsid(apSsid),
           apPassword(apPassword), mdnsName(mdnsName),
-          wifiConnectionTimeout(wifiConnectionTimeout), countLed(countLed),
+          wifiConnectionTimeoutMs(wifiConnectionTimeoutMs), countLed(countLed),
           deviceName(deviceName), token(token),
           limitMessage(limitMessage), periodUpdate(periodUpdate) {}
 
     GetConfigResponse::GetConfigResponse(String32 &&apSsid, String32 &&apPassword,
-                                         String32 &&mdnsName, unsigned long wifiConnectionTimeout,
+                                         String32 &&mdnsName, uint32_t wifiConnectionTimeoutMs,
                                          uint16_t countLed, String32 &&deviceName,
                                          String64 &&token, uint8_t limitMessage,
                                          uint16_t periodUpdate, ModelBaseResponse &&base)
         : ModelBaseResponse(std::move(base)), apSsid(std::move(apSsid)),
           apPassword(std::move(apPassword)), mdnsName(std::move(mdnsName)),
-          wifiConnectionTimeout(wifiConnectionTimeout), countLed(countLed),
+          wifiConnectionTimeoutMs(wifiConnectionTimeoutMs), countLed(countLed),
           deviceName(std::move(deviceName)), token(std::move(token)),
           limitMessage(limitMessage), periodUpdate(periodUpdate) {}
 
@@ -302,7 +302,7 @@ namespace api::webserver
             {AP_SSID, {apSsid}},
             {AP_PASSWORD, {apPassword}},
             {MDNS_NAME, {mdnsName}},
-            {WIFI_CONNECTION_TIMEOUT, {wifiConnectionTimeout}},
+            {WIFI_CONNECTION_TIMEOUT_MS, {wifiConnectionTimeoutMs}},
             {COUNT_LED, {countLed}},
             {DEVICE_NAME, {deviceName}},
             {TOKEN, {token}},

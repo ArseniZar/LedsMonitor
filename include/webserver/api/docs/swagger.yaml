@@ -228,7 +228,7 @@ components:
             mdnsName:
               type: string
               example: "lumvia"
-            wifiConnectionTimeout:
+            wifiConnectionTimeoutMs:
               type: integer
               format: int64
               example: 60000
@@ -350,7 +350,7 @@ components:
             mdnsName:
               type: string
               example: "lumvia"
-            wifiConnectionTimeout:
+            wifiConnectionTimeoutMs:
               type: integer
               format: int64
               example: 60000
@@ -372,7 +372,7 @@ components:
               type: integer
               format: int32
               example: 60
-          required: [apSsid, apPassword, mdnsName, wifiConnectionTimeout, countLed, deviceName, token, limitMessage, periodUpdate]
+          required: [apSsid, apPassword, mdnsName, wifiConnectionTimeoutMs, countLed, deviceName, token, limitMessage, periodUpdate]
       required: [config]
 
     ConnectWifiNetworkResponseEnvelope:

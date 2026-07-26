@@ -88,7 +88,7 @@ namespace api::webserver
         std::optional<String32> apSsid;
         std::optional<String32> apPassword;
         std::optional<String32> mdnsName;
-        std::optional<unsigned long> wifiConnectionTimeout;
+        std::optional<uint32_t> wifiConnectionTimeoutMs;
 
         std::optional<uint16_t> countLed;
         std::optional<String32> deviceName;
@@ -98,12 +98,12 @@ namespace api::webserver
         std::optional<uint16_t> periodUpdate;
         UpdateConfigRequest() = delete;
         UpdateConfigRequest(const std::optional<String32> apSsid, const std::optional<String32> apPassword,
-                            const std::optional<String32> mdnsName, const std::optional<unsigned long> wifiConnectionTimeout,
+                            const std::optional<String32> mdnsName, const std::optional<uint32_t> wifiConnectionTimeoutMs,
                             const std::optional<uint16_t> countLed, const std::optional<String32> deviceName,
                             const std::optional<String64> token, const std::optional<uint8_t> limitMessage,
                             const std::optional<uint16_t> periodUpdate, const ModelBaseRequest &base);
         UpdateConfigRequest(std::optional<String32> &&apSsid, std::optional<String32> &&apPassword,
-                            std::optional<String32> &&mdnsName, std::optional<unsigned long> &&wifiConnectionTimeout,
+                            std::optional<String32> &&mdnsName, std::optional<uint32_t> &&wifiConnectionTimeoutMs,
                             std::optional<uint16_t> &&countLed, std::optional<String32> &&deviceName,
                             std::optional<String64> &&token, std::optional<uint8_t> &&limitMessage,
                             std::optional<uint16_t> &&periodUpdate, ModelBaseRequest &&base);
@@ -118,7 +118,7 @@ namespace api::webserver
         String32 apSsid;
         String32 apPassword;
         String32 mdnsName;
-        unsigned long wifiConnectionTimeout;
+        uint32_t wifiConnectionTimeoutMs;
 
         uint16_t countLed;
         String32 deviceName;
@@ -128,12 +128,12 @@ namespace api::webserver
         uint16_t periodUpdate;
         GetConfigResponse() = delete;
         GetConfigResponse(const String32 &apSsid, const String32 &apPassword,
-                          const String32 &mdnsName, const unsigned long wifiConnectionTimeout,
+                          const String32 &mdnsName, const uint32_t wifiConnectionTimeoutMs,
                           const uint16_t countLed, const String32 &deviceName,
                           const String64 &token, const uint8_t limitMessage,
                           const uint16_t periodUpdate, const ModelBaseResponse &base);
         GetConfigResponse(String32 &&apSsid, String32 &&apPassword,
-                          String32 &&mdnsName, unsigned long wifiConnectionTimeout,
+                          String32 &&mdnsName, uint32_t wifiConnectionTimeoutMs,
                           uint16_t countLed, String32 &&deviceName,
                           String64 &&token, uint8_t limitMessage,
                           uint16_t periodUpdate, ModelBaseResponse &&base);
