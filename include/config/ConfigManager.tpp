@@ -140,7 +140,7 @@ void ConfigManager<ConfigPair<Configs, RuntimeConfigs>...>::saveConfig()
                             {
                                 configPair.storage.writeData(configPair.config);
                                 logger.log(LOG_INFO, [&]() -> String256
-                                            { String256 buf; buf = F("(ConfigManager::saveConfig) Saving "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage..."); return buf; });
+                                            { String256 buf; buf = F("(ConfigManager::saveConfig) Saving "); buf.add(decltype(configPair.config)::TYPE_NAME); buf.add(" to storage"); return buf; });
                             }
                             else
                             {

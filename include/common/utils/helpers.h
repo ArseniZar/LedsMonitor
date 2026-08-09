@@ -24,7 +24,6 @@ struct has_type_in_tuple_with_pair<T, std::tuple<Args...>> {
     static constexpr bool value = (has_type_in_pair<T, Args>::value || ...);
 };
 
-//XXX под вопросом удаления
 template <typename T, template<typename U> class Wrapped>
 void fromOptional(const std::optional<T>& opt,  Wrapped<T>& target) {
     if (opt.has_value()) {
