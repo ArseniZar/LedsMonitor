@@ -277,7 +277,7 @@ void App::registerEndpoints()
         });
 
     server.registerEndpoint<void, std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>>(
-        "api/v1/network/scan",
+        "/api/v1/network/scan",
         HTTPMethod::GET,
         EndpointType::System,
         [this]() -> std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>
