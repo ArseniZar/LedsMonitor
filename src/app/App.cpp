@@ -11,7 +11,7 @@ App::App() : mode(AppMode::WORK),
 
              webServerInactivityPeriodMs(WEBSERVER_INACTIVITY_PERIOD_MS),
              wifiReconnectTimer(WIFI_RECONNECT_PERIOD_MS, false, GTMode::Interval),
-             applyConfigTimer(APPLY_CONFIG_TIMEOUT_MS, false, GTMode::Timeout),
+             applyConfigTimer(APPLY_CONFIG_TIMEOUT_MS, false, GTMode::Overflow),
              saveConfigTimer(SAVE_CONFIG_TIMEOUT_MS, false, GTMode::Timeout),
              buttonHoldTimer(HOLD_BUTTON_TIMEOUT_MS, false, GTMode::Timeout),
 
@@ -68,20 +68,6 @@ void App::startMode(AppMode newMode)
         network.stopDNS();
         network.stopAP();
         wifiReconnectTimer.stop();
-
-        auto networkConfig = config.getConfig<NetworkConfig>();
-        const bool ssidChanged = (strcmp(network.getSsid(), networkConfig.ssid.c_str()) != 0);
-        const bool passChanged = (strcmp(network.getPass(), networkConfig.password.c_str()) != 0);
-
-        if (ssidChanged || passChanged)
-        {
-            networkConfig.ssid = network.getSsid();
-            networkConfig.password = network.getPass();
-            config.updateConfig(networkConfig);
-        }
-
-        config.save();
-
         return;
     }
     case AppMode::CONFIG:
@@ -121,7 +107,7 @@ void App::update()
     {
         const bool buttonHoldTimerCheck = (!buttonHoldTimer.running() || buttonHoldTimer.tick());
         const bool applyConfigTimerCheck = (!applyConfigTimer.running() || applyConfigTimer.tick());
-        
+
         if (isWifiConnected && isServerInactive && buttonHoldTimerCheck && applyConfigTimerCheck)
         {
             startMode(AppMode::WORK);
@@ -139,6 +125,20 @@ void App::update()
             const auto &networkConfig = config.getConfig<NetworkConfig>();
             network.attemptConnectionAsync(networkConfig.ssid, networkConfig.password);
         }
+
+        if (isWifiConnected)
+        {
+            auto networkConfig = config.getConfig<NetworkConfig>();
+            const bool ssidChanged = (strcmp(network.getSsid(), networkConfig.ssid.c_str()) != 0);
+            const bool passChanged = (strcmp(network.getPass(), networkConfig.password.c_str()) != 0);
+
+            if (ssidChanged || passChanged)
+            {
+                networkConfig.ssid = network.getSsid();
+                networkConfig.password = network.getPass();
+                config.updateConfig(networkConfig);
+            }
+        }
     }
 
     if (applyConfigTimer.tick())
@@ -148,6 +148,12 @@ void App::update()
         bot.applyConfig(config.getConfig<TelegramBotConfig>());
         network.applyConfig(config.getConfig<NetworkConfig>());
         this->applyConfig(config.getConfig<AppConfig>());
+        applyConfigTimer.stop();
+    }
+
+    if ((!applyConfigTimer.running() || applyConfigTimer.tick()) && saveConfigTimer.tick())
+    {
+        config.save();
     }
 }
 
@@ -270,15 +276,11 @@ void App::registerEndpoints()
                 ScanWifiNetworkStartedResponse(network.scanWifiNetworksAsync(), ModelBaseResponse()));
         });
 
-    using ScanVariant = std::variant<
-        api::SuccessResponse<ScanWifiNetworkResponse>,
-        api::SuccessResponse<GetScanStatusResponse>>;
-
-    server.registerEndpoint<void, ScanVariant>(
+    server.registerEndpoint<void, std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>>(
         "api/v1/network/scan",
         HTTPMethod::GET,
         EndpointType::System,
-        [this]() -> ScanVariant
+        [this]() -> std::variant<api::SuccessResponse<ScanWifiNetworkResponse>, api::SuccessResponse<GetScanStatusResponse>>
         {
             ScanState scanStatus = network.getStatusScan();
             if (scanStatus == ScanState::COMPLETED)
@@ -321,59 +323,116 @@ void App::registerEndpoints()
                 GetWifiStatusResponse(network.getStatusWifi(), ModelBaseResponse()));
         });
 
-    server.registerEndpoint<UpdateConfigRequest, void>(
-        "/api/v1/config",
+    server.registerEndpoint<UpdateNetworkConfigRequest, void>(
+        "/api/v1/config/network",
         HTTPMethod::PATCH,
         EndpointType::System,
-        [this](UpdateConfigRequest &request) -> void
+        [this](UpdateNetworkConfigRequest &request) -> void
         {
-            DeviceLedConfig deviceLedConfig = config.getConfig<DeviceLedConfig>();
-            fromOptional(request.countLed, deviceLedConfig.countLed);
-            fromOptional(request.deviceName, deviceLedConfig.deviceName);
-
-            TelegramBotConfig telegramBotConfig = config.getConfig<TelegramBotConfig>();
-            fromOptional(request.token, telegramBotConfig.token);
-            fromOptional(request.limitMessage, telegramBotConfig.limitMessage);
-            fromOptional(request.periodUpdate, telegramBotConfig.periodUpdate);
-
-            WebServerConfig webServerConfig = config.getConfig<WebServerConfig>();
-
             NetworkConfig networkConfig = config.getConfig<NetworkConfig>();
             fromOptional(request.apSsid, networkConfig.apSsid);
             fromOptional(request.apPassword, networkConfig.apPassword);
             fromOptional(request.mdnsName, networkConfig.mdnsName);
             fromOptional(request.wifiConnectionTimeoutMs, networkConfig.wifiConnectionTimeoutMs);
 
-            AppConfig appConfig = config.getConfig<AppConfig>();
-
-            config.updateConfig(deviceLedConfig);
-            config.updateConfig(webServerConfig);
-            config.updateConfig(telegramBotConfig);
             config.updateConfig(networkConfig);
-            config.updateConfig(appConfig);
-
             applyConfigTimer.start();
         });
 
-    server.registerEndpoint<void, api::SuccessResponse<GetConfigResponse>>(
-        "/api/v1/config",
+    server.registerEndpoint<void, api::SuccessResponse<GetNetworkConfigResponse>>(
+        "/api/v1/config/network",
         HTTPMethod::GET,
         EndpointType::System,
-        [this]() -> api::SuccessResponse<GetConfigResponse>
+        [this]() -> api::SuccessResponse<GetNetworkConfigResponse>
         {
             const auto &networkConfig = config.getConfig<NetworkConfig>();
-            const auto &deviceLedConfig = config.getConfig<DeviceLedConfig>();
-            const auto &telegramBotConfig = config.getConfig<TelegramBotConfig>();
-
-            return api::SuccessResponse<GetConfigResponse>(
+            return api::SuccessResponse<GetNetworkConfigResponse>(
                 200,
-                GetConfigResponse(
+                GetNetworkConfigResponse(
+                    networkConfig.ssid,
+                    networkConfig.password,
                     networkConfig.apSsid,
                     networkConfig.apPassword,
                     networkConfig.mdnsName,
                     networkConfig.wifiConnectionTimeoutMs,
+                    ModelBaseResponse()));
+        });
+
+    server.registerEndpoint<void, void>(
+        "/api/v1/config/network",
+        HTTPMethod::DELETE,
+        EndpointType::System,
+        [this]()
+        {
+            config.resetConfig<NetworkConfig>();
+            applyConfigTimer.start();
+        });
+
+    server.registerEndpoint<UpdateDeviceLedConfigRequest, void>(
+        "/api/v1/config/deviceled",
+        HTTPMethod::PATCH,
+        EndpointType::System,
+        [this](UpdateDeviceLedConfigRequest &request) -> void
+        {
+            DeviceLedConfig deviceLedConfig = config.getConfig<DeviceLedConfig>();
+            fromOptional(request.countLed, deviceLedConfig.countLed);
+            fromOptional(request.deviceName, deviceLedConfig.deviceName);
+
+            config.updateConfig(deviceLedConfig);
+            applyConfigTimer.start();
+        });
+
+    server.registerEndpoint<void, api::SuccessResponse<GetDeviceLedConfigResponse>>(
+        "/api/v1/config/deviceled",
+        HTTPMethod::GET,
+        EndpointType::System,
+        [this]() -> api::SuccessResponse<GetDeviceLedConfigResponse>
+        {
+            const auto &deviceLedConfig = config.getConfig<DeviceLedConfig>();
+            return api::SuccessResponse<GetDeviceLedConfigResponse>(
+                200,
+                GetDeviceLedConfigResponse(
+                    deviceLedConfig.pin,
                     deviceLedConfig.countLed,
                     deviceLedConfig.deviceName,
+                    ModelBaseResponse()));
+        });
+
+    server.registerEndpoint<void, void>(
+        "/api/v1/config/deviceled",
+        HTTPMethod::DELETE,
+        EndpointType::System,
+        [this]()
+        {
+            config.resetConfig<DeviceLedConfig>();
+            applyConfigTimer.start();
+        });
+
+    server.registerEndpoint<UpdateTelegramBotConfigRequest, void>(
+        "/api/v1/config/telegrambot",
+        HTTPMethod::PATCH,
+        EndpointType::System,
+        [this](UpdateTelegramBotConfigRequest &request) -> void
+        {
+            TelegramBotConfig telegramBotConfig = config.getConfig<TelegramBotConfig>();
+            fromOptional(request.token, telegramBotConfig.token);
+            fromOptional(request.limitMessage, telegramBotConfig.limitMessage);
+            fromOptional(request.periodUpdate, telegramBotConfig.periodUpdate);
+
+            config.updateConfig(telegramBotConfig);
+            applyConfigTimer.start();
+        });
+
+    server.registerEndpoint<void, api::SuccessResponse<GetTelegramBotConfigResponse>>(
+        "/api/v1/config/telegrambot",
+        HTTPMethod::GET,
+        EndpointType::System,
+        [this]() -> api::SuccessResponse<GetTelegramBotConfigResponse>
+        {
+            const auto &telegramBotConfig = config.getConfig<TelegramBotConfig>();
+            return api::SuccessResponse<GetTelegramBotConfigResponse>(
+                200,
+                GetTelegramBotConfigResponse(
                     telegramBotConfig.token,
                     telegramBotConfig.limitMessage,
                     telegramBotConfig.periodUpdate,
@@ -381,12 +440,67 @@ void App::registerEndpoints()
         });
 
     server.registerEndpoint<void, void>(
-        "/api/v1/config",
+        "/api/v1/config/telegrambot",
         HTTPMethod::DELETE,
-    EndpointType::System,
-        [this]() {
-            config.reset();
+        EndpointType::System,
+        [this]()
+        {
+            config.resetConfig<TelegramBotConfig>();
             applyConfigTimer.start();
-        }
-    );
+        });
+
+    server.registerEndpoint<UpdateAppConfigRequest, void>(
+        "/api/v1/config/app",
+        HTTPMethod::PATCH,
+        EndpointType::System,
+        [this](UpdateAppConfigRequest &request) -> void
+        {
+            AppConfig appConfig = config.getConfig<AppConfig>();
+            fromOptional(request.webServerInactivityPeriodMs, appConfig.webServerInactivityPeriodMs);
+            fromOptional(request.wifiReconnectPeriodMs, appConfig.wifiReconnectPeriodMs);
+            fromOptional(request.applyConfigTimeoutMs, appConfig.applyConfigTimeoutMs);
+            fromOptional(request.saveConfigTimeoutMs, appConfig.saveConfigTimeoutMs);
+            fromOptional(request.holdButtonTimeoutMs, appConfig.holdButtonTimeoutMs);
+
+            config.updateConfig(appConfig);
+            applyConfigTimer.start();
+        });
+
+    server.registerEndpoint<void, api::SuccessResponse<GetAppConfigResponse>>(
+        "/api/v1/config/app",
+        HTTPMethod::GET,
+        EndpointType::System,
+        [this]() -> api::SuccessResponse<GetAppConfigResponse>
+        {
+            const auto &appConfig = config.getConfig<AppConfig>();
+            return api::SuccessResponse<GetAppConfigResponse>(
+                200,
+                GetAppConfigResponse(
+                    appConfig.webServerInactivityPeriodMs,
+                    appConfig.wifiReconnectPeriodMs,
+                    appConfig.applyConfigTimeoutMs,
+                    appConfig.saveConfigTimeoutMs,
+                    appConfig.holdButtonTimeoutMs,
+                    appConfig.buttonPin,
+                    ModelBaseResponse()));
+        });
+
+    server.registerEndpoint<void, void>(
+        "/api/v1/config/app",
+        HTTPMethod::DELETE,
+        EndpointType::System,
+        [this]()
+        {
+            config.resetConfig<AppConfig>();
+            applyConfigTimer.start();
+        });
+    
+    server.registerEndpoint<void, void>(
+        "/api/v1/config",
+        HTTPMethod::POST,
+        EndpointType::System,
+        [this]()
+        {
+            saveConfigTimer.start();
+        });
 }

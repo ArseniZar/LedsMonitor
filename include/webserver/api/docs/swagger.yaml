@@ -2,10 +2,25 @@ openapi: 3.0.0
 info:
   title: espWeb
   description: |
-    OpenAPI specification for the built-in ESP8266 web server (WebServer).
-    Generated from the backend implementation (WebServer.cpp, DeviceModels.*,
-    ApiParse/ApiSerialization).
+    OpenAPI specification for the built-in ESP8266 web server.
+    This file mirrors the current /api/v1 backend routes
   version: 1.0.0
+
+tags:
+  - name: UI
+    description: Web interface endpoints.
+  - name: Network
+    description: Wi-Fi scan and connection endpoints.
+  - name: Network Config
+    description: Network configuration endpoints.
+  - name: Device LED Config
+    description: Device LED configuration endpoints.
+  - name: Telegram Bot Config
+    description: Telegram bot configuration endpoints.
+  - name: App Config
+    description: App-level configuration endpoints.
+  - name: Config Storage
+    description: Configuration persistence endpoint.
 
 servers:
   - url: http://192.168.4.1/
@@ -23,8 +38,9 @@ paths:
             text/html:
               schema:
                 type: string
+      tags: [UI]
 
-  "/network/scan":
+  "/api/v1/network/scan":
     post:
       summary: Start Wi-Fi scan
       description: Starts scanning for available Wi-Fi networks.
@@ -34,13 +50,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScanNetworkStartedResponseEnvelope"
+                $ref: "#/components/schemas/ScanWifiNetworkStartedResponseEnvelope"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network]
     get:
       summary: Get Wi-Fi scan state or results
       description: Returns the current scan state, or the discovered networks once the scan is completed.
@@ -51,25 +68,26 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/ScanStatusResponseEnvelope"
-                  - $ref: "#/components/schemas/ScanNetworksResponseEnvelope"
+                  - $ref: "#/components/schemas/ScanWifiStatusResponseEnvelope"
+                  - $ref: "#/components/schemas/ScanWifiNetworksResponseEnvelope"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network]
 
-  "/network/connect":
+  "/api/v1/network/connect":
     post:
       summary: Start connection to Wi-Fi network
-      description: Accepts the target SSID and password and initiates a connection attempt.
+      description: Accepts the target SSID and password inside the `data` wrapper and initiates a connection attempt.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConnectWifiNetworkRequest"
+              $ref: "#/components/schemas/ConnectWifiNetworkRequestEnvelope"
       responses:
         "200":
           description: Connection attempt started
@@ -78,11 +96,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ConnectWifiNetworkResponseEnvelope"
         "400":
-          description: Bad request (empty body, invalid JSON, etc.)
+          description: Bad request (empty body, invalid JSON, missing data wrapper, etc.)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network]
     get:
       summary: Get Wi-Fi connection status
       description: Returns the current Wi-Fi connection state.
@@ -99,35 +118,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network]
 
-  "/config":
+  "/api/v1/config/network":
     get:
-      summary: Get device configuration
-      description: Returns the current device, network, and Telegram configuration.
+      summary: Get network configuration
+      description: Returns the current network configuration.
       responses:
         "200":
-          description: Configuration
+          description: Network configuration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetConfigResponseEnvelope"
+                $ref: "#/components/schemas/GetNetworkConfigResponseEnvelope"
         "400":
           description: Bad request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network Config]
     patch:
-      summary: Update device configuration
-      description: Updates one or more configuration fields. Omitted fields remain unchanged.
+      summary: Update network configuration
+      description: Updates one or more network configuration fields. Omitted fields remain unchanged.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateConfigRequest"
+              $ref: "#/components/schemas/UpdateNetworkConfigRequestEnvelope"
       responses:
-        "200":
+        "204":
           description: Configuration updated
         "400":
           description: Bad request
@@ -135,21 +156,194 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network Config]
+    delete:
+      summary: Reset network configuration
+      description: Restores network configuration to defaults.
+      responses:
+        "204":
+          description: Configuration reset
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Network Config]
 
-  "/stop":
+  "/api/v1/config/deviceled":
     get:
-      summary: Stop web server
-      description: Stops the WebServer and returns HTTP 200 with an empty body.
+      summary: Get device LED configuration
+      description: Returns the current LED device configuration.
       responses:
         "200":
-          description: Server stopped successfully
-    
+          description: Device LED configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDeviceLedConfigResponseEnvelope"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Device LED Config]
+    patch:
+      summary: Update device LED configuration
+      description: Updates one or more LED device configuration fields. Omitted fields remain unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDeviceLedConfigRequestEnvelope"
+      responses:
+        "204":
+          description: Configuration updated
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Device LED Config]
+    delete:
+      summary: Reset device LED configuration
+      description: Restores LED device configuration to defaults.
+      responses:
+        "204":
+          description: Configuration reset
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Device LED Config]
+
+  "/api/v1/config/telegrambot":
+    get:
+      summary: Get Telegram bot configuration
+      description: Returns the current Telegram bot configuration.
+      responses:
+        "200":
+          description: Telegram bot configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTelegramBotConfigResponseEnvelope"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Telegram Bot Config]
+    patch:
+      summary: Update Telegram bot configuration
+      description: Updates one or more Telegram bot configuration fields. Omitted fields remain unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTelegramBotConfigRequestEnvelope"
+      responses:
+        "204":
+          description: Configuration updated
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Telegram Bot Config]
+    delete:
+      summary: Reset Telegram bot configuration
+      description: Restores Telegram bot configuration to defaults.
+      responses:
+        "204":
+          description: Configuration reset
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Telegram Bot Config]
+
+  "/api/v1/config/app":
+    get:
+      summary: Get app configuration
+      description: Returns the current application-level configuration.
+      responses:
+        "200":
+          description: App configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetAppConfigResponseEnvelope"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [App Config]
+    patch:
+      summary: Update app configuration
+      description: Updates one or more app configuration fields. Omitted fields remain unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppConfigRequestEnvelope"
+      responses:
+        "204":
+          description: Configuration updated
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [App Config]
+    delete:
+      summary: Reset app configuration
+      description: Restores app configuration to defaults.
+      responses:
+        "204":
+          description: Configuration reset
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [App Config]
+
+  "/api/v1/config":
+    post:
+      summary: Save configuration
+      description: Persists the current configuration to storage.
+      responses:
+        "204":
+          description: Configuration saved
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      tags: [Config Storage]
 
 components:
   schemas:
     ErrorResponse:
       type: object
-      description: API error (ApiErrorResponse).
+      description: API error response.
       properties:
         ok:
           type: boolean
@@ -165,9 +359,10 @@ components:
           example: "Bad request"
       required: [ok, error_code, message]
 
+    # ========================= Common entities =========================
     WifiNetwork:
       type: object
-      description: Wi-Fi network model used by the scan and connect APIs.
+      description: Wi-Fi network model used by the scan API.
       properties:
         ssid:
           type: string
@@ -181,7 +376,7 @@ components:
           example: -40
         encryptionType:
           type: integer
-          description: Encryption type (enum value from the Wi‑Fi library).
+          description: Encryption type (enum value from the Wi-Fi library).
           example: 7
         channel:
           type: integer
@@ -194,67 +389,138 @@ components:
           example: false
       required: [ssid, password, rssi, encryptionType, channel, bssid, hidden]
 
-    ConnectWifiNetworkRequest:
+    # ========================= Request wrappers =========================
+    ConnectWifiNetworkRequestData:
       type: object
-      description: Request body for POST /network/connect.
+      description: Payload for POST /api/v1/network/connect.
+      properties:
+        ssid:
+          type: string
+          example: "HomeWiFi"
+        password:
+          type: string
+          example: "12345678"
+      required: [ssid, password]
+
+    ConnectWifiNetworkRequestEnvelope:
+      type: object
+      description: Request body wrapper used by the parser.
       properties:
         data:
-          type: object
-          description: Payload containing WiFi credentials.
-          properties:
-            ssid:
-              type: string
-              example: "HomeWiFi"
-            password:
-              type: string
-              example: "12345678"
-          required: [ssid, password]
+          $ref: "#/components/schemas/ConnectWifiNetworkRequestData"
       required: [data]
 
-    UpdateConfigRequest:
+    # ========================= Network config =========================
+    UpdateNetworkConfigData:
       type: object
-      description: Request body for PATCH /config.
+      description: Payload for PATCH /api/v1/config/network.
+      properties:
+        apSsid:
+          type: string
+          example: "MyAccessPoint"
+        apPassword:
+          type: string
+          example: "ap-password"
+        mdnsName:
+          type: string
+          example: "lumvia"
+        wifiConnectionTimeoutMs:
+          type: integer
+          format: int64
+          example: 60000
+
+    UpdateNetworkConfigRequestEnvelope:
+      type: object
+      description: Request body wrapper used by the parser.
       properties:
         data:
-          type: object
-          description: Payload containing the fields to update.
-          properties:
-            apSsid:
-              type: string
-              example: "MyAccessPoint"
-            apPassword:
-              type: string
-              example: "ap-password"
-            mdnsName:
-              type: string
-              example: "lumvia"
-            wifiConnectionTimeoutMs:
-              type: integer
-              format: int64
-              example: 60000
-            countLed:
-              type: integer
-              format: int32
-              example: 8
-            deviceName:
-              type: string
-              example: "Lumvia"
-            token:
-              type: string
-              example: "1234567890:ABCDEF"
-            limitMessage:
-              type: integer
-              format: int32
-              example: 20
-            periodUpdate:
-              type: integer
-              format: int32
-              example: 60
+          $ref: "#/components/schemas/UpdateNetworkConfigData"
       required: [data]
 
-    ScanNetworkStartedResult:
+    # ========================= Device LED config =========================
+    UpdateDeviceLedConfigData:
       type: object
-      description: result field for POST /network/scan.
+      description: Payload for PATCH /api/v1/config/deviceled.
+      properties:
+        countLed:
+          type: integer
+          format: int32
+          example: 8
+        deviceName:
+          type: string
+          example: "Lumvia"
+
+    UpdateDeviceLedConfigRequestEnvelope:
+      type: object
+      description: Request body wrapper used by the parser.
+      properties:
+        data:
+          $ref: "#/components/schemas/UpdateDeviceLedConfigData"
+      required: [data]
+
+    # ========================= Telegram bot config =========================
+    UpdateTelegramBotConfigData:
+      type: object
+      description: Payload for PATCH /api/v1/config/telegrambot.
+      properties:
+        token:
+          type: string
+          example: "1234567890:ABCDEF"
+        limitMessage:
+          type: integer
+          format: int32
+          example: 20
+        periodUpdate:
+          type: integer
+          format: int32
+          example: 60
+
+    UpdateTelegramBotConfigRequestEnvelope:
+      type: object
+      description: Request body wrapper used by the parser.
+      properties:
+        data:
+          $ref: "#/components/schemas/UpdateTelegramBotConfigData"
+      required: [data]
+
+    # ========================= App config =========================
+    UpdateAppConfigData:
+      type: object
+      description: Payload for PATCH /api/v1/config/app.
+      properties:
+        webServerInactivityPeriodMs:
+          type: integer
+          format: int64
+          example: 300000
+        wifiReconnectPeriodMs:
+          type: integer
+          format: int64
+          example: 10000
+        applyConfigTimeoutMs:
+          type: integer
+          format: int64
+          example: 5000
+        saveConfigTimeoutMs:
+          type: integer
+          format: int64
+          example: 10000
+        holdButtonTimeoutMs:
+          type: integer
+          format: int64
+          example: 1500
+
+    UpdateAppConfigRequestEnvelope:
+      type: object
+      description: Request body wrapper used by the parser.
+      properties:
+        data:
+          $ref: "#/components/schemas/UpdateAppConfigData"
+      required: [data]
+
+    # ========================= Response payloads =========================
+    ScanWifiNetworkStartedResult:
+      type: object
+      description: Result field for POST /api/v1/network/scan.
       properties:
         scan:
           type: object
@@ -266,9 +532,9 @@ components:
           required: [started]
       required: [scan]
 
-    ScanStatusResult:
+    ScanWifiStatusResult:
       type: object
-      description: result field for GET /network/scan while the scan is running.
+      description: Result field for GET /api/v1/network/scan while the scan is running.
       properties:
         status:
           type: object
@@ -285,9 +551,9 @@ components:
           required: [code]
       required: [status]
 
-    ScanNetworksResult:
+    ScanWifiNetworksResult:
       type: object
-      description: result field for GET /network/scan when the scan is complete.
+      description: Result field for GET /api/v1/network/scan when the scan is complete.
       properties:
         networks:
           type: array
@@ -297,7 +563,7 @@ components:
 
     ConnectWifiNetworkStartedResult:
       type: object
-      description: result field for POST /network/connect.
+      description: Result field for POST /api/v1/network/connect.
       properties:
         connect:
           type: object
@@ -311,7 +577,7 @@ components:
 
     WifiStatusResult:
       type: object
-      description: result field for GET /network/connect.
+      description: Result field for GET /api/v1/network/connect.
       properties:
         status:
           type: object
@@ -334,13 +600,19 @@ components:
           required: [code]
       required: [status]
 
-    GetConfigResult:
+    GetNetworkConfigResult:
       type: object
-      description: result field for GET /config.
+      description: Result field for GET /api/v1/config/network.
       properties:
         config:
           type: object
           properties:
+            ssid:
+              type: string
+              example: "HomeWiFi"
+            password:
+              type: string
+              example: "12345678"
             apSsid:
               type: string
               example: "MyAccessPoint"
@@ -354,6 +626,20 @@ components:
               type: integer
               format: int64
               example: 60000
+          required: [ssid, password, apSsid, apPassword, mdnsName, wifiConnectionTimeoutMs]
+      required: [config]
+
+    GetDeviceLedConfigResult:
+      type: object
+      description: Result field for GET /api/v1/config/deviceled.
+      properties:
+        config:
+          type: object
+          properties:
+            pin:
+              type: integer
+              format: int32
+              example: 2
             countLed:
               type: integer
               format: int32
@@ -361,6 +647,16 @@ components:
             deviceName:
               type: string
               example: "Lumvia"
+          required: [pin, countLed, deviceName]
+      required: [config]
+
+    GetTelegramBotConfigResult:
+      type: object
+      description: Result field for GET /api/v1/config/telegrambot.
+      properties:
+        config:
+          type: object
+          properties:
             token:
               type: string
               example: "1234567890:ABCDEF"
@@ -372,8 +668,79 @@ components:
               type: integer
               format: int32
               example: 60
-          required: [apSsid, apPassword, mdnsName, wifiConnectionTimeoutMs, countLed, deviceName, token, limitMessage, periodUpdate]
+          required: [token, limitMessage, periodUpdate]
       required: [config]
+
+    GetAppConfigResult:
+      type: object
+      description: Result field for GET /api/v1/config/app.
+      properties:
+        config:
+          type: object
+          properties:
+            webServerInactivityPeriodMs:
+              type: integer
+              format: int64
+              example: 300000
+            wifiReconnectPeriodMs:
+              type: integer
+              format: int64
+              example: 10000
+            applyConfigTimeoutMs:
+              type: integer
+              format: int64
+              example: 5000
+            saveConfigTimeoutMs:
+              type: integer
+              format: int64
+              example: 10000
+            holdButtonTimeoutMs:
+              type: integer
+              format: int64
+              example: 1500
+            buttonPin:
+              type: integer
+              format: int32
+              example: 0
+          required: [webServerInactivityPeriodMs, wifiReconnectPeriodMs, applyConfigTimeoutMs, saveConfigTimeoutMs, holdButtonTimeoutMs, buttonPin]
+      required: [config]
+
+    # ========================= Response envelopes =========================
+    ScanWifiNetworkStartedResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<ScanWifiNetworkStartedResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/ScanWifiNetworkStartedResult"
+      required: [ok, result]
+
+    ScanWifiStatusResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetScanStatusResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/ScanWifiStatusResult"
+      required: [ok, result]
+
+    ScanWifiNetworksResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<ScanWifiNetworkResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/ScanWifiNetworksResult"
+      required: [ok, result]
 
     ConnectWifiNetworkResponseEnvelope:
       type: object
@@ -387,54 +754,6 @@ components:
           $ref: "#/components/schemas/ConnectWifiNetworkStartedResult"
       required: [ok, result]
 
-    GetConfigResponseEnvelope:
-      type: object
-      description: Successful response ApiSuccessResponse<GetConfigResponse>.
-      properties:
-        ok:
-          type: boolean
-          enum: [true]
-          example: true
-        result:
-          $ref: "#/components/schemas/GetConfigResult"
-      required: [ok, result]
-
-    ScanNetworkStartedResponseEnvelope:
-      type: object
-      description: Successful response ApiSuccessResponse<ScanWifiNetworkStartedResponse>.
-      properties:
-        ok:
-          type: boolean
-          enum: [true]
-          example: true
-        result:
-          $ref: "#/components/schemas/ScanNetworkStartedResult"
-      required: [ok, result]
-
-    ScanStatusResponseEnvelope:
-      type: object
-      description: Successful response ApiSuccessResponse<GetScanStatusResponse>.
-      properties:
-        ok:
-          type: boolean
-          enum: [true]
-          example: true
-        result:
-          $ref: "#/components/schemas/ScanStatusResult"
-      required: [ok, result]
-
-    ScanNetworksResponseEnvelope:
-      type: object
-      description: Successful response ApiSuccessResponse<ScanWifiNetworkResponse>.
-      properties:
-        ok:
-          type: boolean
-          enum: [true]
-          example: true
-        result:
-          $ref: "#/components/schemas/ScanNetworksResult"
-      required: [ok, result]
-
     WifiStatusResponseEnvelope:
       type: object
       description: Successful response ApiSuccessResponse<GetWifiStatusResponse>.
@@ -445,4 +764,52 @@ components:
           example: true
         result:
           $ref: "#/components/schemas/WifiStatusResult"
+      required: [ok, result]
+
+    GetNetworkConfigResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetNetworkConfigResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/GetNetworkConfigResult"
+      required: [ok, result]
+
+    GetDeviceLedConfigResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetDeviceLedConfigResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/GetDeviceLedConfigResult"
+      required: [ok, result]
+
+    GetTelegramBotConfigResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetTelegramBotConfigResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/GetTelegramBotConfigResult"
+      required: [ok, result]
+
+    GetAppConfigResponseEnvelope:
+      type: object
+      description: Successful response ApiSuccessResponse<GetAppConfigResponse>.
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+          example: true
+        result:
+          $ref: "#/components/schemas/GetAppConfigResult"
       required: [ok, result]
