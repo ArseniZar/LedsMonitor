@@ -9,16 +9,20 @@ struct AppRuntimeConfig;
 class AppConfig
 {
 public:
-    const uint32_t webServerInactivityPeriodMs;
-    const uint32_t wifiReconnectPeriodMs;
-    const uint32_t applyConfigTimeoutMs;
-    const uint32_t saveConfigTimeoutMs;
+    uint32_t webServerInactivityPeriodMs;
+    uint32_t wifiReconnectPeriodMs;
+    uint32_t applyConfigTimeoutMs;
+    uint32_t saveConfigTimeoutMs;
+    uint32_t holdButtonTimeoutMs;
+    const uint8_t buttonPin;
 
 
     static const AppConfig &defaultConfig(uint32_t webServerInactivityPeriodMs,
                                           uint32_t wifiReconnectPeriodMs, 
                                           uint32_t applyConfigTimeoutMs,
-                                          uint32_t saveConfigTimeoutMs);
+                                          uint32_t saveConfigTimeoutMs,
+                                          uint32_t holdButtonTimeoutMs,
+                                          uint8_t buttonPin);
 
     static const AppConfig &fromDefault();
     static constexpr const char *TYPE_NAME = "AppConfig";
@@ -34,7 +38,9 @@ private:
         uint32_t webServerInactivityPeriodMs, 
         uint32_t wifiReconnectPeriodMs,
         uint32_t applyConfigTimeoutMs,
-        uint32_t saveConfigTimeoutMs
+        uint32_t saveConfigTimeoutMs,
+        uint32_t holdButtonTimeoutMs,
+        uint8_t buttonPin
     );
     static AppConfig *defaultInstance;
 };
@@ -43,6 +49,12 @@ struct AppRuntimeConfig
 {
     static constexpr const char *PATH = "/app";
     static constexpr uint8_t KEY = 'A';
+
+    uint32_t webServerInactivityPeriodMs;
+    uint32_t wifiReconnectPeriodMs;
+    uint32_t applyConfigTimeoutMs;
+    uint32_t saveConfigTimeoutMs;
+    uint32_t holdButtonTimeoutMs;
 
     AppRuntimeConfig() = default;
     AppRuntimeConfig(const AppConfig &config);

@@ -26,7 +26,7 @@ public:
     bool operator==(const DeviceLedRuntimeConfig &config) const;
 
 private:
-    DeviceLedConfig(uint8_t p, uint16_t c, const char *name);
+    DeviceLedConfig(uint8_t pin, uint16_t countLed, const char *deviceName);
     static DeviceLedConfig *defaultInstance;
 };
 
@@ -37,6 +37,7 @@ struct DeviceLedRuntimeConfig
 
     uint16_t countLed;
     String32 deviceName;
+    
     DeviceLedRuntimeConfig() = default;
     DeviceLedRuntimeConfig(const DeviceLedConfig &config);
     void operator=(const DeviceLedConfig &config);

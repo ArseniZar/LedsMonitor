@@ -53,12 +53,18 @@ public:
     std::vector<WifiNetwork> scanWifiNetworks();
     std::vector<WifiNetwork> getScanWifiNetworksAsyncResults();
     
-    bool startCaptivePortal();
-    bool stopCaptivePortal();
+    // bool startCaptivePortal();
+    // bool stopCaptivePortal();
     bool stopMDNS();
     bool startMDNS();
     bool stopAP();
     bool startAP();
+    bool startDNS();
+    bool stopDNS();
+    bool isRunningDNS() const;
+    bool isRunningAP() const;
+    bool isRunnningMDNS() const;
+    
 
     void setAttemptWifiConfig(const char *ssid, const char *password);
     void setAPConfig(const char *apSsid, const char *apPassword);
@@ -102,8 +108,6 @@ private:
 
     bool startMDNS(const String32 &mdnsName);
     bool startAP(const String32 &apSsid, const String32 &apPassword);
-    bool stopDNS();
-    bool startDNS();
 
     bool tryConnectWifi(const String32 &ssid, const String32 &password);
     bool tryConnectWifiAsync(const String32 &ssid, const String32 &password);

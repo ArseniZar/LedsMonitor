@@ -7,8 +7,8 @@ DeviceLedConfig::DeviceLedConfig(const DeviceLedConfig &def)
 {
 }
 
-DeviceLedConfig::DeviceLedConfig(uint8_t p, uint16_t c, const char *name)
-    : pin(p), countLed(c), deviceName(name)
+DeviceLedConfig::DeviceLedConfig(uint8_t pin, uint16_t countLed, const char *deviceName)
+    : pin(pin), countLed(countLed), deviceName(deviceName)
 {
 }
 

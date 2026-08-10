@@ -4,6 +4,8 @@
 
 #include <Arduino.h>
 #include <GTimer.h>
+#include <uButton.h>
+#include "AppMode.h"
 #include "Logger.h"
 #include "ConfigManager.h"
 #include "MacAddress.h"
@@ -29,29 +31,14 @@
 #define SAVE_CONFIG_TIMEOUT_MS 2000
 #endif
 
+#ifndef HOLD_BUTTON_TIMEOUT_MS
+#define HOLD_BUTTON_TIMEOUT_MS 30000
+#endif
+
 #ifndef LOGGER_DEBUG_MODE
 #define LOGGER_DEBUG_MODE 1
 #endif
 
-#ifndef ENABLE_NETWORK_MODULE
-#define ENABLE_NETWORK_MODULE 1
-#endif
-
-#ifndef ENABLE_WEBSERVER_MODULE
-#define ENABLE_WEBSERVER_MODULE 1
-#endif
-
-#ifndef ENABLE_TELEGRAM_BOT_MODULE
-#define ENABLE_TELEGRAM_BOT_MODULE 1
-#endif
-
-#ifndef ENABLE_DEVICE_MODULE
-#define ENABLE_DEVICE_MODULE 1
-#endif
-
-#ifndef ENABLE_CONFIG_MODULE
-#define ENABLE_CONFIG_MODULE 1
-#endif
 
 class App
 {
@@ -62,7 +49,9 @@ public:
     void update();
 
 private:
-    App();
+    App();    
+    AppMode mode;
+    void startMode(AppMode newMode);
 
     using DeviceLedConfigPair = ConfigPair<DeviceLedConfig, DeviceLedRuntimeConfig>;
     using NetworkConfigPair = ConfigPair<NetworkConfig, NetworkRuntimeConfig>;
@@ -82,6 +71,9 @@ private:
     GTimer<millis> wifiReconnectTimer;
     GTimer<millis> applyConfigTimer;
     GTimer<millis> saveConfigTimer;
+    GTimer<millis> buttonHoldTimer;
+
+    uButton button; 
 
     void applyConfig(const AppConfig &config);
     void registerCommands();

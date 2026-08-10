@@ -4,7 +4,7 @@
 template <typename T, typename E>
 DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, uint16_t countLed) : DeviceBase(mac, DEVICE_LED_NAME),
                                                                                                     logger(logger),
-                                                                                                    device(countLed, pin),
+                                                                                                    device(std::make_unique<NeoPixelBus<T, E>>(countLed, pin)),
                                                                                                     pin(pin),
                                                                                                     countLed(countLed),
                                                                                                     brightness(DEVICE_LED_BRIGHTNESS),
@@ -13,7 +13,7 @@ DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, u
 template <typename T, typename E>
 void DeviceLed<T, E>::begin()
 {
-    device.Begin();
+    device->Begin();
     setBrightness(brightness);
     setPower(status);
 }
@@ -42,8 +42,8 @@ template <typename T, typename E>
 void DeviceLed<T, E>::setPower(bool status)
 {
     this->status = status;
-    device.ClearTo(this->status ? brightnessColor() : Colors::BLACK);
-    device.Show();
+    device->ClearTo(this->status ? brightnessColor() : Colors::BLACK);
+    device->Show();
 }
 
 template <typename T, typename E>
@@ -54,9 +54,19 @@ void DeviceLed<T, E>::setColor(const char *color)
 
     if (status)
     {
-        device.ClearTo(brightnessColor());
-        device.Show();
+        device->ClearTo(brightnessColor());
+        device->Show();
     }
+}
+
+template <typename T, typename E>
+void DeviceLed<T, E>::setCountLed(uint16_t countLed)
+{
+    this->countLed = countLed;
+    device = std::make_unique<NeoPixelBus<T, E>>(countLed, pin);
+    device->Begin();
+    setBrightness(brightness);
+    setPower(status);
 }
 
 template <typename T, typename E>
@@ -88,7 +98,14 @@ void DeviceLed<T, E>::applyConfig(const DeviceLedConfig &config)
 
     if (countLed != config.countLed)
     {
-        // TODO: надо как то метод котоырй будет говрит системе в ближайщее время сделай restart board
+        setCountLed(config.countLed);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) CountLed changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) CountLed no changed"); return buf; });
     }
 }
 

@@ -73,45 +73,45 @@ void NetworkManager::tick()
     }
 }
 
-bool NetworkManager::startCaptivePortal()
-{
-    logger.log(LOG_DEBUG, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Starting Captive Portal network (DNS)..."); return buf; });
+// bool NetworkManager::startCaptivePortal()
+// {
+//     logger.log(LOG_DEBUG, [&]() -> String128
+//                { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Starting Captive Portal network (DNS)..."); return buf; });
 
-    if (!startDNS())
-    {
-        logger.log(LOG_ERROR, [&]() -> String128
-                   { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start DNS server for Captive Portal."); return buf; });
-        return false;
-    }
+//     if (!startDNS())
+//     {
+//         logger.log(LOG_ERROR, [&]() -> String128
+//                    { String128 buf;  buf = F("(NetworkManager::startCaptivePortal) Failed to start DNS server for Captive Portal."); return buf; });
+//         return false;
+//     }
 
-    logger.log(LOG_INFO, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Captive Portal network started successfully (DNS)."); return buf; });
+//     logger.log(LOG_INFO, [&]() -> String128
+//                { String128 buf; buf = F("(NetworkManager::startCaptivePortal) Captive Portal network started successfully (DNS)."); return buf; });
 
-    return true;
-}
+//     return true;
+// }
 
-bool NetworkManager::stopCaptivePortal()
-{
-    logger.log(LOG_DEBUG, [&]() -> String128
-               { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Stoping Captive Portal network (DNS)..."); return buf; });
+// bool NetworkManager::stopCaptivePortal()
+// {
+//     logger.log(LOG_DEBUG, [&]() -> String128
+//                { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Stoping Captive Portal network (DNS)..."); return buf; });
 
-    bool dnsStopped = stopDNS();
+//     bool dnsStopped = stopDNS();
 
-    if (dnsStopped)
-    {
-        logger.log(LOG_INFO, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Captive Portal network stopped successfully (DNS)."); return buf; });
-        return true;
-    }
+//     if (dnsStopped)
+//     {
+//         logger.log(LOG_INFO, [&]() -> String128
+//                    { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Captive Portal network stopped successfully (DNS)."); return buf; });
+//         return true;
+//     }
 
-    if (!dnsStopped)
-    {
-        logger.log(LOG_WARN, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop DNS server for Captive Portal."); return buf; });
-    }
-    return false;
-}
+//     if (!dnsStopped)
+//     {
+//         logger.log(LOG_WARN, [&]() -> String128
+//                    { String128 buf; buf = F("(NetworkManager::stopCaptivePortal) Failed to stop DNS server for Captive Portal."); return buf; });
+//     }
+//     return false;
+// }
 
 void NetworkManager::configureWifiPerformance()
 {
@@ -137,24 +137,31 @@ bool NetworkManager::attemptConnection(const char *ssid, const char *password)
 {
     for (int i = 0; i < MAX_WIFI_HANDLER; i++)
     {
-        this->onGotIpHandlers[i] = nullptr;
-        this->onDisconnectedHandlers[i] = nullptr;
+        onGotIpHandlers[i] = nullptr;
+        onDisconnectedHandlers[i] = nullptr;
     }
 
-    this->attemptSsid = ssid;
-    this->attemptPassword = password;
+    if (strcmp(ssid, attemptSsid.c_str()) != 0) // была проблема самаприсваивания
+    {
+        attemptSsid = ssid;
+    }
+
+    if (strcmp(password, attemptPassword.c_str()) != 0)
+    {
+        attemptPassword = password;
+    }
 
     if (!tryConnectWifi(attemptSsid, attemptPassword))
     {
-        this->attemptSsid = F("");
-        this->attemptPassword = F("");
+        attemptSsid = F("");
+        attemptPassword = F("");
         return false;
     }
 
-    this->ssid = attemptSsid;
-    this->password = attemptPassword;
-    this->attemptSsid = F("");
-    this->attemptPassword = F("");
+    ssid = attemptSsid;
+    password = attemptPassword;
+    attemptSsid = F("");
+    attemptPassword = F("");
     return true;
 }
 
@@ -167,17 +174,24 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
 {
     for (int i = 0; i < MAX_WIFI_HANDLER; i++)
     {
-        this->onGotIpHandlers[i] = nullptr;
-        this->onDisconnectedHandlers[i] = nullptr;
+        onGotIpHandlers[i] = nullptr;
+        onDisconnectedHandlers[i] = nullptr;
     }
 
-    this->attemptSsid = ssid;
-    this->attemptPassword = password;
+    if (strcmp(ssid, attemptSsid.c_str()) != 0)
+    {
+        attemptSsid = ssid;
+    }
+
+    if (strcmp(password, attemptPassword.c_str()) != 0)
+    {
+        attemptPassword = password;
+    }
 
     if (!tryConnectWifiAsync(attemptSsid, attemptPassword))
     {
-        this->attemptSsid = F("");
-        this->attemptPassword = F("");
+        attemptSsid = F("");
+        attemptPassword = F("");
         return false;
     }
 
@@ -188,26 +202,15 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
         this->attemptSsid = F("");
         this->attemptPassword = F("");
         this->onGotIpHandlers[1] = nullptr; 
-        this->onDisconnectedHandlers[1] = nullptr; });
+        this->onDisconnectedHandlers[1] = nullptr; 
+        });
 
     onDisconnectedHandlers[1] = WiFi.onStationModeDisconnected([this](const WiFiEventStationModeDisconnected &event)
                                                                {
-                                                                   // switch(static_cast<WifiFailState>(event.reason))
-                                                                   // {
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_NO_AP_FOUND:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_AUTH_FAIL:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_ASSOC_FAIL:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_HANDSHAKE_TIMEOUT:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_BEACON_TIMEOUT:
-
-                                                                   this->attemptSsid = F("");
-                                                                   this->attemptPassword = F("");
-                                                                   this->onGotIpHandlers[1] = nullptr;
-                                                                   this->onDisconnectedHandlers[1] = nullptr;
-
-                                                                   //     break;
-                                                                   // }
-                                                               });
+        this->attemptSsid = F("");
+        this->attemptPassword = F("");
+        this->onGotIpHandlers[1] = nullptr;
+        this->onDisconnectedHandlers[1] = nullptr; });
 
     return true;
 }
@@ -279,14 +282,19 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
 
 void NetworkManager::setAttemptWifiConfig(const char *ssid, const char *password)
 {
-    this->attemptSsid = ssid;
-    this->attemptPassword = password;
+    attemptSsid = ssid;
+    attemptPassword = password;
 }
 
 void NetworkManager::setAPConfig(const char *apSsid, const char *apPassword)
 {
-    this->apSsid = apSsid;
-    this->apPassword = apPassword;
+    apSsid = apSsid;
+    apPassword = apPassword;
+}
+
+bool NetworkManager::isRunningAP() const
+{
+    return WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA;
 }
 
 bool NetworkManager::startAP()
@@ -304,9 +312,16 @@ bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
                 buf.add(F("'"));
                 return buf; });
 
-    if (apSsid.length() == 0)
+    if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA)
     {
         logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf.add(F("(NetworkManager::startAP) Wi-Fi Access Point is already running. Restart with new SSID and PASS.")); return buf; });
+        WiFi.softAPdisconnect(true);
+    }
+
+    if (apSsid.length() == 0)
+    {
+        logger.log(LOG_ERROR, [&]() -> String128
                    {
                     String128 buf;
                     buf.add(F("(NetworkManager::startAP) Failed to start Access Point: SSID is empty."));
@@ -324,7 +339,7 @@ bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
                 buf.add(phySet ? F("enabled successfully") : F("failed to enable"));
                 return buf; });
 
-    bool apStarted = WiFi.softAP(apSsid, apPassword, 1);
+    bool apStarted = WiFi.softAP(apSsid, apPassword, WiFi.channel());
     logger.log(apStarted ? LOG_INFO : LOG_ERROR, [&]() -> String128
                {
                 String128 buf;
@@ -364,12 +379,12 @@ bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
 
 void NetworkManager::setMdnsName(const char *mdnsName)
 {
-    this->mdnsName = mdnsName;
+    mdnsName = mdnsName;
 }
 
 void NetworkManager::setWifiConnectionTimeout(uint32_t timeout)
 {
-    this->wifiConnectionTimeoutMs = timeout;
+    wifiConnectionTimeoutMs = timeout;
 }
 
 bool NetworkManager::stopMDNS()
@@ -379,6 +394,13 @@ bool NetworkManager::stopMDNS()
                 String128 buf;
                 buf.add(F("(NetworkManager::stopMDNS) Attempting to stop mDNS responder..."));
                 return buf; });
+
+    if (!MDNS.isRunning())
+    {
+        logger.log(LOG_INFO, [&]() -> String128
+                   { String128 buf; buf.add(F("(NetworkManager::stopMDNS) mDNS responder is not running.")); return buf; });
+        return true;
+    }
 
     bool status = MDNS.end();
 
@@ -395,6 +417,11 @@ bool NetworkManager::stopMDNS()
     return false;
 }
 
+bool NetworkManager::isRunnningMDNS() const
+{
+    return MDNS.isRunning();
+}
+
 bool NetworkManager::startMDNS()
 {
     return startMDNS(mdnsName);
@@ -409,9 +436,16 @@ bool NetworkManager::startMDNS(const String32 &mdnsName)
                 buf.add(mdnsName);
                 return buf; });
 
-    if (mdnsName.length() == 0)
+    if (MDNS.isRunning())
     {
         logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf.add(F("(NetworkManager::startMDNS) mDNS responder is already running. Restart with new Name")); return buf; });
+        MDNS.end();
+    }
+
+    if (mdnsName.length() == 0)
+    {
+        logger.log(LOG_ERROR, [&]() -> String128
                    {
                     String128 buf;
                     buf.add(F("(NetworkManager::startMDNS) Failed to start mDNS responder: mDNS name is empty."));
@@ -427,7 +461,7 @@ bool NetworkManager::startMDNS(const String32 &mdnsName)
         return true;
     }
 
-    logger.log(LOG_WARN, [&]() -> String128
+    logger.log(LOG_ERROR, [&]() -> String128
                { String128 buf; buf =  F("(NetworkManager::startMDNS) Failed to start mDNS responder with name: "); buf.add(mdnsName); return buf; });
 
     return false;
@@ -441,6 +475,13 @@ bool NetworkManager::stopAP()
                 buf.add(F("(NetworkManager::stopAP) Attempting to stop Wi-Fi Access Point..."));
                 return buf; });
 
+    if (WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_OFF)
+    {
+        logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf =  F("(NetworkManager::stopAP) Wi-Fi Access Point is already stopped."); return buf; });
+        return true;
+    }
+
     bool status = WiFi.softAPdisconnect(true);
 
     if (status)
@@ -450,10 +491,15 @@ bool NetworkManager::stopAP()
         return true;
     }
 
-    logger.log(LOG_WARN, [&]() -> String128
+    logger.log(LOG_ERROR, [&]() -> String128
                { String128 buf; buf =  F("(NetworkManager::stopAP) Wi-Fi Access Point was not stopped."); return buf; });
 
     return false;
+}
+
+bool NetworkManager::isRunningDNS() const
+{
+    return const_cast<DNSServer &>(dnsServer).isForwarding();
 }
 
 bool NetworkManager::startDNS()
@@ -461,8 +507,15 @@ bool NetworkManager::startDNS()
     logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
-                buf.add(F("(NetworkManager::startDNS) Attempting to start DNS responder"));
+                buf.add(F("(NetworkManager::startDNS) Attempting to start DNS responder..."));
                 return buf; });
+
+    if (dnsServer.isForwarding())
+    {
+        logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf =  F("(NetworkManager::startDNS) DNS responder is already running. Restart DNS."); return buf; });
+        dnsServer.stop();
+    }
 
     dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer.setTTL(0);
@@ -475,7 +528,7 @@ bool NetworkManager::startDNS()
         return true;
     }
 
-    logger.log(LOG_WARN, [&]() -> String128
+    logger.log(LOG_ERROR, [&]() -> String128
                { String128 buf; buf =  F("(NetworkManager::startDNS) Failed to start DNS responder"); return buf; });
 
     return false;
@@ -488,6 +541,13 @@ bool NetworkManager::stopDNS()
                 String128 buf;
                 buf.add(F("(NetworkManager::stopDNS) Attempting to stop DNS responder"));
                 return buf; });
+
+    if (!dnsServer.isForwarding())
+    {
+        logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf =  F("(NetworkManager::stopDNS) DNS responder is not running."); return buf; });
+        return true;
+    }
 
     dnsServer.stop();
     logger.log(LOG_INFO, [&]() -> String128
@@ -503,18 +563,37 @@ std::vector<WifiNetwork> NetworkManager::scanWifiNetworks()
                 buf.add(F("(NetworkManager::scanWifiNetworks) Starting Wi-Fi scan..."));
                 return buf; });
 
+    // const WiFiMode_t previousMode = WiFi.getMode();
+    // int networksFound = WiFi.scanNetworks();
+
+    // if (previousMode != WIFI_STA && previousMode != WIFI_AP_STA)
+    // {
+    //     WiFi.disconnect(true, false);
+    // }
+
     int networksFound = WiFi.scanNetworks();
-    if (networksFound <= 0)
+
+    if (static_cast<ScanState>(networksFound) == ScanState::FAILED)
     {
-        logger.log(LOG_DEBUG, [&]() -> String128
+        logger.log(LOG_ERROR, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(NetworkManager::scanWifiNetworks) No Wi-Fi networks found."));
+                    buf.add(F("(NetworkManager::scanWifiNetworks) Wi-Fi scan failed."));
                     return buf; });
         return {};
     }
 
-    logger.log(LOG_DEBUG, [&]() -> String128
+    if (networksFound == 0)
+    {
+        logger.log(LOG_INFO, [&]() -> String128
+                   {
+                    String128 buf;
+                    buf.add(F("(NetworkManager::scanWifiNetworks) Wi-Fi scan completed. No Wi-Fi networks found."));
+                    return buf; });
+        return {};
+    }
+
+    logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
                 buf.add(F("(NetworkManager::scanWifiNetworks) Found "));
@@ -555,23 +634,34 @@ std::vector<WifiNetwork> NetworkManager::scanWifiNetworks()
                     buf.add(networks[i].hidden ? F("true") : F("false"));
                     return buf; });
     }
-    WiFi.scanDelete();
+
+    // WiFi.scanDelete(); TODO: если что вернуть
     return networks;
 }
 
 bool NetworkManager::scanWifiNetworksAsync()
 {
-    logger.log(LOG_DEBUG, [&]() -> String128
+    logger.log(LOG_DEBUG, []() -> String128
                {
         String128 buf;
         buf.add(F("(NetworkManager::scanWifiNetworksAsync) Starting asynchronous Wi-Fi scan..."));
         return buf; });
 
-    int result = WiFi.scanNetworks(true);
+    // const WiFiMode_t previousMode = WiFi.getMode();
 
-    if (static_cast<ScanState>(result) == ScanState::RUNNING)
+    // WiFi.scanNetworksAsync([this, previousMode](int networksFound)
+    //                        {
+    //     if (previousMode != WIFI_STA && previousMode != WIFI_AP_STA)
+    //     {
+    //          WiFi.enableSTA(false);
+    //         // WiFi.disconnect(true, false);
+    //     } });
+
+    WiFi.scanNetworksAsync([](int _) {});
+
+    if (static_cast<ScanState>(WiFi.scanComplete()) == ScanState::RUNNING)
     {
-        logger.log(LOG_DEBUG, [&]() -> String128
+        logger.log(LOG_INFO, []() -> String128
                    {
             String128 buf;
             buf.add(F("(NetworkManager::scanWifiNetworksAsync) Asynchronous Wi-Fi scan started."));
@@ -579,30 +669,59 @@ bool NetworkManager::scanWifiNetworksAsync()
         return true;
     }
 
-    logger.log(LOG_ERROR, [&]() -> String128
+    if (static_cast<ScanState>(WiFi.scanComplete()) == ScanState::FAILED)
+    {
+        logger.log(LOG_ERROR, []() -> String128
+                   {
+            String128 buf;
+            buf.add(F("(NetworkManager::scanWifiNetworksAsync) Asynchronous Wi-Fi scan failed to start."));
+            return buf; });
+        return false;
+    }
+
+    logger.log(LOG_WARN, []() -> String128
                {
         String128 buf;
-        buf.add(F("(NetworkManager::scanWifiNetworksAsync) Failed to start. Error code: "));
-        buf.add(result);
+        buf.add(F("(NetworkManager::scanWifiNetworksAsync) Asynchronous Wi-Fi scan did not start. Unknown error."));
         return buf; });
-
     return false;
 }
 
 std::vector<WifiNetwork> NetworkManager::getScanWifiNetworksAsyncResults()
 {
     int networksFound = WiFi.scanComplete();
-    if (networksFound <= 0)
+
+    if (static_cast<ScanState>(networksFound) == ScanState::RUNNING)
     {
-        logger.log(LOG_DEBUG, [&]() -> String128
+        logger.log(LOG_INFO, [&]() -> String128
                    {
                     String128 buf;
-                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan not found or scan not completed yet."));
+                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan is still running."));
                     return buf; });
         return {};
     }
 
-    logger.log(LOG_DEBUG, [&]() -> String128
+    if (static_cast<ScanState>(networksFound) == ScanState::FAILED)
+    {
+        logger.log(LOG_ERROR, [&]() -> String128
+                   {
+                    String128 buf;
+                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan failed."));
+                    return buf; });
+        return {};
+    }
+
+    if (networksFound == 0)
+    {
+        logger.log(LOG_INFO, [&]() -> String128
+                   {
+                    String128 buf;
+                    buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan completed. No Wi-Fi networks found."));
+                    return buf; });
+        return {};
+    }
+
+    logger.log(LOG_INFO, [&]() -> String128
                {
                 String128 buf;
                 buf.add(F("(NetworkManager::getScanWifiNetworksAsyncResults) Asynchronous Wi-Fi scan completed. Found "));
@@ -643,7 +762,7 @@ std::vector<WifiNetwork> NetworkManager::getScanWifiNetworksAsyncResults()
                     buf.add(networks[i].hidden ? F("true") : F("false"));
                     return buf; });
     }
-    WiFi.scanDelete();
+    // WiFi.scanDelete(); TODO: если что вернуть
     return networks;
 }
 
@@ -679,7 +798,7 @@ uint32_t NetworkManager::getWifiConnectionTimeout() const
 
 bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &password)
 {
-    logger.log(LOG_INFO, [&]() -> String128
+    logger.log(LOG_DEBUG, [&]() -> String128
                {
                 String128 buf;
                 buf.add(F("(NetworkManager::tryConnectWifi) Attempting to connect to SSID: '"));
@@ -689,9 +808,16 @@ bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &passwo
                 buf.add(F("'"));
                 return buf; });
 
-    if (ssid.length() == 0)
+    if (getStatusWifi() == ConnState::WL_CONNECTED)
     {
         logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Wi-Fi is already connected. Restart with new SSID and PASS.")); return buf; });
+        WiFi.disconnect(false, true); // TODO не выключаем режим STA
+    }
+
+    if (ssid.length() == 0)
+    {
+        logger.log(LOG_ERROR, [&]() -> String128
                    { String128 buf; buf.add(F("(NetworkManager::tryConnectWifi) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
         return false;
     }
@@ -722,7 +848,7 @@ bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &passwo
     }
     else
     {
-        logger.log(LOG_WARN, [&]() -> String128
+        logger.log(LOG_ERROR, [&]() -> String128
                    {
                     String128 buf;
                     buf.add(F("(NetworkManager::tryConnectWifi) Failed to connect to Wi-Fi network: '"));
@@ -730,7 +856,7 @@ bool NetworkManager::tryConnectWifi(const String32 &ssid, const String32 &passwo
                     buf.add(F("'"));
                     return buf; });
 
-        WiFi.disconnect(true, true);
+        WiFi.disconnect(false, true); // TODO не выключаем режим STA
         return false;
     }
 }
@@ -747,9 +873,16 @@ bool NetworkManager::tryConnectWifiAsync(const String32 &ssid, const String32 &p
                 buf.add(F("'"));
                 return buf; });
 
-    if (ssid.length() == 0)
+    if (getStatusWifi() == ConnState::WL_CONNECTED)
     {
         logger.log(LOG_WARN, [&]() -> String128
+                   { String128 buf; buf.add(F("(NetworkManager::tryConnectWifiAsync) Wi-Fi is already connected. Restart with new SSID and PASS.")); return buf; });
+        WiFi.disconnect(false, true); // TODO не выключаем режим STA
+    }
+
+    if (ssid.length() == 0)
+    {
+        logger.log(LOG_ERROR, [&]() -> String128
                    { String128 buf; buf.add(F("(NetworkManager::tryConnectWifiAsync) Failed to connect to Wi-Fi network: SSID is empty.")); return buf; });
         return false;
     }
@@ -779,31 +912,18 @@ bool NetworkManager::tryConnectWifiAsync(const String32 &ssid, const String32 &p
 
     onDisconnectedHandlers[0] = WiFi.onStationModeDisconnected([this, ssid](const WiFiEventStationModeDisconnected &event)
                                                                {
-                                                                   // switch(static_cast<WifiFailState>(event.reason))
-                                                                   // {
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_NO_AP_FOUND:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_AUTH_FAIL:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_ASSOC_FAIL:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_HANDSHAKE_TIMEOUT:
-                                                                   //     case WifiFailState::WIFI_DISCONNECT_REASON_BEACON_TIMEOUT:
-
-                                                                   logger.log(LOG_WARN, [&]() -> String128
-                                                                              {
-                    String128 buf;
+        logger.log(LOG_ERROR, [&]() -> String128 {
+            String128 buf;
             buf.add(F("(NetworkManager::tryConnectWifiAsync) Failed to connect to Wi-Fi network: '"));
-                    buf.add(ssid);
-                    buf.add(F("'"));
-                    buf.add(F(" Reason: "));
-                    buf.add(event.reason);
-                    return buf; });
+            buf.add(ssid);
+            buf.add(F("' Reason: "));
+            buf.add(event.reason);
+            return buf;
+        });
 
-                                                                   WiFi.disconnect(true, true);
-                                                                   this->onGotIpHandlers[0] = nullptr;
-                                                                   this->onDisconnectedHandlers[0] = nullptr;
-
-                                                                   // break;
-                                                                   // }
-                                                               });
+        WiFi.disconnect(false, true); //TODO не выключаем режим STA
+        this->onGotIpHandlers[0] = nullptr;
+        this->onDisconnectedHandlers[0] = nullptr; });
 
     return true;
 }

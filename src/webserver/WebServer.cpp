@@ -82,7 +82,7 @@ void WebServer::handleRoot()
 {
     logger.log(LOG_DEBUG, [&]() -> String128
                {String128 buf; buf.add(F("(WebServer::handleRoot) Handling root page request.")); return buf; });
-    server.sendFile_P(index_html, "text/html", true);
+    server.sendFile_P(index_html, "text/html", true); 
 }
 
 void WebServer::handleNotFound(ghttp::ServerBase::Request request)
@@ -91,7 +91,7 @@ void WebServer::handleNotFound(ghttp::ServerBase::Request request)
     {
         Text path = request.path();
 
-        if (path.endsWith(F(".ico")) || path.endsWith(F(".png")) || path.endsWith(F(".map")))
+        if (path.endsWith(F(".ico")) || path.endsWith(F(".png")) || path.endsWith(F(".map")) || path.endsWith(F(".dat")) || path.endsWith(F(".da")))
         {
             logger.log(LOG_WARN, [&]() -> String128
                        {String128 buf; buf.add(F("(WebServer::handleNotFound) ")); buf.add(request.path().c_str()); buf.add(" "); buf.add(request.method().c_str()); buf.add(F(" Resource not found.")); return buf; });
@@ -110,9 +110,9 @@ void WebServer::handleNotFound(ghttp::ServerBase::Request request)
         ghttp::ServerBase::Headers headers(302);
         headers.add(F("Location"), Text(redirectUri));
         headers.add(F("Connection"), F("close"));
+        headers.add(F("Cache-Control"), F("public, max-age=60")); //TODO проверить, нужно ли кешировать редирект
         server.beginResponse(headers);
         server.send(302);
-        Serial.println(Text(redirectUri));
         return;
     }
 

@@ -48,10 +48,10 @@ public:
 
 private:
     Logger &logger;
-    NeoPixelBus<T, E> device;
+    std::unique_ptr<NeoPixelBus<T, E>> device;
     //TODO make gamma correction configurable https://github.com/Makuna/NeoPixelBus/wiki/T_GAMMA
     const uint8_t pin;
-    const uint16_t countLed;
+    uint16_t countLed;
 
     int brightness;
     RgbColor color;

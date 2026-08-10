@@ -1,17 +1,21 @@
 #include "App.h"
 
-App::App() : logger(Logger::init(LOGGER_DEBUG_MODE)),
+App::App() : mode(AppMode::WORK),
+             logger(Logger::init(LOGGER_DEBUG_MODE)),
              config(ConfigManager<DeviceLedConfigPair, NetworkConfigPair, TelegramBotConfigPair, WebServerConfigPair, AppConfigPair>::init(logger)),
              network(NetworkManager::init(logger)),
              server(WebServer::init(logger, config.getConfig<WebServerConfig>().port)),
              mac(MacAddress::init(network.getMacAddress())),
              bot(TelegramBot::init(logger, mac)),
              device(logger, mac, config.getConfig<DeviceLedConfig>().pin, config.getConfig<DeviceLedConfig>().countLed),
-             
+
              webServerInactivityPeriodMs(WEBSERVER_INACTIVITY_PERIOD_MS),
              wifiReconnectTimer(WIFI_RECONNECT_PERIOD_MS, false, GTMode::Interval),
              applyConfigTimer(APPLY_CONFIG_TIMEOUT_MS, false, GTMode::Timeout),
-             saveConfigTimer(SAVE_CONFIG_TIMEOUT_MS, false, GTMode::Timeout)
+             saveConfigTimer(SAVE_CONFIG_TIMEOUT_MS, false, GTMode::Timeout),
+             buttonHoldTimer(HOLD_BUTTON_TIMEOUT_MS, false, GTMode::Timeout),
+
+             button(config.getConfig<AppConfig>().buttonPin, INPUT_PULLUP)
 
 {
 }
@@ -25,6 +29,7 @@ App &App::init()
 void App::begin()
 {
     config.begin();
+    config.reset();
 
     device.applyConfig(config.getConfig<DeviceLedConfig>());
     device.begin();
@@ -35,7 +40,6 @@ void App::begin()
 
     network.applyConfig(config.getConfig<NetworkConfig>());
     network.begin();
-    network.startMDNS();
 
     bot.applyConfig(config.getConfig<TelegramBotConfig>());
     registerCommands();
@@ -50,45 +54,87 @@ void App::start()
     server.start();
 }
 
+void App::startMode(AppMode newMode)
+{
+    if (mode == newMode)
+        return;
+
+    switch (newMode)
+    {
+    case AppMode::WORK:
+    {
+        mode = AppMode::WORK;
+        server.stopCaptivePortal();
+        network.stopDNS();
+        network.stopAP();
+        wifiReconnectTimer.stop();
+
+        auto networkConfig = config.getConfig<NetworkConfig>();
+        const bool ssidChanged = (strcmp(network.getSsid(), networkConfig.ssid.c_str()) != 0);
+        const bool passChanged = (strcmp(network.getPass(), networkConfig.password.c_str()) != 0);
+
+        if (ssidChanged || passChanged)
+        {
+            networkConfig.ssid = network.getSsid();
+            networkConfig.password = network.getPass();
+            config.updateConfig(networkConfig);
+        }
+
+        config.save();
+
+        return;
+    }
+    case AppMode::CONFIG:
+    {
+        mode = AppMode::CONFIG;
+        network.startAP();
+        network.startDNS();
+        server.startCaptivePortal(network.getAPIpAddress().toString().c_str());
+        wifiReconnectTimer.start();
+        return;
+    }
+    }
+}
+
 void App::update()
 {
-    if (network.getStatusWifi() == ConnState::WL_CONNECTED)
+    network.tick();
+    server.tick();
+    button.tick();
+
+    const bool isWifiConnected = (network.getStatusWifi() == ConnState::WL_CONNECTED);
+    const bool isServerInactive = ((millis() - server.getLastSystemRequestTime()) > webServerInactivityPeriodMs);
+
+    if (mode == AppMode::WORK)
     {
-        if (server.isCaptivePortalRunning())
+        if (button.hold())
         {
-            network.stopCaptivePortal();
-            server.stopCaptivePortal();
-
-            auto networkConfig = config.getConfig<NetworkConfig>();
-            if (strcmp(network.getSsid(), networkConfig.ssid) != 0 || strcmp(network.getPass(), networkConfig.password) != 0)
-            {
-                networkConfig.ssid = network.getSsid();
-                networkConfig.password = network.getPass();
-                config.updateConfig<NetworkConfig>(networkConfig);
-                config.saveConfig<NetworkConfig>();
-            }
-
-            wifiReconnectTimer.stop();
+            buttonHoldTimer.start();
+            startMode(AppMode::CONFIG);
         }
-
-        if (millis() - server.getLastSystemRequestTime() > webServerInactivityPeriodMs)
+        else if (!isWifiConnected)
         {
-            network.stopAP();
+            startMode(AppMode::CONFIG);
         }
+    }
+    else if (mode == AppMode::CONFIG)
+    {
+        const bool buttonHoldTimerCheck = (!buttonHoldTimer.running() || buttonHoldTimer.tick());
+        const bool applyConfigTimerCheck = (!applyConfigTimer.running() || applyConfigTimer.tick());
+        
+        if (isWifiConnected && isServerInactive && buttonHoldTimerCheck && applyConfigTimerCheck)
+        {
+            startMode(AppMode::WORK);
+        }
+    }
 
+    if (this->mode == AppMode::WORK)
+    {
         bot.tick();
     }
-    else
+    else if (mode == AppMode::CONFIG)
     {
-        if (!server.isCaptivePortalRunning())
-        {
-            network.startAP();
-            network.startCaptivePortal();
-            server.startCaptivePortal(network.getAPIpAddress().toString().c_str());
-            wifiReconnectTimer.start();
-        }
-
-        if ((millis() - server.getLastSystemRequestTime()) > webServerInactivityPeriodMs && wifiReconnectTimer.tick())
+        if (!isWifiConnected && isServerInactive && wifiReconnectTimer.tick())
         {
             const auto &networkConfig = config.getConfig<NetworkConfig>();
             network.attemptConnectionAsync(networkConfig.ssid, networkConfig.password);
@@ -97,22 +143,12 @@ void App::update()
 
     if (applyConfigTimer.tick())
     {
-        applyConfigTimer.stop();
         device.applyConfig(config.getConfig<DeviceLedConfig>());
         server.applyConfig(config.getConfig<WebServerConfig>());
         bot.applyConfig(config.getConfig<TelegramBotConfig>());
         network.applyConfig(config.getConfig<NetworkConfig>());
         this->applyConfig(config.getConfig<AppConfig>());
     }
-
-    if (saveConfigTimer.tick())
-    {
-        saveConfigTimer.stop();
-        config.save();
-    }
-
-    network.tick();
-    server.tick();
 }
 
 void App::applyConfig(const AppConfig &config)
@@ -167,6 +203,19 @@ void App::applyConfig(const AppConfig &config)
         logger.log(LOG_DEBUG, [&]() -> String128
                    { String128 buf; buf = F("(App::applyConfig) saveConfigTimeoutMs no changed"); return buf; });
     }
+
+    if (buttonHoldTimer.getTime() != config.holdButtonTimeoutMs)
+    {
+        buttonHoldTimer.setTime(config.holdButtonTimeoutMs);
+
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(App::applyConfig) holdButtonTimeoutMs changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(App::applyConfig) holdButtonTimeoutMs no changed"); return buf; });
+    }
 }
 
 void App::registerCommands()
@@ -211,7 +260,7 @@ void App::registerEndpoints()
     using namespace api::webserver;
 
     server.registerEndpoint<void, api::SuccessResponse<ScanWifiNetworkStartedResponse>>(
-        "/network/scan",
+        "/api/v1/network/scan",
         HTTPMethod::POST,
         EndpointType::System,
         [this]() -> api::SuccessResponse<ScanWifiNetworkStartedResponse>
@@ -226,7 +275,7 @@ void App::registerEndpoints()
         api::SuccessResponse<GetScanStatusResponse>>;
 
     server.registerEndpoint<void, ScanVariant>(
-        "/network/scan",
+        "api/v1/network/scan",
         HTTPMethod::GET,
         EndpointType::System,
         [this]() -> ScanVariant
@@ -249,7 +298,7 @@ void App::registerEndpoints()
         });
 
     server.registerEndpoint<ConnectWifiNetworkRequest, api::SuccessResponse<ConnectWifiNetworkStartedResponse>>(
-        "/network/connect",
+        "/api/v1/network/connect",
         HTTPMethod::POST,
         EndpointType::System,
         [this](ConnectWifiNetworkRequest &request) -> api::SuccessResponse<ConnectWifiNetworkStartedResponse>
@@ -262,7 +311,7 @@ void App::registerEndpoints()
         });
 
     server.registerEndpoint<void, api::SuccessResponse<GetWifiStatusResponse>>(
-        "/network/connect",
+        "/api/v1/network/connect",
         HTTPMethod::GET,
         EndpointType::System,
         [this]() -> api::SuccessResponse<GetWifiStatusResponse>
@@ -273,7 +322,7 @@ void App::registerEndpoints()
         });
 
     server.registerEndpoint<UpdateConfigRequest, void>(
-        "/config",
+        "/api/v1/config",
         HTTPMethod::PATCH,
         EndpointType::System,
         [this](UpdateConfigRequest &request) -> void
@@ -304,11 +353,10 @@ void App::registerEndpoints()
             config.updateConfig(appConfig);
 
             applyConfigTimer.start();
-            saveConfigTimer.start();
         });
 
     server.registerEndpoint<void, api::SuccessResponse<GetConfigResponse>>(
-        "/config",
+        "/api/v1/config",
         HTTPMethod::GET,
         EndpointType::System,
         [this]() -> api::SuccessResponse<GetConfigResponse>
@@ -332,15 +380,13 @@ void App::registerEndpoints()
                     ModelBaseResponse()));
         });
 
-    // server.registerEndpoint<void, void>(
-    //     "/stop",
-    //     HTTPMethod::GET,
-    // EndpointType::System,
-    //     [this]() {
-    //         network.stopAP();
-    //         network.stopCaptivePortal();
-    //         server.stopCaptivePortal();
-    //         wifiReconnectTimer.stop();
-    //     }
-    // );
+    server.registerEndpoint<void, void>(
+        "/api/v1/config",
+        HTTPMethod::DELETE,
+    EndpointType::System,
+        [this]() {
+            config.reset();
+            applyConfigTimer.start();
+        }
+    );
 }
