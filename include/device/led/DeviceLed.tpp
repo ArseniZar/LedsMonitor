@@ -84,7 +84,7 @@ bool DeviceLed<T, E>::getStatus()
 template <typename T, typename E>
 void DeviceLed<T, E>::applyConfig(const DeviceLedConfig &config)
 {
-    if (name != config.deviceName)
+    if ((!strcmp(name.c_str(), config.deviceName.c_str()) == 0)) //FIXME: Временный костыль из-за отсутствия operator== в StringN.
     {
         setName(config.deviceName);
         logger.log(LOG_DEBUG, [&]() -> String128

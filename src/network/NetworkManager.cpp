@@ -202,8 +202,7 @@ bool NetworkManager::attemptConnectionAsync(const char *ssid, const char *passwo
         this->attemptSsid = F("");
         this->attemptPassword = F("");
         this->onGotIpHandlers[1] = nullptr; 
-        this->onDisconnectedHandlers[1] = nullptr; 
-        });
+        this->onDisconnectedHandlers[1] = nullptr; });
 
     onDisconnectedHandlers[1] = WiFi.onStationModeDisconnected([this](const WiFiEventStationModeDisconnected &event)
                                                                {
@@ -229,7 +228,13 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) wifiConnectionTimeoutMs no changed"); return buf; });
     }
 
-    if ((!(strcmp(ssid, config.ssid) == 0) && !(strcmp(attemptSsid, config.ssid) == 0)) || (!(strcmp(password, config.password) == 0) && !(strcmp(attemptPassword, config.password) == 0))) // FIXME: Временный костыль из-за отсутствия operator== в StringN.
+    bool ssidChanged = (!strcmp(ssid.c_str(), config.ssid.c_str()) == 0) &&
+                       (!strcmp(attemptSsid.c_str(), config.ssid.c_str()) == 0); //FIXME: Временный костыль из-за отсутствия operator== в StringN.
+
+    bool passwordChanged = (!strcmp(password.c_str(), config.password.c_str()) == 0) &&
+                           (!strcmp(attemptPassword.c_str(), config.password.c_str()) == 0);
+
+    if (ssidChanged || passwordChanged)
     {
         setAttemptWifiConfig(config.ssid, config.password);
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -246,7 +251,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
     }
 
-    if ((!(strcmp(apSsid, config.apSsid) == 0)) || (!(strcmp(apPassword, config.apPassword)) == 0))
+    if ((!(strcmp(apSsid.c_str(), config.apSsid.c_str()) == 0)) || (!(strcmp(apPassword.c_str(), config.apPassword.c_str())) == 0))
     {
         setAPConfig(config.apSsid, config.apPassword);
         logger.log(LOG_DEBUG, [&]() -> String128
@@ -263,7 +268,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
                    { String128 buf; buf = F("(NetworkManager::applyConfig) apSsid apPassword no changed"); return buf; });
     }
 
-    if (!(strcmp(mdnsName, config.mdnsName) == 0))
+    if (!(strcmp(mdnsName.c_str(), config.mdnsName.c_str()) == 0))
     {
         setMdnsName(config.mdnsName);
         logger.log(LOG_DEBUG, [&]() -> String128
