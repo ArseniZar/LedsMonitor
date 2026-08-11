@@ -1,10 +1,3 @@
-// NOTE:
-// 1. Create a file ConfigDefault.cpp in the config folder.
-// 2. Copy everything from this example file into ConfigDefault.cpp.
-// 3. Update the fields below (Wi‑Fi credentials, LED count, Telegram token, etc.)
-//    according to your setup.
-// 4. Rebuild and flash the firmware.
-
 #include "ConfigDefault.h"
 
 // Base network configuration:
@@ -57,8 +50,10 @@ const WebServerConfig& DEFAULT_WEBSERVER_CONFIG = WebServerConfig::defaultConfig
 // applyConfigTimeoutMs        - Debounce delay before applying config changes (ms)
 // saveConfigTimeoutMs         - Debounce delay before saving config to non-volatile storage (ms)
 const AppConfig& DEFAULT_APP_CONFIG = AppConfig::defaultConfig(
-    180000UL, // Web Server Inactivity Period (ms)
-    120000UL, // Wi-Fi Reconnect Period (ms)
-    2000UL,   // Apply Config Timeout (ms)
-    2000UL    // Save Config Timeout (ms)
+    120000UL, // Web Server Inactivity Period (ms)
+    30000UL, // Wi-Fi Reconnect Period (ms)
+    4000UL,   // Apply Config Timeout (ms)
+    2000UL,    // Save Config Timeout (ms)
+    20000UL,   // Hold Button Timeout (ms),
+    4        // Button Pin (GPIO)
 );
