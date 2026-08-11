@@ -6,18 +6,20 @@
 #include <StringN.h>
 #include "MacAddress.h"
 
-class DeviceBase
-{
+class DeviceBase {
 public:
     virtual ~DeviceBase() = default;
-    const MacAddress &getMacAddress() const { return mac; }
-    const String getName() const { return name; }
-
+    
+    const MacAddress& getMacAddress();
+    const char* getName() const;
+    void setName(const char* name);
+    
 protected:
-    const MacAddress &mac;
-    const String name;
+    const MacAddress& mac;
+    String32 name;
+
     DeviceBase() = delete;
-    DeviceBase(const MacAddress &mac, const char *name) : mac(mac), name(name) {}
+    DeviceBase(const MacAddress& mac, const char* name);
 };
 
 #endif // DEVICE_BASE_H

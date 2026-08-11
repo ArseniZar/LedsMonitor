@@ -17,7 +17,7 @@ class Logger
 {
 public:
   static Logger &init(bool debugMode);
-  void log(LogLevel level, std::function<String256()> messageGenerator);
+  void log(LogLevel level, std::function<String256()> messageGenerator) const;
 
 private:
   bool debugMode;

@@ -2,39 +2,31 @@
 #include "DeviceLed.h"
 
 template <typename T, typename E>
-DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, const char *name, uint16_t countLed, uint8_t pin) : DeviceBase(mac, name),
-                                                                                                                       logger(logger),
-                                                                                                                       device(countLed, pin),
-                                                                                                                       countLed(countLed),
-                                                                                                                       brightness(255),
-                                                                                                                       color(Colors::WHITE),
-                                                                                                                       status(true) {}
+DeviceLed<T, E>::DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, uint16_t countLed) : DeviceBase(mac, DEVICE_LED_NAME),
+                                                                                                    logger(logger),
+                                                                                                    device(std::make_unique<NeoPixelBus<T, E>>(countLed, pin)),
+                                                                                                    pin(pin),
+                                                                                                    countLed(countLed),
+                                                                                                    brightness(DEVICE_LED_BRIGHTNESS),
+                                                                                                    color(Colors::WHITE),
+                                                                                                    status(true) {}
 template <typename T, typename E>
 void DeviceLed<T, E>::begin()
 {
-    device.Begin();
+    device->Begin();
     setBrightness(brightness);
     setPower(status);
 }
 
 template <typename T, typename E>
-void DeviceLed<T, E>::setBrightness(int newBrightness)
+void DeviceLed<T, E>::setBrightness(int brightness)
 {
-    if (newBrightness < 0)
-        newBrightness = 0;
-    if (newBrightness > 255)
-        newBrightness = 255;
+    if (brightness < 0)
+        brightness = 0;
+    if (brightness > 255)
+        brightness = 255;
 
-    brightness = newBrightness;
-    logger.log(LOG_INFO, [&]() -> String256
-                   { String256 buf;
-                     buf.add(F("[DeviceLed::setBrightness] Set brightness for device '"));
-                     buf.add(getName().c_str());
-                     buf.add(F("' ("));
-                     buf.add(mac.getMac());
-                     buf.add(F(") to "));
-                     buf.add(brightness);
-                     return buf; });
+    this->brightness = brightness;
 }
 
 template <typename T, typename E>
@@ -47,50 +39,38 @@ RgbColor DeviceLed<T, E>::brightnessColor()
 }
 
 template <typename T, typename E>
-void DeviceLed<T, E>::setPower(bool newStatus)
+void DeviceLed<T, E>::setPower(bool status)
 {
-    if (newStatus != status)
-    {
-        logger.log(LOG_INFO, [&]() -> String256
-                   { String256 buf;
-                     buf.add(F("[DeviceLed::setPower] Set power for device '"));
-                     buf.add(getName().c_str());
-                     buf.add(F("' ("));
-                     buf.add(mac.getMac());
-                     buf.add(F(") to "));
-                     buf.add(newStatus ? F("ON") : F("OFF"));
-                     return buf; });
-    }
-
-    device.ClearTo(newStatus ? brightnessColor() : Colors::BLACK);
-    device.Show();
-    this->status = newStatus;
+    this->status = status;
+    device->ClearTo(this->status ? brightnessColor() : Colors::BLACK);
+    device->Show();
 }
 
 template <typename T, typename E>
 void DeviceLed<T, E>::setColor(const char *color)
 {
-    logger.log(LOG_INFO, [&]() -> String256
-                        { String256 buf;
-                            buf.add(F("[DeviceLed::setColor] Set color for device '"));
-                            buf.add(getName().c_str());
-                            buf.add(F("' to """));
-                            buf.add(color);
-                            buf.add(F(""));
-                            return buf; });
-
     RgbColor hexColor = stringHexToRgbColor(color);
     this->color = std::move(hexColor);
-    
+
     if (status)
     {
-        device.ClearTo(brightnessColor());
-        device.Show();
+        device->ClearTo(brightnessColor());
+        device->Show();
     }
 }
 
 template <typename T, typename E>
-const char *DeviceLed<T, E>::getColor()
+void DeviceLed<T, E>::setCountLed(uint16_t countLed)
+{
+    this->countLed = countLed;
+    device = std::make_unique<NeoPixelBus<T, E>>(countLed, pin);
+    device->Begin();
+    setBrightness(brightness);
+    setPower(status);
+}
+
+template <typename T, typename E>
+StringN<8> DeviceLed<T, E>::getColor()
 {
     return rgbColorToStringHex(color);
 }
@@ -102,7 +82,35 @@ bool DeviceLed<T, E>::getStatus()
 }
 
 template <typename T, typename E>
-RgbColor DeviceLed<T, E>::stringHexToRgbColor(const char* colorStr)
+void DeviceLed<T, E>::applyConfig(const DeviceLedConfig &config)
+{
+    if ((!strcmp(name.c_str(), config.deviceName.c_str()) == 0)) //FIXME: Временный костыль из-за отсутствия operator== в StringN.
+    {
+        setName(config.deviceName);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) Name changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) Name no changed"); return buf; });
+    }
+
+    if (countLed != config.countLed)
+    {
+        setCountLed(config.countLed);
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) CountLed changed"); return buf; });
+    }
+    else
+    {
+        logger.log(LOG_DEBUG, [&]() -> String128
+                   { String128 buf; buf = F("(DeviceLed::applyConfig) CountLed no changed"); return buf; });
+    }
+}
+
+template <typename T, typename E>
+RgbColor DeviceLed<T, E>::stringHexToRgbColor(const char *colorStr)
 {
     String hex = colorStr;
     if (hex.startsWith("#"))
@@ -131,8 +139,8 @@ RgbColor DeviceLed<T, E>::stringHexToRgbColor(const char* colorStr)
     return RgbColor(r, g, b);
 }
 
-template<typename T, typename E>
-StringN<8> DeviceLed<T, E>::rgbColorToStringHex(const RgbColor& c)
+template <typename T, typename E>
+StringN<8> DeviceLed<T, E>::rgbColorToStringHex(const RgbColor &c)
 {
     const char hexDigits[] = "0123456789abcdef";
 

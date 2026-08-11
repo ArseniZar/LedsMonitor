@@ -3,8 +3,18 @@
 #define DEVICE_LED_H
 
 #include <NeoPixelBus.h>
+#include <memory>
 #include "Logger.h"
 #include "DeviceBase.h"
+#include "DeviceLedConfigModels.h"
+
+#ifndef DEVICE_LED_NAME
+#define DEVICE_LED_NAME "Led"
+#endif
+
+#ifndef DEVICE_LED_BRIGHTNESS
+#define DEVICE_LED_BRIGHTNESS 255
+#endif
 
 namespace Colors
 {
@@ -26,23 +36,28 @@ template <typename T, typename E>
 class DeviceLed final : public DeviceBase
 {
 public:
-    DeviceLed(Logger &logger, const MacAddress &mac, const char *name, uint16_t countLed, uint8_t pin);
+    DeviceLed(Logger &logger, const MacAddress &mac, uint8_t pin, uint16_t countLed);
     void begin();
-    void setPower(bool newStatus);
-    void setBrightness(int newBrightness);
+    void setCountLed(uint16_t countLed);
+    void setPower(bool status);
+    void setBrightness(int  brightness);
     void setColor(const char *color);
-    const char *getColor();
+    void applyConfig(const DeviceLedConfig &config);
+    StringN<8> getColor();
     bool getStatus();
 
 private:
     Logger &logger;
-    NeoPixelBus<T, E> device;
+    std::unique_ptr<NeoPixelBus<T, E>> device;
+    //TODO make gamma correction configurable https://github.com/Makuna/NeoPixelBus/wiki/T_GAMMA
+    const uint8_t pin;
+    uint16_t countLed;
 
-    const int countLed;
     int brightness;
     RgbColor color;
     bool status;
 
+    
     RgbColor stringHexToRgbColor(const char *colorStr);
     StringN<8> rgbColorToStringHex(const RgbColor& c);
     RgbColor brightnessColor();

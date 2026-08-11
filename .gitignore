@@ -1,4 +1,9 @@
 .pio
 .vscode/
-include/config.h
-venv/
+.test/
+
+.DS_Store
+TODO.md
+
+include/webserver/index.h
+src/config/ConfigDefault.cpp

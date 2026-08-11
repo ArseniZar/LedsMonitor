@@ -1,0 +1,59 @@
+#include "ConfigDefault.h"
+
+// Base network configuration:
+// ssid / password     - No saved Wi-Fi network by default (empty strings)
+// "SmartHome"        - Access Point SSID broadcasted in captive portal mode
+// "12345678"         - Access Point password (minimum 8 characters)
+// "smarthome"        - mDNS hostname: device will be accessible at smarthome.local
+const NetworkConfig& DEFAULT_NETWORK_CONFIG = NetworkConfig::defaultConfig(
+    "",          // Saved Wi-Fi SSID
+    "",          // Saved Wi-Fi Password
+    "SmartHome", // AP SSID
+    "12345678",  // AP Password
+    "smarthome", // mDNS Hostname
+    10000UL      // Wi-Fi connection timeout (ms)
+);
+
+
+// Base LED device configuration for out-of-the-box firmware.
+// 3     - Hardware data pin (GPIO number used for DMA transfer)
+// 40    - Default number of LEDs in the strip
+// "Led" - Device name displayed in UI / Telegram
+const DeviceLedConfig& DEFAULT_DEVICE_CONFIG = DeviceLedConfig::defaultConfig(
+    3,      // Hardware Data Pin (GPIO)
+    40,     // LED Count
+    "Led"   // Device Name
+);
+
+
+// Base Telegram bot configuration:
+// token         - Empty by default until user inputs their bot token
+// limitMessage  - Maximum number of messages processed per tick (anti-spam protection)
+// periodUpdate  - Telegram polling interval (ms); recommended >= 4000 ms for stability
+const TelegramBotConfig& DEFAULT_TELEGRAM_CONFIG = TelegramBotConfig::defaultConfig(
+    "",     // Bot Token
+    10,     // Message Limit
+    1500    // Update Period (ms)
+);
+
+
+// Base Web Server configuration:
+// port - HTTP communication port (default: 80)
+const WebServerConfig& DEFAULT_WEBSERVER_CONFIG = WebServerConfig::defaultConfig(
+    80     // Web Server Port
+);
+
+
+// Base Application System configuration:
+// webServerInactivityPeriodMs - Portal inactivity timeout before shut down (ms)
+// wifiReconnectPeriodMs       - Delay between Wi-Fi reconnection attempts (ms)
+// applyConfigTimeoutMs        - Debounce delay before applying config changes (ms)
+// saveConfigTimeoutMs         - Debounce delay before saving config to non-volatile storage (ms)
+const AppConfig& DEFAULT_APP_CONFIG = AppConfig::defaultConfig(
+    120000UL, // Web Server Inactivity Period (ms)
+    30000UL, // Wi-Fi Reconnect Period (ms)
+    4000UL,   // Apply Config Timeout (ms)
+    2000UL,    // Save Config Timeout (ms)
+    20000UL,   // Hold Button Timeout (ms),
+    4        // Button Pin (GPIO)
+);
