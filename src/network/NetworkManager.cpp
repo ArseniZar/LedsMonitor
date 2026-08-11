@@ -248,7 +248,7 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
     else
     {
         logger.log(LOG_DEBUG, [&]() -> String128
-                   { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password changed"); return buf; });
+                   { String128 buf; buf = F("(NetworkManager::applyConfig) Ssid Password no changed"); return buf; });
     }
 
     if ((!(strcmp(apSsid.c_str(), config.apSsid.c_str()) == 0)) || (!(strcmp(apPassword.c_str(), config.apPassword.c_str())) == 0))
@@ -287,14 +287,14 @@ void NetworkManager::applyConfig(const NetworkConfig &config)
 
 void NetworkManager::setAttemptWifiConfig(const char *ssid, const char *password)
 {
-    attemptSsid = ssid;
-    attemptPassword = password;
+    this->attemptSsid = ssid;
+    this->attemptPassword = password;
 }
 
 void NetworkManager::setAPConfig(const char *apSsid, const char *apPassword)
 {
-    apSsid = apSsid;
-    apPassword = apPassword;
+    this->apSsid = apSsid;
+    this->apPassword = apPassword;
 }
 
 bool NetworkManager::isRunningAP() const
@@ -384,12 +384,12 @@ bool NetworkManager::startAP(const String32 &apSsid, const String32 &apPassword)
 
 void NetworkManager::setMdnsName(const char *mdnsName)
 {
-    mdnsName = mdnsName;
+    this->mdnsName = mdnsName;
 }
 
 void NetworkManager::setWifiConnectionTimeout(uint32_t timeout)
 {
-    wifiConnectionTimeoutMs = timeout;
+    this->wifiConnectionTimeoutMs = timeout;
 }
 
 bool NetworkManager::stopMDNS()
