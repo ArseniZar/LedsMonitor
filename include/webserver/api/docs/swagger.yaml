@@ -25,7 +25,11 @@ tags:
 servers:
   - url: http://192.168.4.1/
     description: ESP8266 access point
-
+  - url: http://{host}/
+    description: ESP8266 local network 
+    variables:
+      host:
+        default: smarthome.local
 paths:
   "/":
     get:
