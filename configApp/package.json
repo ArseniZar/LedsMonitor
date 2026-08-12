@@ -9,14 +9,19 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4",
-    "vite-plugin-singlefile": "^2.3.0"
+    "@preact/preset-vite": "2.10.6",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "^26.2.0",
+    "tailwindcss": "4.3.3",
+    "terser": "5.50.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.1",
+    "vite-plugin-compression2": "2.5.3",
+    "vite-plugin-singlefile": "2.3.3"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.11",
-    "htm": "^3.1.1",
-    "preact": "^10.27.0",
-    "tailwindcss": "^4.1.11"
+    "konsta": "5.3.0",
+    "preact": "10.29.8",
+    "preact-router": "4.1.2"
   }
 }
