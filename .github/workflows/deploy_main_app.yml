@@ -14,7 +14,7 @@ jobs:
       - name: Download build artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build.yml      
+          workflow: build_main_app.yml      
           name: mainApp-build      
           path: mainApp/dist        
           workflow_conclusion: success 
@@ -24,4 +24,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: webApp/dist
+          publish_dir: mainApp/dist
